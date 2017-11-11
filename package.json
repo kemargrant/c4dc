@@ -1,0 +1,22 @@
+{
+  "name": "binance-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "crypto-js": "^3.1.9-1",
+    "echarts": "^3.7.2",
+    "echarts-for-react": "^2.0.0",
+    "material-ui": "^1.0.0-beta.18",
+    "material-ui-icons": "^1.0.0-beta.5",
+    "react-materialize": "^1.0.11",
+    "react-scripts": "1.0.13",
+    "webpack": "^3.8.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {}
+}

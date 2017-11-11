@@ -1,0 +1,139 @@
+.App {
+  text-align: center;
+  overflow-y:hidden;
+}
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+body{
+	overflow-x:hidden;
+}
+
+.Burger{
+	display: block;
+    margin: auto;
+    position: absolute;
+    left:-1em;
+    top: .5em;
+}   
+
+label{font-size:larger}
+
+.menu{
+	position:absolute;
+	bottom:1em;
+	left:1em;
+}
+
+.slider{
+	display:block;
+	margin:auto;
+	width:70%;
+	padding-bottom:2em;
+}
+
+textarea{
+	height:100vh;
+	width:100%;
+	font-size:1.1em !important;
+	overflow-y:scroll;
+	border:2px solid black;
+	background:black;
+	color:green;
+}
+
+td,th{
+	padding-bottom:0.2em !important;
+	padding-top:0.2em !important;
+}
+
+.td_input{width:5em !important;}
+
+/*
+Material Slider:
+A PEN BY Behnam Mohammadi
+ https://codepen.io/itten/pen/OWLjoX
+ */
+ 
+/* track */
+input[type="range"] {
+  -webkit-appearance: none !important;
+  width: 100%;
+  height: 1px;
+  background-color: blue;
+  border: none;
+  border-radius: 10px;
+  margin: auto;
+  transition: all 400ms;
+  outline:none;
+  padding: 0;
+  margin: 0;
+}
+input[type="range"]::-moz-range-track { 
+  width: 100%;
+  height: 1px;
+  background-color: blue;
+  border: none;
+  border-radius: 10px;
+  margin: auto;
+  transition: all 400ms;
+  outline:none;
+  padding: 0;
+  margin: 0;
+}
+
+/* thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  transform:scale(0.75);
+  width: 1.7em;
+  height: 1.7em;
+  border: none;
+  background-color: #181d6c;
+  border-radius: 40px; 
+  box-shadow: 0px 0px 0px green;
+  transition: all 400ms;
+  outline:none
+}
+input[type="range"]::-moz-range-thumb {
+  -webkit-appearance: none !important;
+  transform:scale(0.75);
+  width: 1.7em;
+  height: 1.7em;
+  border: none;
+  background-color: #181d6c;
+  border-radius: 30px;
+  box-shadow: 0px 0px 0px green;
+  transition: all 400ms;
+  outline:none
+}
+
+/* thumb hover */
+input[type="range"]::-webkit-slider-thumb:hover {  
+  transform:scale(0.85);
+}
+input[type="range"]::-moz-range-thumb:hover{
+  transform:scale(0.85);
+}
+
+/* thumb active */
+input[type="range"]::-webkit-slider-thumb:active {
+  transform:scale(1);
+}
+input[type="range"]::-moz-range-thumb:active{
+  transform:scale(1);
+}
+
+ 
