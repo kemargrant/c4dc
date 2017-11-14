@@ -169,6 +169,7 @@ class App extends Component{
 			},	
 			time:0,			
 			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{}},
+			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
 			zoomend:100,
 			zoomstart:80,		
@@ -195,7 +196,6 @@ class App extends Component{
 			return localStorage.removeItem("Autosave");
 		}
 		else{
-			this.setState({cleared:false});
 			return localStorage.setItem("Autosave",true);
 		}	
 	}
@@ -626,6 +626,32 @@ class App extends Component{
 			}
 			this.setState({toast:{message:message+'\r\n'+this.state.toast.message,open:true}});
 		}
+		((_message)=>{
+			if(document.hasFocus() || message === "log" || !this.state.webNotify){
+				return;
+			}
+			let n;
+			let _body = "";
+			if(message === "percentage"){
+				_body =  "Percentage:"+this.state.bittrexPercentage.toFixed(3) + "%";
+			}
+			if (!("Notification" in window)) {
+			    alert("This browser does not support system notifications");
+			}
+			else if (Notification.permission === "granted"){
+				n = new Notification(_message,{body:_body,icon:"https://arbitrage.0trust.us/favicon.ico"});
+			}
+			else if (Notification.permission !== 'denied'){
+				 Notification.requestPermission(function(permission) {
+					if (permission === "granted") {
+						n = new Notification(_message,{body:_body,icon:"https://arbitrage.0trust.us/favicon.ico"});
+					}
+				});
+			}
+		    if(n){
+				return setTimeout(n.close.bind(n),5000);
+			}
+		})(message);	
 		return setTimeout(()=>{return this.setState({toast:{open:false}});},2000);
 	}	
 			
@@ -674,8 +700,16 @@ class App extends Component{
 		let rate = evt.currentTarget.value; 
 		this.setState({pollingRate:rate * 1000});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
-	}		
-	
+	}	
+		
+	webNotify(checked){
+		if(!checked){
+			return localStorage.removeItem("Web_Notify");
+		}
+		else{
+			return localStorage.setItem("Web_Notify",true);
+		}	
+	}	
 	render(){  	
 		return (
 		  <div className="App">
@@ -872,7 +906,9 @@ class App extends Component{
 			        <FormGroup>
 			        <FormControlLabel
 					  label="Connect"
+					  style={{margin:"auto"}}
 			          control={<Switch
+							  
 				              checked={this.state.connected}
 				              onChange={(event, checked) => {
 								  if(checked){
@@ -885,6 +921,7 @@ class App extends Component{
 					<FormGroup>
 			        <FormControlLabel
 					  label="AutoConnect"
+					  style={{margin:"auto"}}
 			          control={<Switch
 				              checked={this.state.autoconnect}
 				              onChange={(event, checked) => {
@@ -898,6 +935,7 @@ class App extends Component{
 		        <FormGroup>
 		        <FormControlLabel
 				  label="AutoSave Settings"
+				  style={{margin:"auto"}}
 		          control={<Switch
 			              checked={this.state.autosave}
 			              onChange={(event, checked) => {
@@ -907,11 +945,27 @@ class App extends Component{
 						/>}
 		        />
 				</FormGroup>
+		        <FormGroup>
+		        <FormControlLabel
+				  label="Notifications"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.state.webNotify}
+			              onChange={(event, checked) => {
+							  this.setState({ webNotify: checked });
+							  return this.webNotify(checked);
+							}}
+						/>}
+		        />
+				</FormGroup>	
+				</CardActions>
+				<CardActions>			
 				{
 				!this.state.cleared ?
 				<FormGroup>
 		        <FormControlLabel
 				  label="Reset Settings"
+				  style={{margin:"auto"}}
 		          control={<Switch
 			              checked={this.state.cleared}
 			              onChange={(event, checked) => {
