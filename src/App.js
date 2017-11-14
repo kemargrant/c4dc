@@ -46,7 +46,7 @@ function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
 			
-function slope(array,points,name){
+function slope(array,_points,name){
 	function minmax(_array){
 		var _min = [0,0];
 		var _max = [0,0];
@@ -59,7 +59,7 @@ function slope(array,points,name){
 		
 	}
 	let line = {lineStyle:{normal:{type:'solid'}}};	
-	if(!points){
+	if(!_points){
 		if(!array){return [];}
 		let detmm = minmax(array);
 		let coord1 = detmm[0];
@@ -88,6 +88,10 @@ function slope(array,points,name){
 		return line;
 	}
 	else{
+		let points = JSON.parse(JSON.stringify(_points));
+		points.map((v,i)=>{
+			return points[i] =[0,points[i].value[1]]
+		});
 		let r = (Math.log(points[points.length-1][1]/points[0][1]))/(points.length-2);
 		let data = [];			
 		for(let i=0;i<points.length;i++){
@@ -257,7 +261,7 @@ class App extends Component{
 		return this.setState({orders:[]});
 	}		
 
-	componentDidMount() {
+	componentDidMount(){
 		let e = {
 			'dataZoom': (zoom)=>{
 				return this.brushZoom([zoom.start,zoom.end]);
@@ -355,21 +359,22 @@ class App extends Component{
 					}
 				}
 				for(let k=0;k<data.info.length;k++){
-					date = new Date(data.info[k].Time);
+					date = data.info[k].Time;
 					for(let i= 0;i < coins.length;i++){
-						bank[coins[i]].push([date,Number(data.info[k][coins[i]].toFixed(6))]);
+						bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(6))],name:date.toString()});
 					}
 				}
 				let format = function(obj,dataArray,name){
 					obj.legend = {data:[name,"Projection -"+name]}  
 					obj.yAxis = [{min:"dataMin",max:"dataMax"}];
-					obj.xAxis = [{type:"value",min:"dataMin",max:"dataMax",axisLabel:{formatter:quick_format}}];
+					obj.xAxis = [{type:"time",min:"dataMin",max:"dataMax",axisLabel:{formatter:quick_format}}];
 					obj.tooltip = {trigger:"axis",formatter:quick_format2}
 					obj.grid =  {left:"1%",right:"1%",bottom:'7%',containLabel:true}
 					let proj = slope(null,dataArray,name);
-					obj.series = [{smooth:true,name:name,type:'line',data:dataArray},proj];
+					obj.series = [{smooth:true,name:name,type:'line',data:dataArray}];
 					obj.title = {textStyle:{fontSize:13},text:proj.text,top:'5.5%',left:"30%"}
 					obj.range = balanceMinMax(dataArray);
+					obj.dataZoom=[{realtime:true,show:true,start:80,end:100}];
 					obj.value = obj.range[0];
 					obj.maxvalue = obj.range[1];
 					obj.base = dataArray;
@@ -807,59 +812,19 @@ class App extends Component{
 			{this.state.tabValue === 1 && <TabContainer>
 			   <Button raised color="primary" onClick={this.getBittrexDBBalance}>Generate Balance Charts</Button>
 			   {this.state.dbBalance.map((option) => (
-				 <div key={option.title? option.title.text : ""}>
+				 <div key={option.series[0].name}>
 		         <ReactEchartsCore
 		          echarts={echarts}
 				  option={option}
 				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
 				  notMerge={true}
 				  lazyUpdate={true}
+				  onEvents={{
+					  'dataZoom': (zoom)=>{
+					   return option.dataZoom = ({start:zoom.start,end:zoom.end});
+						}
+				  }}
 				   />	
-				   <div className="slider">
-				   <InputLabel>Min. Value: {option.value ? option.value : ""}</InputLabel>
-				   <input type="range" onChange={
-						(evt)=>{
-							try{
-								option.value = evt.currentTarget.value;
-								let filter = [];
-								for(let i = 0;i < option.base.length;i++){
-									if(option.base[i][1] < option.maxvalue && option.base[i][1] > option.value){
-										filter.push(option.base[i]);
-									}
-								}
-								let proj = slope(null,filter,option.series[0].name);
-								return option.series = [{smooth:true,name:option.series[0].name,type:'line',data:filter},proj];
-							}catch(e){}
-						}
-					} 
-					step={option.range ? (option.range[0]+option.range[1])/20 : 1} 
-					min={option.range ? option.range[0] : 0} 
-					max={option.range ? option.range[1] : 9999} 
-					value={option.value}
-					/>
-				 <InputLabel>Max Value: {option.maxvalue ? option.maxvalue : ""}</InputLabel>
-				 <input type="range" onChange={
-						(evt)=>{
-							try{
-								option.maxvalue = evt.currentTarget.value;
-								let filter = [];
-								for(let i = 0;i < option.base.length;i++){
-									if(option.base[i][1] < option.maxvalue && option.base[i][1] > option.value){
-										filter.push(option.base[i]);
-									}
-								}
-								let proj = slope(null,filter,option.series[0].name);
-								return option.series = [{smooth:true,name:option.series[0].name,type:'line',data:filter},proj];
-							}
-							catch(e){}
-						}
-					} 
-					step={option.range ? (option.range[0]+option.range[1])/20 : 1} 
-					min={option.range ? option.range[0] : 0} 
-					max={option.range ? option.range[1] : 9999} 
-					value={option.maxvalue}
-					/>	
-					</div>
 				   </div>
 				))}    		   	   			
 			</TabContainer>}
