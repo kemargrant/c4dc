@@ -361,7 +361,10 @@ class App extends Component{
 				for(let k=0;k<data.info.length;k++){
 					date = data.info[k].Time;
 					for(let i= 0;i < coins.length;i++){
-						bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(6))],name:date.toString()});
+						bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
+						if(bank[coins[i]][k-1] && bank[coins[i]][k-1].value[1] === Number(data.info[k][coins[i]].toFixed(8))){
+								bank[coins[i]].pop();
+						}
 					}
 				}
 				let format = function(obj,dataArray,name){
