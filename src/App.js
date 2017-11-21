@@ -352,11 +352,12 @@ class App extends Component{
 					date = data.info[k].Time;
 					for(let i= 0;i < coins.length;i++){
 						try{
-							if(Number(data.info[k][coins[i]].toFixed(7)) !== bank[coins[i]][ bank[coins[i]].length  -1].value[1])
-								{bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(7))],name:date.toString()})};
+							if(Number(data.info[k][coins[i]].toFixed(8)) !== bank[coins[i]][ bank[coins[i]].length  -1].value[1]){
+								bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
+							}
 						}
 						catch(e){
-							bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(7))],name:date.toString()});
+							bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
 						}
 					}
 				}
