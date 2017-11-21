@@ -142,13 +142,16 @@ class App extends Component{
                 ]
             },					
 			dbBalance:JSON.parse(localStorage.getItem("DB_Balance"))? JSON.parse(localStorage.getItem("DB_Balance")) : [],
+			dbTrade:JSON.parse(localStorage.getItem("DB_Trade"))? JSON.parse(localStorage.getItem("DB_Trade")) : {
+				xAxis:{type:'time'},
+				yAxis:{type:'value'}
+			},
 			cleared:false,
 			chartSize:{
 				width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9 : 1000,
 				height:document.documentElement.clientHeight > 0 ? document.documentElement.clientHeight/1.9 : 500,
 			},				
 			connected:false,
-			events:{},
 			loading:0,
 			log:"",
 			menuAnchor: null,
@@ -175,14 +178,13 @@ class App extends Component{
 			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{}},
 			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
-			zoomend:100,
-			zoomstart:80,		
 		}
 		this.changeTab = this.changeTab.bind(this);	
 		this.clearData = this.clearData.bind(this);
 		this.clearOrders = this.clearOrders.bind(this);
 		this.connect = this.connect.bind(this);		
 		this.getBittrexDBBalance = this.getBittrexDBBalance.bind(this);
+		this.getBittrexDBTrade = this.getBittrexDBTrade.bind(this);
 		this.getOrders = this.getOrders.bind(this);
 		this.getPollingRate = this.getPollingRate.bind(this);
 		this.menuClose = this.menuClose.bind(this);
@@ -233,17 +235,6 @@ class App extends Component{
 		return this.setState({socketMessage:function(x){return bsocket.postMessage(x)}});
 	}
 	
-	brushZoom(evt){
-		let new_option = this.state.option;
-		new_option.dataZoom = {
-		    start:evt[0],
-		    end: evt[1],
-		    realtime:true,
-		    filterMode: 'filter',
-		}
-		return this.setState({zoomstart:evt[0],zoomend:evt[1],option:new_option});
-	}
-	
 	changeTab(evt,value){
 		return this.setState({tabValue:value});
 	}	
@@ -262,11 +253,6 @@ class App extends Component{
 	}		
 
 	componentDidMount(){
-		let e = {
-			'dataZoom': (zoom)=>{
-				return this.brushZoom([zoom.start,zoom.end]);
-			},	
-		}
 		let blob = new Blob(["onmessage = function(e) { return setTimeout(()=>{ return postMessage('')},2000) }"]);			
 		let blobURL = window.URL.createObjectURL(blob);
 		let dataWorker = new Worker(blobURL);
@@ -274,7 +260,7 @@ class App extends Component{
 			this.setState({time:this.state.time+2000,loading:((this.state.time+2000)/this.state.pollingRate) * 100});
 			return this.state.myWorker.postMessage("");
 		};		
-		this.setState({events:e,myWorker:dataWorker});
+		this.setState({myWorker:dataWorker});
 		if(this.state.autoconnect === true && this.state.previous.length > 1){
 			this.connect(this.state.previous[1]);
 		}
@@ -300,6 +286,10 @@ class App extends Component{
 	getBittrexDBHistory(){
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"history"}),this.state.privatekey).toString());
 	}	
+	
+	getBittrexDBTrade(){
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"trade"}),this.state.privatekey).toString());
+	}		
 						
 	getOrders(){
 		this.clearOrders();
@@ -444,7 +434,83 @@ class App extends Component{
 			}
 			new_option.series = [{sampling:"average",smooth:true,animation:false,name:'Percentages',type:'line',data:v,markLine:this.state.border}];
 			return this.setState({option:new_option});
-		}		
+		}	
+		if(data.type === "db_trade"){
+			let date;
+			let v = [];
+			let dat = {}
+			for(let k=0;k<data.info.length;k++){
+				date = new Date(data.info[k].Time).toISOString().split("T")[0];
+				if(dat[date]){
+					dat[date]++;
+				}
+				else{
+					dat[date]=1;
+				}
+			}
+			for(let key in dat){
+				v.push({value:[key,dat[key]],name:key})
+			}
+			let option = {
+					animation:false,
+		            dataZoom:[
+				            {
+				            show: true,
+				            realtime: true,
+				            start: 0,
+				            end: 100
+				        },
+				    ],					
+		            tooltip:{
+		                trigger: 'axis',
+						formatter: function(params){
+							params = params[0];
+							return params.name.split("GMT")[0]+ '/' + params.value[1].toFixed(2);
+						},            
+		            },
+		            grid: {
+						top:'2%',
+		                left: '3%',
+		                right: '3%',
+		                bottom: '15%',
+		                containLabel: true
+		            },
+		            xAxis:[
+						{
+		                    type : 'time',
+		                    splitLine:{
+								show: true,
+								lineStyle:{
+									type:'dashed',
+									width:1
+								}
+							},					
+		                }
+		            ],
+		            yAxis:[
+						{
+							min:0,
+							max:"dataMax",
+		                    type : 'value',
+		                }
+		            ],
+		            series:[
+		                {
+							lineStyle:{normal:{width:4.5}},
+							animationDuration:4000,
+							animationEasing: 'CubicOut',
+		                    name:'Trades',
+		                    type:'line',
+		                    smooth:'true',
+		                    data:v,
+		                },
+		            ]
+		        }			
+			if(this.state.autosave){
+					localStorage.setItem("DB_Trade",JSON.stringify(option));
+			}
+			return this.setState({dbTrade:option});
+		}				
 		
 		if(data.type === "history"){
 			if(this.state.autosave && !this.state.previous.includes("ws://"+this.state.websocketNetwork+":"+this.state.port)){
@@ -462,15 +528,15 @@ class App extends Component{
 				for(let k=0;k<dates.length;k++){
 					v.push({value:[new Date(dates[k]),data.bittrex_history1[k]],name:new Date(dates[k]).toString()});
 				}
-				var lastTime = new Date().getTime() - dates[dates.length-1];
-				var option = {
+				let lastTime = new Date().getTime() - dates[dates.length-1];
+				let option = {
 					animation:false,
 		            dataZoom:[
 				            {
 				            show: true,
 				            realtime: true,
-				            start: this.state.zoomstart,
-				            end: this.state.zoomend
+				            start: 80,
+				            end: 100
 				        },
 				    ],
 		            tooltip:{
@@ -541,7 +607,7 @@ class App extends Component{
 		                },
 		            ]
 		        }
-				var _bittrexPercentage = data.bittrex_history1 ? data.bittrex_history1[data.bittrex_history1.length-1] : 0;
+				let _bittrexPercentage = data.bittrex_history1 ? data.bittrex_history1[data.bittrex_history1.length-1] : 0;
 				this.setState({time:lastTime,option:option,bittrexPercentage:_bittrexPercentage});
 				return this.tick()
 			}
@@ -740,7 +806,12 @@ class App extends Component{
 				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
 				  notMerge={true}
 				  lazyUpdate={true}
-				  onEvents={this.state.events}
+				  onEvents={{
+					  'dataZoom': (zoom)=>{
+						  //mutate state directly for smoother experience;
+						  return this.state.option.dataZoom =({start:zoom.start,end:zoom.end});
+						}
+				  }}
 				   />
 				</div>
 					<Table>
@@ -829,7 +900,21 @@ class App extends Component{
 				  }}
 				   />	
 				   </div>
-				))}    		   	   			
+				))} 
+				<Button raised color="accent" onClick={this.getBittrexDBTrade}>Generate Trade Chart</Button>   	
+				 <ReactEchartsCore
+		          echarts={echarts}
+				  option={this.state.dbTrade}
+				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
+				  notMerge={true}
+				  lazyUpdate={true}
+				  onEvents={{
+					  'dataZoom': (zoom)=>{
+						  //mutate state directly for smoother experience;
+						  return this.state.dbTrade.dataZoom =({start:zoom.start,end:zoom.end});
+						}
+				  }}
+				   />	   	   			
 			</TabContainer>}
 			{this.state.tabValue === 2 && <TabContainer>
 				<Button raised color="primary" onClick={this.clearOrders}>Clear Cache</Button>
