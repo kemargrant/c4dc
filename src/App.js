@@ -360,7 +360,6 @@ class App extends Component{
 						}
 					}
 				}
-				console.log(bank[coins[0]].slice(0,10))
 				let format = function(obj,dataArray,name){
 					obj.legend = {data:[name,"Projection -"+name]}  
 					obj.yAxis = [{min:"dataMin",max:"dataMax"}];
