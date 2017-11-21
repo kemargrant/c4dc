@@ -351,12 +351,16 @@ class App extends Component{
 				for(let k=0;k<data.info.length;k++){
 					date = data.info[k].Time;
 					for(let i= 0;i < coins.length;i++){
-						bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
-						if(bank[coins[i]][k-1] && bank[coins[i]][k-1].value[1] === Number(data.info[k][coins[i]].toFixed(8))){
-								bank[coins[i]].pop();
+						try{
+							if(Number(data.info[k][coins[i]].toFixed(7)) !== bank[coins[i]][ bank[coins[i]].length  -1].value[1])
+								{bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(7))],name:date.toString()})};
+						}
+						catch(e){
+							bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(7))],name:date.toString()});
 						}
 					}
 				}
+				console.log(bank[coins[0]].slice(0,10))
 				let format = function(obj,dataArray,name){
 					obj.legend = {data:[name,"Projection -"+name]}  
 					obj.yAxis = [{min:"dataMin",max:"dataMax"}];
