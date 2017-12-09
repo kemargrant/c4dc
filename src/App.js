@@ -706,6 +706,7 @@ class App extends Component{
 			this.setState({swingGauge:gauge});
 		}	
 		if (data.type === "swingStatus"){
+			console.log(data)
 			let gauge = {
 				series:[{
 						type:"gauge",
@@ -1039,7 +1040,7 @@ class App extends Component{
 					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
 						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
-						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1+(this.state.swingOrder.swing/100)) : this.state.swingOrder.order.Limit * (1-(this.state.swingOrder.swing/100))}
+						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1-(this.state.swingOrder.swing/100)) : this.state.swingOrder.order.Limit * (1+(this.state.swingOrder.swing/100))}
 					</CardContent>}
 				</Card>
 				</div>		
