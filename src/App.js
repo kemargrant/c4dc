@@ -712,8 +712,10 @@ class App extends Component{
 						data: [{name: "Loading",value:0}]
 					}]
 			}
-			data.order.swing = data.swing;
-			this.setState({swingGauge:gauge,swingOrder:data.order});			
+			if(data.order && data.on === true){
+				data.order.swing = data.swing;
+				this.setState({swingGauge:gauge,swingOrder:data.order});
+			}		
 		}																									
 	}	
 			
@@ -824,6 +826,9 @@ class App extends Component{
 	}	
 	
 	updateSwingPrice(){
+		if(this.state.swingOrder.on === false || !this.state.swingOrder.order){
+			return;
+		}
 		let req = new XMLHttpRequest();
 		req.open("GET","https://cors-anywhere.herokuapp.com/https://bittrex.com/api/v1.1/public/getticker?market="+this.state.swingOrder.order.Exchange,true);
 		req.onload = ()=>{
@@ -1012,7 +1017,7 @@ class App extends Component{
 			</TabContainer>}
 			{this.state.tabValue === 4 && <TabContainer>
 				<div>
-				{<Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">Previous Trade</Typography>
 						<Typography component="p">
@@ -1031,11 +1036,11 @@ class App extends Component{
 				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
 				   />
 				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
-					<CardContent>
+					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
 						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
 						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1+(this.state.swingOrder.swing/100)) : this.state.swingOrder.order.Limit * (1-(this.state.swingOrder.swing/100))}
-					</CardContent>
+					</CardContent>}
 				</Card>
 				</div>		
 			</TabContainer>}
