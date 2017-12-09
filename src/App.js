@@ -90,7 +90,6 @@ function slope(array,_points,name){
 		return line;
 	}
 	else{
-		console.log(_points)
 		let points = JSON.parse(JSON.stringify(_points));
 		points.map((v,i)=>{
 			return points[i] =[0,points[i].value[1]]
@@ -362,7 +361,9 @@ class App extends Component{
 							}
 						}
 						catch(e){
-							bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
+							if(data.info[k][coins[i]]){
+								bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
+							}
 						}
 					}
 				}
@@ -706,7 +707,6 @@ class App extends Component{
 			this.setState({swingGauge:gauge});
 		}	
 		if (data.type === "swingStatus"){
-			console.log(data)
 			let gauge = {
 				series:[{
 						type:"gauge",
@@ -1169,8 +1169,9 @@ class App extends Component{
 									(()=>{
 										let p = [];
 										for(let key in this.state.balance.bittrex){
-											if(key !== "account")
+											if(key !== "account" && this.state.balance.bittrex[key] > 0){
 												p.push([key.toString(),this.state.balance.bittrex[key]]);
+											}
 										}
 										return p.map(item=>(<TableRow key={item[0]}><TableCell>{item[0]}</TableCell><TableCell>{item[1]}</TableCell></TableRow>));
 										
