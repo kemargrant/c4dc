@@ -36,7 +36,10 @@ label{font-size:medium}
 	bottom:1em;
 	left:1em;
 }
-
+.MuiTab-root-60{
+max-width:16.5vw !important;
+min-width:1em !important;
+}
 .slider{
 	display:block;
 	margin:auto;
