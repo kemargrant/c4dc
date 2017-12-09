@@ -4,6 +4,7 @@ import AES from "crypto-js/aes";
 import Enc from 'crypto-js/enc-utf8';
 import Typography from 'material-ui/Typography';
 import AppBar  from 'material-ui/AppBar';
+import AutoRenew from 'material-ui-icons/Autorenew';
 import Button from 'material-ui/Button';
 import BubbleChart from 'material-ui-icons/BubbleChart';
 import Card, { CardActions, CardContent } from 'material-ui/Card';
@@ -24,6 +25,7 @@ import Tabs, {Tab} from 'material-ui/Tabs';
 import ReactEchartsCore from 'echarts-for-react/lib/core';
 import echarts from 'echarts/lib/echarts';
 import 'echarts/lib/chart/line';
+import 'echarts/lib/chart/gauge';
 import 'echarts/lib/component/dataZoom';
 import 'echarts/lib/component/grid';
 import 'echarts/lib/component/legend';
@@ -88,6 +90,7 @@ function slope(array,_points,name){
 		return line;
 	}
 	else{
+		console.log(_points)
 		let points = JSON.parse(JSON.stringify(_points));
 		points.map((v,i)=>{
 			return points[i] =[0,points[i].value[1]]
@@ -101,7 +104,7 @@ function slope(array,_points,name){
 		line.data = data;
 		line.type = "line"
 		line.name ="Projection -"+name;
-		line.text = 'P = '+points[0][1]+'e^('+r.toFixed(10)+'t) \r\nGained:'+ (points[points.length-1][1] -points[0][1]).toFixed(12) +"("+ (100*(points[points.length-1][1] -points[0][1])/points[0][1]).toFixed(8) + "%)";
+		line.text = 'P = '+points[0][1]+'e^('+r.toFixed(10)+'t) \r\nGained:'+ (points[points.length-1][1] - points[0][1]).toFixed(12) +"("+ (100*(points[points.length-1][1] -points[0][1])/points[0][1]).toFixed(8) + "%)";
 	}			
 	return line;
 }
@@ -169,6 +172,8 @@ class App extends Component{
 			port:7071,
 			privatekey:localStorage.getItem("xxpkeyxx") ? localStorage.getItem("xxpkeyxx"): "",
 			socketMessage:function(){},
+			swingGauge:{},
+			swingOrder:{},
 			tabValue:0,
 			toast:{
 				open:false,
@@ -671,7 +676,45 @@ class App extends Component{
 	
 		if(data.type === "poll_rate"){
 			return this.setState({pollingRate:data.polling});						
-		}																						
+		}	
+
+		if(data.type === "swing"){
+			let gauge = {
+				tooltip : {
+					formatter: "{a} <br/>{b} : {c}"
+				},
+				series:[{
+						axisLine:{
+							lineStyle:{
+								width:10
+							}
+						},
+						radius:"80%",
+						name:"Swing Trade",
+						type: 'gauge',
+						title : {
+			                fontWeight: 'bolder',
+			                fontSize: 20,
+			                fontStyle: 'italic'
+			            },
+						min: data.target > data.price ? data.target/2 : data.target,
+						max:data.target > data.price ? data.target : data.price,
+						detail: {formatter:"Current "+data.trade+"\r\n{value}"},
+						data: [{value: data.price, name: "Target Price:"+data.target}]
+					}]
+			}
+			this.setState({swingGauge:gauge});
+		}	
+		if (data.type === "swingStatus"){
+			let gauge = {
+				series:[{
+						type:"gauge",
+						data: [{name: "Loading",value:0}]
+					}]
+			}
+			data.order.swing = data.swing;
+			this.setState({swingGauge:gauge,swingOrder:data.order});			
+		}																									
 	}	
 			
 	menuOpen(evt){
@@ -779,6 +822,31 @@ class App extends Component{
 		this.setState({pollingRate:rate * 1000});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
 	}	
+	
+	updateSwingPrice(){
+		let req = new XMLHttpRequest();
+		req.open("GET","https://cors-anywhere.herokuapp.com/https://bittrex.com/api/v1.1/public/getticker?market="+this.state.swingOrder.order.Exchange,true);
+		req.onload = ()=>{
+			if (req.status === 200){
+					let ticker = JSON.parse(req.responseText);
+					let _swingGauge = this.state.swingGauge;
+					if(this.state.swingOrder.order.Type === "LIMIT_BUY"){
+						_swingGauge.series[0].data = [{value:ticker.result.Bid,name:_swingGauge.series[0].data[0].name}];
+					}
+					else{
+						_swingGauge.series[0].data = [{value:ticker.result.Ask,name:_swingGauge.series[0].data[0].name}];
+					}
+					return this.setState({swingGauge:_swingGauge});
+				}
+		}
+		req.onerror = (e)=>{
+			console.log(e);
+		}
+		if(document.hasFocus()){
+			setTimeout(()=>{this.updateSwingPrice()},10000);
+			return req.send();
+		} 
+	}
 		
 	webNotify(checked){
 		if(!checked){
@@ -798,6 +866,7 @@ class App extends Component{
 				<Tab label="Charts" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
+				<Tab label="Swing" icon={<AutoRenew />} onClick={()=>{this.updateSwingPrice()}}></Tab>
 				<Tab label="Settings" icon={<InsertSettings />}></Tab>   
 			</Tabs>
 			</AppBar>	
@@ -941,7 +1010,36 @@ class App extends Component{
 			{this.state.tabValue === 3 && <TabContainer>
 				<textarea value={this.state.log}> </textarea>		
 			</TabContainer>}
-			{this.state.tabValue === 4 && <TabContainer>		
+			{this.state.tabValue === 4 && <TabContainer>
+				<div>
+				{<Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+			        <CardContent>
+			           <Typography type="headline">Previous Trade</Typography>
+						<Typography component="p">
+						{this.state.swingOrder.order.Type} {this.state.swingOrder.order.Exchange}
+						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.PricePerUnit}
+						<br/>Created:{this.state.swingOrder.order.Opened}
+						<br/>{this.state.swingOrder.order.OrderUuid}
+						</Typography>
+						<LinearProgress mode="determinate" value={ this.state.swingOrder.order.QuantityRemaining >= 0? ((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100 : 0} />					
+						{ this.state.swingOrder.order.QuantityRemaining >= 0? (((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100).toFixed(2) +'% Filled' : '0% Filled'}
+			        </CardContent>
+			      </Card>}
+				<ReactEchartsCore
+				  echarts={echarts}
+				  option={this.state.swingGauge}
+				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
+				   />
+				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+					<CardContent>
+						<Typography type="headline">Next Trade</Typography>
+						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
+						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1+(this.state.swingOrder.swing/100)) : this.state.swingOrder.order.Limit * (1-(this.state.swingOrder.swing/100))}
+					</CardContent>
+				</Card>
+				</div>		
+			</TabContainer>}
+			{this.state.tabValue === 5 && <TabContainer>		
 				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
 		        <CardContent >
 		           <Typography type="title">Server Connection</Typography>
