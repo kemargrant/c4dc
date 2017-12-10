@@ -25,7 +25,14 @@ The 'Settings' tab controls  connection to the bot
 | AutoConnect | Automatically connect to running C4D instance | Switch
 | AutoSave | Save settings and data in local storage | Switch
 | Reset Settings | Clear settings and data saved in local storage | Switch
-| Polling Rate | Update polling rate of C4D bot | Range
+| Polling Rate | Update polling rate (seconds) of C4D bot | Number
+| Swing Polling Rate | Update swing polling rate (seconds) of C4D bot | Number
+| Sane Trades | Perform arbitrage when the percentage deviation is between the upper and lower limits | Switch
+| Liquid Trades | Perform arbitrage when order book has liquidity | Switch
+| Swing Trade | Vibrate with the frequency of the market | Switch
+| Lower Limit | Lowest acceptable percentage (if sane Trades is active) | Number
+| Upper Limit | Highest acceptable percentage (if sane Trades is active) | Number
+| Swing Percentage | Percentage Deviation between buy/sell orders | Number
 
 
 ## Disclaimer
