@@ -46,6 +46,16 @@ min-width:1em !important;
 	width:70%;
 	padding-bottom:2em;
 }
+.Switches{
+display:block !important;
+}
+.MuiFormGroup-root-190{
+display:block !important;
+}
+
+.c190{
+display:block !important;
+}
 
 textarea{
 	height:100vh;
