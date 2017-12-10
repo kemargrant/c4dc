@@ -154,8 +154,10 @@ class App extends Component{
 				height:document.documentElement.clientHeight > 0 ? document.documentElement.clientHeight/1.9 : 500,
 			},				
 			connected:false,
+			liquidTrades:true,
 			loading:0,
 			log:"",
+			lowerLimit:89,
 			menuAnchor: null,
 			menu_open:false,
 			myWorker:{},
@@ -170,9 +172,13 @@ class App extends Component{
 			pollingRate:0,
 			port:7071,
 			privatekey:localStorage.getItem("xxpkeyxx") ? localStorage.getItem("xxpkeyxx"): "",
+			sanity:true,
 			socketMessage:function(){},
 			swingGauge:{},
 			swingOrder:{},
+			swingPercentage:2,
+			swingPollingRate:0,
+			swingTrade:false,
 			tabValue:0,
 			toast:{
 				open:false,
@@ -180,6 +186,7 @@ class App extends Component{
 			},	
 			time:0,			
 			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{}},
+			upperLimit:101.79,
 			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
 		}
@@ -194,12 +201,19 @@ class App extends Component{
 		this.menuClose = this.menuClose.bind(this);
 		this.menuOpen = this.menuOpen.bind(this);
 		this.updateBittrexBalance = this.updateBittrexBalance.bind(this);
+		this.updateLiquidTrade = this.updateLiquidTrade.bind(this);
+		this.updateLowerLimit = this.updateLowerLimit.bind(this);
 		this.updateNetwork = this.updateNetwork.bind(this);
 		this.updatePkey = this.updatePkey.bind(this);	
 		this.updatePercentage1 = this.updatePercentage1.bind(this);	
 		this.updatePercentage2 = this.updatePercentage2.bind(this);	
 		this.updatePollingRate = this.updatePollingRate.bind(this);	
 		this.updatePort = this.updatePort.bind(this);	
+		this.updateSanity = this.updateSanity.bind(this);	
+		this.updateSwingPercentage = this.updateSwingPercentage.bind(this);	
+		this.updateSwingPollingRate = this.updateSwingPollingRate.bind(this);	
+		this.updateSwingTrade = this.updateSwingTrade.bind(this);	
+		this.updateUpperLimit = this.updateUpperLimit.bind(this);
 	}
 	autosave(checked){
 		if(!checked){
@@ -338,7 +352,9 @@ class App extends Component{
 				}
 			});
 		}
-
+		if(data.type === "config"){
+			return this.setState({swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
+		}
 		if(data.type === "db_balance"){
 				let bank = {};
 				let dbBalances = [];
@@ -361,7 +377,7 @@ class App extends Component{
 							}
 						}
 						catch(e){
-							if(data.info[k][coins[i]]){
+							if(Number(data.info[k][coins[i]])){
 								bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
 							}
 						}
@@ -622,7 +638,6 @@ class App extends Component{
 				return this.tick()
 			}
 			catch(e){
-				console.log(e)
 				return this.toast(e);
 			}
 		}	
@@ -698,14 +713,19 @@ class App extends Component{
 			                fontSize: 20,
 			                fontStyle: 'italic'
 			            },
-						min: data.target > data.price ? data.target/2 : data.target,
-						max:data.target > data.price ? data.target : data.price,
+						min: data.target > data.price ? data.target/1.15 : data.target,
+						max:data.target > data.price ? data.target : data.price*1.15,
 						detail: {formatter:"Current "+data.trade+"\r\n{value}"},
 						data: [{value: data.price, name: "Target Price:"+data.target}]
 					}]
 			}
 			this.setState({swingGauge:gauge});
 		}	
+		
+		if (data.type === "swingOrder"){
+			this.setState({swingOrder:data.order});
+		}
+		
 		if (data.type === "swingStatus"){
 			let gauge = {
 				series:[{
@@ -714,7 +734,6 @@ class App extends Component{
 					}]
 			}
 			if(data.order && data.on === true){
-				data.order.swing = data.swing;
 				this.setState({swingGauge:gauge,swingOrder:data.order});
 			}		
 		}																									
@@ -782,6 +801,16 @@ class App extends Component{
 	updateBittrexBalance(){
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_balance"}),this.state.privatekey).toString());
 	}					
+
+	updateLiquidTrade(evt,checked){
+		this.setState({liquidTrades:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTrade","bool":checked}),this.state.privatekey).toString());
+	}	
+	
+	updateLowerLimit(evt){
+		this.setState({lowerLimit:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"lowerLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}
 	
 	updateNetwork(evt){
 		if(evt.currentTarget.value){
@@ -825,7 +854,24 @@ class App extends Component{
 		this.setState({pollingRate:rate * 1000});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
 	}	
+
+	updateSanity(evt,checked){
+		this.setState({sanity:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"sanity","bool":checked}),this.state.privatekey).toString());
+	}
+
+	updateSwingPercentage(evt){
+		let rate = evt.currentTarget.value; 
+		this.setState({swingPercentage:rate});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingPercentage","percentage":rate}),this.state.privatekey).toString());
+	}
 	
+	updateSwingPollingRate(evt){
+		let rate = evt.currentTarget.value; 
+		this.setState({swingPollingRate:rate * 1000});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingPoll","rate":rate}),this.state.privatekey).toString());
+	}	
+		
 	updateSwingPrice(){
 		if(this.state.swingOrder.on === false || !this.state.swingOrder.order){
 			return;
@@ -846,13 +892,23 @@ class App extends Component{
 				}
 		}
 		req.onerror = (e)=>{
-			console.log(e);
+			return this.toast(e);
 		}
 		if(document.hasFocus()){
 			setTimeout(()=>{this.updateSwingPrice()},10000);
 			return req.send();
 		} 
 	}
+		
+	updateSwingTrade(evt,checked){
+		this.setState({swingTrade:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingTrade","bool":checked}),this.state.privatekey).toString());
+	}		
+
+	updateUpperLimit(evt){
+		this.setState({upperLimit:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"upperLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}		
 		
 	webNotify(checked){
 		if(!checked){
@@ -999,7 +1055,7 @@ class App extends Component{
 				<Button raised color="primary" onClick={this.clearOrders}>Clear Cache</Button>
 				<Button raised color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
 				{this.state.orders.map((order)=> 
-					<Card key={order.order_id} raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+					<Card key={order.order_id} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">{order.type}</Typography>
 						<Typography component="p">
@@ -1018,12 +1074,12 @@ class App extends Component{
 			</TabContainer>}
 			{this.state.tabValue === 4 && <TabContainer>
 				<div>
-				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">Previous Trade</Typography>
 						<Typography component="p">
 						{this.state.swingOrder.order.Type} {this.state.swingOrder.order.Exchange}
-						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.PricePerUnit}
+						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Limit}
 						<br/>Created:{this.state.swingOrder.order.Opened}
 						<br/>{this.state.swingOrder.order.OrderUuid}
 						</Typography>
@@ -1036,17 +1092,17 @@ class App extends Component{
 				  option={this.state.swingGauge}
 				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
 				   />
-				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
 						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
-						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1-(this.state.swingOrder.swing/100)) : this.state.swingOrder.order.Limit * (1+(this.state.swingOrder.swing/100))}
+						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1-(this.state.swingPercentage/100)) : this.state.swingOrder.order.Limit * (1+(this.state.swingPercentage/100))}
 					</CardContent>}
 				</Card>
 				</div>		
 			</TabContainer>}
 			{this.state.tabValue === 5 && <TabContainer>		
-				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}}>
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 		        <CardContent >
 		           <Typography type="title">Server Connection</Typography>
 		           <br/>
@@ -1140,19 +1196,62 @@ class App extends Component{
 				}							
 		        </CardActions>
 				</Card>
-				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}} >
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
-			           <Typography type="title">Bot</Typography>
+			            <Typography type="title">Bot Config</Typography>
+			            <br/>
+						<InputLabel>Bot Polling Rate:{this.state.pollingRate/60000} Minutes </InputLabel>
 						<br/>
-						<InputLabel>Polling Rate:{this.state.pollingRate/1000} Seconds </InputLabel>
+						<Input type="number" min={10} max={1400001} value={this.state.pollingRate/1000} onChange={this.updatePollingRate}/>
 						<br/>
-						<input type="range" step={5} min={10} max={300} value={this.state.pollingRate/1000} onChange={this.updatePollingRate}/>
+						<InputLabel>Swing Polling Rate:{this.state.swingPollingRate/60000} Minutes</InputLabel>
+						<br/>
+						<Input type="number" min={10} max={1400001} value={this.state.swingPollingRate/1000} onChange={this.updateSwingPollingRate}/>
+						 <div className="Switches">
+						<FormGroup>
+				        <FormControlLabel
+						  label="Sane Trades"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.state.sanity}
+					              onChange={this.updateSanity}
+				            /> }
+				        />
+				        <FormControlLabel
+						  label="Liquid Trades"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.state.liquidTrades}
+					              onChange={this.updateLiquidTrade}
+				            /> }
+				        />
+				        <FormControlLabel
+						  label="Swing Trade"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.state.swingTrade}
+					              onChange={this.updateSwingTrade}
+				            /> }
+				        />
+				        </FormGroup>
+				        </div>
+						<InputLabel>Lower Limit</InputLabel>
+						<br/>
+						<Input type="number" min={0} max={120} value={this.state.lowerLimit} onChange={this.updateLowerLimit}/>
+						<br/>
+						<InputLabel>Upper Limit</InputLabel>
+						<br/>
+						<Input type="number"  min={0} max={120} value={this.state.upperLimit} onChange={this.updateUpperLimit}/>			       
+						<br/>
+						<InputLabel>Swing Percentage</InputLabel>
+						<br/>
+						<Input type="number" min={0} max={100} value={this.state.swingPercentage} onChange={this.updateSwingPercentage}/>
 			        </CardContent>
 			        <CardActions>
-						<Button raised color="primary" onClick={this.get_poll_rate}>Get Poll Rate</Button>			
+						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>	
 			        </CardActions>
 				</Card> 		      
-				<Card raised style={{maxWidth:"95%",margin:"1em",backgroundColor:""}} >
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Bittrex Status</Typography>
 						<br/>
