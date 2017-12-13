@@ -92,7 +92,7 @@ function slope(array,_points,name){
 	else{
 		let points = JSON.parse(JSON.stringify(_points));
 		points.map((v,i)=>{
-			return points[i] =[0,points[i].value[1]]
+			return points[i] =[Number(points[i].name),points[i].value[1]]
 		});
 		let r = (Math.log(points[points.length-1][1]/points[0][1]))/(points.length-2);
 		let data = [];			
@@ -186,6 +186,7 @@ class App extends Component{
 			},	
 			time:0,			
 			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{}},
+			tradeInfo:undefined,
 			upperLimit:101.79,
 			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
@@ -358,31 +359,32 @@ class App extends Component{
 		if(data.type === "db_balance"){
 				let bank = {};
 				let dbBalances = [];
+				let btc;
 				let coins = [];
 				let date;
 				let quick_format = function(x){return new Date(x).toString().split(" ").slice(0,3).join("\r\n");}
 				let quick_format2 = function(params){params=params[0];return params.value[0].toString().split("GMT")[0]+" / "+params.value[1];}
+				let msc;
 				for(let key in data.info[0]){
 					if(key !== 'Time' && key !== '_id'){
 						coins.push(key);
 						bank[key]= [];
 					}
 				}
-				for(let k=0;k<data.info.length;k++){
-					date = data.info[k].Time;
-					for(let i= 0;i < coins.length;i++){
-						try{
-							if(Number(data.info[k][coins[i]].toFixed(8)) !== bank[coins[i]][ bank[coins[i]].length  -1].value[1]){
-								bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
-							}
-						}
-						catch(e){
-							if(Number(data.info[k][coins[i]])){
-								bank[coins[i]].push({value:[new Date(date),Number(data.info[k][coins[i]].toFixed(8))],name:date.toString()});
-							}
-						}
+				coins = ['BTC',this.state.tradingPairs.misc.toUpperCase()];
+				btc = data.info[0]['BTC'];
+				msc = data.info[0][this.state.tradingPairs.misc.toUpperCase()];
+				for(let k=0;k<this.state.tradeInfo.length;k++){
+					date = this.state.tradeInfo[k].Time;
+					if(this.state.tradeInfo[k].Percent > 100){
+						btc *= this.state.tradeInfo[k].Profit;
+						bank['BTC'].push({value:[new Date(date),btc.toFixed(8)],name:date.toString()});
 					}
-				}
+					else{
+						msc *= this.state.tradeInfo[k].Profit;
+						bank[this.state.tradingPairs.misc.toUpperCase()].push({value:[new Date(date),msc.toFixed(8)],name:date.toString()});
+					}
+				}				
 				let format = function(obj,dataArray,name){
 					obj.legend = {data:[name,"Projection -"+name]}  
 					obj.yAxis = [{min:"dataMin",max:"dataMax"}];
@@ -390,13 +392,10 @@ class App extends Component{
 					obj.tooltip = {trigger:"axis",formatter:quick_format2}
 					obj.grid =  {left:"1%",right:"1%",bottom:'7%',containLabel:true}
 					let proj = slope(null,dataArray,name);
-					obj.series = [{smooth:true,name:name,type:'line',data:dataArray}];
+					obj.series = [{smooth:true,name:name,type:'line',data:dataArray},proj];
 					obj.title = {textStyle:{fontSize:13},text:proj.text,top:'5.5%',left:"30%"}
 					obj.range = balanceMinMax(dataArray);
 					obj.dataZoom=[{realtime:true,show:true,start:80,end:100}];
-					obj.value = obj.range[0];
-					obj.maxvalue = obj.range[1];
-					obj.base = dataArray;
 					return obj;
 				}
 				let extraOption = {				    
@@ -462,9 +461,27 @@ class App extends Component{
 			return this.setState({option:new_option});
 		}	
 		if(data.type === "db_trade"){
+			function sort(array){
+				let max = 0;
+				let max_index;
+				let order = []
+				while(array.length > 0){
+					for(let i=0;i<array.length;i++){
+						if(max === 0 || array[i].Time > max){
+							max = array[i].Time;
+							max_index = i;
+						}
+					}
+					order.unshift(array[max_index]);
+					array.splice(max_index,1);
+					max = 0;
+				}
+				return order;
+			}
 			let date;
 			let v = [];
 			let dat = {}
+			data.info = sort(data.info);
 			for(let k=0;k<data.info.length;k++){
 				date = new Date(data.info[k].Time).toISOString().split("T")[0];
 				if(dat[date]){
@@ -478,7 +495,6 @@ class App extends Component{
 				v.push({value:[key,dat[key]],name:key})
 			}
 			let option = {
-					animation:false,
 		            dataZoom:[
 				            {
 				            show: true,
@@ -522,7 +538,7 @@ class App extends Component{
 		            ],
 		            series:[
 		                {
-							lineStyle:{normal:{width:4.5}},
+							//lineStyle:{normal:{width:4.5}},
 							animationDuration:4000,
 							animationEasing: 'CubicOut',
 		                    name:'Trades',
@@ -531,11 +547,14 @@ class App extends Component{
 		                    data:v,
 		                },
 		            ]
-		        }			
+		        }	
 			if(this.state.autosave){
 					localStorage.setItem("DB_Trade",JSON.stringify(option));
 			}
-			return this.setState({dbTrade:option});
+			return this.setState({dbTrade:option,tradeInfo:data.info},()=>{
+				return this.getBittrexDBBalance();
+			});
+			
 		}				
 		
 		if(data.type === "history"){
@@ -697,26 +716,38 @@ class App extends Component{
 		if(data.type === "swing"){
 			let gauge = {
 				tooltip : {
-					formatter: "{a} <br/>{b} : {c}"
+					formatter: "{c}"
 				},
 				series:[{
 						axisLine:{
 							lineStyle:{
-								width:10
+								width:this.state.chartSize.width/120
 							}
 						},
+						splitLine: {          
+			                length:this.state.chartSize.height/15,      
+			                lineStyle: {
+			                    color: 'blue'
+			                }
+			            },
 						radius:"80%",
 						name:"Swing Trade",
 						type: 'gauge',
+						splitNumber: 6,
 						title : {
-			                fontWeight: 'bolder',
-			                fontSize: 20,
-			                fontStyle: 'italic'
+							show:false,
 			            },
 						min: data.target > data.price ? data.target/1.15 : data.target,
 						max:data.target > data.price ? data.target : data.price*1.15,
-						detail: {formatter:"Current "+data.trade+"\r\n{value}"},
-						data: [{value: data.price, name: "Target Price:"+data.target}]
+						detail:{
+			                formatter:"Current "+data.trade+"\r\n{value}",
+			                textBorderColor: 'white',
+			                fontFamily: 'Roboto',
+			                fontSize:15,
+			                width: 100,
+			                color: 'black',
+			            },
+						data: [{value: data.price, name: "Target Price:\n\r"+data.target}]
 					}]
 			}
 			this.setState({swingGauge:gauge});
@@ -729,7 +760,15 @@ class App extends Component{
 		if (data.type === "swingStatus"){
 			let gauge = {
 				series:[{
+						axisLine:{
+							lineStyle:{
+								width:this.state.chartSize.width/120
+							}
+						},
 						type:"gauge",
+						radius:"80%",
+						min:data.order.order.Limit/1.5,
+						max:data.order.order.Limit*1.5,
 						data: [{name: "Loading",value:0}]
 					}]
 			}
@@ -942,6 +981,9 @@ class App extends Component{
 				  notMerge={true}
 				  lazyUpdate={true}
 				  onEvents={{
+					  'legendselectchanged':(evt)=>{
+						 return this.state.option.legend.selected = evt.selected;
+						 },	
 					  'dataZoom': (zoom)=>{
 						  //mutate state directly for smoother experience;
 						  return this.state.option.dataZoom =({start:zoom.start,end:zoom.end});
@@ -1019,7 +1061,7 @@ class App extends Component{
 					</Table> 	
 			</TabContainer>}
 			{this.state.tabValue === 1 && <TabContainer>
-			   <Button raised color="primary" onClick={this.getBittrexDBBalance}>Generate Balance Charts</Button>
+			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Balance Charts</Button>
 			   {this.state.dbBalance.map((option) => (
 				 <div key={option.series[0].name}>
 		         <ReactEchartsCore
@@ -1029,6 +1071,9 @@ class App extends Component{
 				  notMerge={true}
 				  lazyUpdate={true}
 				  onEvents={{
+						'legendselectchanged':(evt)=>{
+						 return option.legend.selected = evt.selected;
+						 },	 
 					  'dataZoom': (zoom)=>{
 					   return option.dataZoom = ({start:zoom.start,end:zoom.end});
 						}
@@ -1036,7 +1081,6 @@ class App extends Component{
 				   />	
 				   </div>
 				))} 
-				<Button raised color="accent" onClick={this.getBittrexDBTrade}>Generate Trade Chart</Button>   	
 				 <ReactEchartsCore
 		          echarts={echarts}
 				  option={this.state.dbTrade}
