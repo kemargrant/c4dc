@@ -157,6 +157,7 @@ class App extends Component{
 			liquidTrades:true,
 			loading:0,
 			log:"",
+			logLevel:0,
 			lowerLimit:89,
 			menuAnchor: null,
 			menu_open:false,
@@ -203,6 +204,7 @@ class App extends Component{
 		this.menuOpen = this.menuOpen.bind(this);
 		this.updateBittrexBalance = this.updateBittrexBalance.bind(this);
 		this.updateLiquidTrade = this.updateLiquidTrade.bind(this);
+		this.updateLogLevel = this.updateLogLevel.bind(this);
 		this.updateLowerLimit = this.updateLowerLimit.bind(this);
 		this.updateNetwork = this.updateNetwork.bind(this);
 		this.updatePkey = this.updatePkey.bind(this);	
@@ -354,7 +356,7 @@ class App extends Component{
 			});
 		}
 		if(data.type === "config"){
-			return this.setState({swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
+			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
 		}
 		if(data.type === "db_balance"){
 				let bank = {};
@@ -375,6 +377,9 @@ class App extends Component{
 				btc = data.info[0]['BTC'];
 				msc = data.info[0][this.state.tradingPairs.misc.toUpperCase()];
 				for(let k=0;k<this.state.tradeInfo.length;k++){
+					if(this.state.tradeInfo[k].OrdersFilled !== 3){
+						continue;
+					}
 					date = this.state.tradeInfo[k].Time;
 					if(this.state.tradeInfo[k].Percent > 100){
 						btc *= this.state.tradeInfo[k].Profit;
@@ -461,6 +466,7 @@ class App extends Component{
 			return this.setState({option:new_option});
 		}	
 		if(data.type === "db_trade"){
+			let msc = this.state.tradingPairs.misc.toUpperCase();
 			function sort(array){
 				let max = 0;
 				let max_index;
@@ -480,7 +486,11 @@ class App extends Component{
 			}
 			let date;
 			let v = [];
+			let btc = [];
+			let _msc = [];
 			let dat = {}
+			let btcCount = {}
+			let _mscCount = {}
 			data.info = sort(data.info);
 			for(let k=0;k<data.info.length;k++){
 				date = new Date(data.info[k].Time).toISOString().split("T")[0];
@@ -490,19 +500,47 @@ class App extends Component{
 				else{
 					dat[date]=1;
 				}
+				if(data.info[k].Percent > 100){
+					if(btcCount[date]){
+						btcCount[date]++;
+					}
+					else{
+						btcCount[date]=1;
+					}
+				}
+				else{
+					if(_mscCount[date]){
+						_mscCount[date]++;
+					}
+					else{
+						_mscCount[date]=1;
+					}
+				}
 			}
 			for(let key in dat){
-				v.push({value:[key,dat[key]],name:key})
+				v.push({value:[key,dat[key]],name:key});
 			}
+			for(let key in btcCount){
+				btc.push({value:[key,btcCount[key]],name:key});
+			}
+			for(let key in _mscCount){
+				_msc.push({value:[key,_mscCount[key]],name:key});
+			}						
 			let option = {
 		            dataZoom:[
 				            {
 				            show: true,
 				            realtime: true,
-				            start: 0,
+				            start: 30,
 				            end: 100
 				        },
-				    ],					
+				    ],	
+				    legend: {
+						textStyle:{
+							color:'black'
+							},
+		                data:['BTC - Trades','Total - Trades',msc+' - Trades']
+		            },				
 		            tooltip:{
 		                trigger: 'axis',
 						formatter: function(params){
@@ -538,13 +576,28 @@ class App extends Component{
 		            ],
 		            series:[
 		                {
-							//lineStyle:{normal:{width:4.5}},
 							animationDuration:4000,
 							animationEasing: 'CubicOut',
-		                    name:'Trades',
+		                    name:'Total - Trades',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:v,
+		                },
+		                {
+							animationDuration:4000,
+							animationEasing: 'CubicOut',
+		                    name:'BTC - Trades',
+		                    type:'line',
+		                    smooth:'true',
+		                    data:btc,
+		                },
+		                {
+							animationDuration:4000,
+							animationEasing: 'CubicOut',
+		                    name:msc+' - Trades',
+		                    type:'line',
+		                    smooth:'true',
+		                    data:_msc,
 		                },
 		            ]
 		        }	
@@ -767,8 +820,8 @@ class App extends Component{
 						},
 						type:"gauge",
 						radius:"80%",
-						min:data.order.order.Limit/1.5,
-						max:data.order.order.Limit*1.5,
+						min: data.order ? data.order.order.Limit/1.5 : 0,
+						max: data.order ? data.order.order.Limit*1.5 : 1,
 						data: [{name: "Loading",value:0}]
 					}]
 			}
@@ -845,6 +898,11 @@ class App extends Component{
 		this.setState({liquidTrades:checked});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTrade","bool":checked}),this.state.privatekey).toString());
 	}	
+
+	updateLogLevel(evt){
+		this.setState({logLevel:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"logs","logLevel":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}
 	
 	updateLowerLimit(evt){
 		this.setState({lowerLimit:evt.currentTarget.value});
@@ -1047,7 +1105,7 @@ class App extends Component{
 							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1).toFixed(5) : 0}</td>
 							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
 							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-							<td>{(this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 * this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) > 0.0005 && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.btc && (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
+							<td>{(this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 * this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) > 0.0001 && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.btc && (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
 						</TableRow>
 						<TableRow>
 							<td>BTC</td>
@@ -1055,7 +1113,7 @@ class App extends Component{
 							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>						
 							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2).toFixed(5) : 0}</td>
 							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-							<td>{(this.state.balance.bittrex.btc * this.state.percentage2) > 0.0005 &&	(this.state.balance.bittrex.btc * this.state.percentage2) < this.state.balance.bittrex.btc && (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
+							<td>{(this.state.balance.bittrex.btc * this.state.percentage2) > 0.0001 &&	(this.state.balance.bittrex.btc * this.state.percentage2) < this.state.balance.bittrex.btc && (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
 						</TableRow>		
 					</TableBody>
 					</Table> 	
@@ -1088,6 +1146,9 @@ class App extends Component{
 				  notMerge={true}
 				  lazyUpdate={true}
 				  onEvents={{
+					  'legendselectchanged':(evt)=>{
+						 return this.state.dbTrade.legend.selected = evt.selected;
+						 },	
 					  'dataZoom': (zoom)=>{
 						  //mutate state directly for smoother experience;
 						  return this.state.dbTrade.dataZoom =({start:zoom.start,end:zoom.end});
@@ -1290,6 +1351,10 @@ class App extends Component{
 						<InputLabel>Swing Percentage</InputLabel>
 						<br/>
 						<Input type="number" min={0} max={100} value={this.state.swingPercentage} onChange={this.updateSwingPercentage}/>
+						<br/>
+						<InputLabel>Log Level</InputLabel>
+						<br/>
+						<Input type="number" min={0} max={3} value={this.state.logLevel} onChange={this.updateLogLevel}/>						
 			        </CardContent>
 			        <CardActions>
 						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>	
