@@ -539,8 +539,14 @@ class App extends Component{
 						textStyle:{
 							color:'black'
 							},
-		                data:['BTC - Trades','Total - Trades',msc+' - Trades']
-		            },				
+		                data:['BTC Profitable','Total',msc+' Profitable']
+		            },			
+		            title:{
+						textStyle:{fontSize:13},
+						text:"Trades",
+						top:'1%',
+						left:"30%"
+					},
 		            tooltip:{
 		                trigger: 'axis',
 						formatter: function(params){
@@ -549,7 +555,7 @@ class App extends Component{
 						},            
 		            },
 		            grid: {
-						top:'2%',
+						top:'8%',
 		                left: '3%',
 		                right: '3%',
 		                bottom: '15%',
@@ -578,7 +584,7 @@ class App extends Component{
 		                {
 							animationDuration:4000,
 							animationEasing: 'CubicOut',
-		                    name:'Total - Trades',
+		                    name:'Total',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:v,
@@ -586,7 +592,7 @@ class App extends Component{
 		                {
 							animationDuration:4000,
 							animationEasing: 'CubicOut',
-		                    name:'BTC - Trades',
+		                    name:'BTC Profitable',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:btc,
@@ -594,7 +600,7 @@ class App extends Component{
 		                {
 							animationDuration:4000,
 							animationEasing: 'CubicOut',
-		                    name:msc+' - Trades',
+		                    name:msc+' Profitable',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:_msc,
