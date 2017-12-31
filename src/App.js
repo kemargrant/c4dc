@@ -531,7 +531,7 @@ class App extends Component{
 				            {
 				            show: true,
 				            realtime: true,
-				            start: 30,
+				            start: 0,
 				            end: 100
 				        },
 				    ],	
@@ -544,7 +544,7 @@ class App extends Component{
 		            title:{
 						textStyle:{fontSize:13},
 						text:"Trades",
-						top:'1%',
+						top:'3%',
 						left:"30%"
 					},
 		            tooltip:{
