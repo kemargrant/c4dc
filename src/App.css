@@ -17,6 +17,14 @@
   font-size: large;
 }
 
+.binanceImg{
+max-width:1.6em
+}
+
+.bittrexImg{
+max-width:1.6em
+}
+
 body{
 	overflow-x:hidden;
 }
@@ -36,10 +44,17 @@ label{font-size:medium}
 	bottom:1em;
 	left:1em;
 }
+
+.monitorToggle{
+position:absolute;
+top:5.5em;
+}
+
 .c60{
 max-width:16.5vw !important;
 min-width:1em !important;
 }
+
 .slider{
 	display:block;
 	margin:auto;

@@ -15,7 +15,7 @@ import InsertChart from 'material-ui-icons/Dashboard';
 import InsertSettings from 'material-ui-icons/Settings';
 import InsertFile from 'material-ui-icons/ShopTwo';
 import InsertLogs from 'material-ui-icons/LibraryBooks';
-import { LinearProgress } from 'material-ui/Progress';
+import { CircularProgress,LinearProgress } from 'material-ui/Progress';
 import Menu, { MenuItem } from 'material-ui/Menu';
 import MoreVertIcon from 'material-ui-icons/MoreVert';
 import Snackbar from 'material-ui/Snackbar';
@@ -107,7 +107,7 @@ function slope(array,_points,name){
 	}			
 	return line;
 }
-	
+
 class App extends Component{
 	constructor(props){
 	    super(props);
@@ -115,8 +115,52 @@ class App extends Component{
 			anch_menu:null,
 			autoconnect: localStorage.getItem("AutoConnect") ? JSON.parse(localStorage.getItem("AutoConnect")) : false,
 			autosave: JSON.parse(localStorage.getItem("Autosave")) ? true : false,
-			balance:JSON.parse(localStorage.getItem("Bittrex_Balance")) ? JSON.parse(localStorage.getItem("Bittrex_Balance")):{bittrex:{account:"Bittrex"}},
+			balance:JSON.parse(localStorage.getItem("Bittrex_Balance")) ? JSON.parse(localStorage.getItem("Bittrex_Balance")):{binance:{account:"Binance"},bittrex:{account:"Bittrex"}},
+			binanceBTCMinimum:0,
+			binanceC1Minimum:0,
+			binanceC1:"",
+			binanceC2:"",
+			binanceGauge:{
+				tooltip : {
+					formatter: "{c}"
+				},
+				title : {
+						text:"Binance Meter",
+						show:true,
+		            },				
+				series:[{
+						axisLine:{
+							lineStyle:{
+								width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9/120 : 100/12,
+							}
+						},
+						splitLine: {          
+			                length:document.documentElement.clientHeight > 0 ? (document.documentElement.clientHeight/1.9)/15 : 500/15,      
+			                lineStyle: {
+			                    color: 'blue'
+			                }
+			            },
+						radius:"90%",
+						name:"Percent",
+						type: 'gauge',
+						splitNumber: 16,
+						min: 99.61,
+						max:100.39,
+						detail:{
+			                formatter:"{value}",
+			                textBorderColor: 'white',
+			                fontFamily: 'Roboto',
+			                fontSize:15,
+			                width: 100,
+			                color: 'black',
+			            },
+						data: [{value: 0, name: "Percent"}]
+					}]
+			},
+			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {},
+			binanceProgress:0,
 			bittrexPercentage:0,
+			binanceStatus:false,
 			border:{
 			    color:"#f9431a",
 			        lineStyle: {
@@ -148,6 +192,10 @@ class App extends Component{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
 			},
+			dbTradeBinance:JSON.parse(localStorage.getItem("DB_TradeBinance"))? JSON.parse(localStorage.getItem("DB_TradeBinance")) : {
+				xAxis:{type:'time'},
+				yAxis:{type:'value'}
+			},			
 			cleared:false,
 			chartSize:{
 				width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9 : 1000,
@@ -155,6 +203,7 @@ class App extends Component{
 			},				
 			connected:false,
 			liquidTrades:true,
+			liquidTradesBinance:true,
 			loading:0,
 			log:"",
 			logLevel:0,
@@ -186,7 +235,8 @@ class App extends Component{
 				message:""
 			},	
 			time:0,			
-			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{}},
+			toastNotify: JSON.parse(localStorage.getItem("Toast_Notify")) ? true : false,
+			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{},binance:{},msc:""},
 			tradeInfo:undefined,
 			upperLimit:101.79,
 			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
@@ -202,8 +252,12 @@ class App extends Component{
 		this.getPollingRate = this.getPollingRate.bind(this);
 		this.menuClose = this.menuClose.bind(this);
 		this.menuOpen = this.menuOpen.bind(this);
+		this.updateBinanceBalance = this.updateBinanceBalance.bind(this);	
+		this.updateBinanceBTCMinimum = this.updateBinanceBTCMinimum.bind(this);	
+		this.updateBinanceC1Minimum = this.updateBinanceC1Minimum.bind(this);	
 		this.updateBittrexBalance = this.updateBittrexBalance.bind(this);
 		this.updateLiquidTrade = this.updateLiquidTrade.bind(this);
+		this.updateLiquidTradeBinance = this.updateLiquidTradeBinance.bind(this);
 		this.updateLogLevel = this.updateLogLevel.bind(this);
 		this.updateLowerLimit = this.updateLowerLimit.bind(this);
 		this.updateNetwork = this.updateNetwork.bind(this);
@@ -246,6 +300,7 @@ class App extends Component{
 		let bsocket = new Worker(blobURL);
 		bsocket.onmessage =(e)=> {
 			if(e.data === null){
+				this.setState({connected:false});
 				return this.toast("Socket Error");
 			}
 			return this.faux_socket(e.data);
@@ -261,7 +316,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","DB_Balance","Orders","Previous_Connections","Trading_Pairs","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","DB_Balance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			localStorage.removeItem(list[i]);
 		}
@@ -314,6 +369,7 @@ class App extends Component{
 						
 	getOrders(){
 		this.clearOrders();
+		this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binance_orders"}),this.state.privatekey).toString());
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_orders"}),this.state.privatekey).toString());
 	}		
 	
@@ -343,7 +399,7 @@ class App extends Component{
 		}
 		
 		if(data.type === "balance"){
-			return this.setState({balance:{bittrex:data.balance}},()=>{
+			return this.setState({balance:{bittrex:data.balance,binance:this.state.balance.binance}},()=>{
 				if(this.state.autosave){
 					localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
 				}
@@ -355,9 +411,41 @@ class App extends Component{
 				}
 			});
 		}
+		if(data.type === "balanceBinance"){
+			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance}},()=>{
+				if(this.state.autosave){
+					localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
+				}
+			});
+		}		
+		
+		if(data.type === "binancePercent"){
+			let _binance = {}
+			let gauge = this.state.binanceGauge;
+			gauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
+			_binance[this.state.binanceC1+"_btc"] = data.info.a;
+			_binance["btc_"+this.state.binanceC2] = data.info.b;
+			_binance[this.state.binanceC1+"_"+this.state.binanceC2] = data.info.c;
+			let _tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
+			return this.setState({binanceGauge:gauge,tradingPairs:_tradingPairs});
+		}
+
+		if(data.type === "binanceStatus"){
+			if(data.value === false){
+				this.setState({binanceProgress:0});
+			}
+			return this.setState({binanceStatus:data.value});
+		}			
+		
 		if(data.type === "config"){
 			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
 		}
+
+		if(data.type === "configBinance"){		
+				
+			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},liquidTradesBinance:data.liquid,binanceStatus:data.status,binanceC1:data.pair.slice(0,3),binanceC2:data.pair.slice(3,data.pair.length),binanceBTCMinimum:data.minBTC,binanceC1Minimum:data.minXXX});
+		}		
+		
 		if(data.type === "db_balance"){
 				let bank = {};
 				let dbBalances = [];
@@ -466,7 +554,13 @@ class App extends Component{
 			return this.setState({option:new_option});
 		}	
 		if(data.type === "db_trade"){
-			let msc = this.state.tradingPairs.misc.toUpperCase();
+			if(!this.state.tradingPairs.misc){
+				let _temp = this.state.tradingPairs;
+				_temp.misc = "xxx";
+				this.setState({tradingPairs:_temp});
+			}
+			let msc = this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : "XXX";
+			let msc2 = this.state.binanceC1;
 			function sort(array){
 				let max = 0;
 				let max_index;
@@ -484,36 +578,78 @@ class App extends Component{
 				}
 				return order;
 			}
+			let _binanceProfit ={}
 			let date;
+			let date2;
 			let v = [];
 			let btc = [];
 			let _msc = [];
+			let v2 = [];
+			let btc2 = [];
+			let _msc2 = [];			
 			let dat = {}
+			let dat2 = {}
 			let btcCount = {}
+			let btcCount2 = {}
 			let _mscCount = {}
+			let _mscCount2 = {}
 			data.info = sort(data.info);
+			_binanceProfit.btc = 0;
+			_binanceProfit[msc2] = 0;
 			for(let k=0;k<data.info.length;k++){
-				date = new Date(data.info[k].Time).toISOString().split("T")[0];
-				if(dat[date]){
-					dat[date]++;
-				}
-				else{
-					dat[date]=1;
-				}
-				if(data.info[k].Percent > 100){
-					if(btcCount[date]){
-						btcCount[date]++;
+				if(data.info[k].Exchange !== "Binance"){
+					date = new Date(data.info[k].Time).toISOString().split("T")[0];
+					if(dat[date]){
+						dat[date]++;
 					}
 					else{
-						btcCount[date]=1;
+						dat[date]=1;
+					}
+					if(data.info[k].Percent > 100){
+						if(btcCount[date]){
+							btcCount[date]++;
+						}
+						else{
+							btcCount[date]=1;
+						}
+					}
+					else{
+						if(_mscCount[date]){
+							_mscCount[date]++;
+						}
+						else{
+							_mscCount[date]=1;
+						}
 					}
 				}
 				else{
-					if(_mscCount[date]){
-						_mscCount[date]++;
+					date2 = new Date(data.info[k].Time).toISOString().split("T")[0];
+					if(dat[date2]){
+						dat2[date2]++;
 					}
 					else{
-						_mscCount[date]=1;
+						dat2[date2]=1;
+					}
+					if(data.info[k].Percent > 100){
+						_binanceProfit.btc += data.info[k].Profit;
+						if(data.info[k].Profit2){
+							_binanceProfit[msc2] += data.info[k].Profit2;
+						}
+						if(btcCount2[date2]){
+							btcCount2[date2]++;
+						}
+						else{
+							btcCount2[date2]=1;
+						}
+					}
+					else{
+						_binanceProfit[msc2] += data.info[k].Profit;
+						if(_mscCount2[date2]){
+							_mscCount2[date2]++;
+						}
+						else{
+							_mscCount2[date2]=1;
+						}
 					}
 				}
 			}
@@ -525,7 +661,16 @@ class App extends Component{
 			}
 			for(let key in _mscCount){
 				_msc.push({value:[key,_mscCount[key]],name:key});
-			}						
+			}	
+			for(let key in dat2){
+				v2.push({value:[key,dat2[key]],name:key});
+			}
+			for(let key in btcCount2){
+				btc2.push({value:[key,btcCount2[key]],name:key});
+			}
+			for(let key in _mscCount2){
+				_msc2.push({value:[key,_mscCount2[key]],name:key});
+			}									
 			let option = {
 		            dataZoom:[
 				            {
@@ -542,7 +687,7 @@ class App extends Component{
 		                data:['BTC Profitable','Total',msc+' Profitable']
 		            },			
 		            title:{
-						textStyle:{fontSize:13},
+						textStyle:{fontSize:15},
 						text:"Trades",
 						top:'3%',
 						left:"30%"
@@ -607,10 +752,18 @@ class App extends Component{
 		                },
 		            ]
 		        }	
+		    let option2 = JSON.parse(JSON.stringify(option));
+		    option2.legend.data = ['BTC Profitable','Total',msc2+' Profitable'];
+		    option2.series[0].data = v2;
+		    option2.series[1].data = btc2;
+		    option2.series[2].data = _msc2;
+		    option2.series[2].name = _msc2 + ' Profitable';
 			if(this.state.autosave){
 					localStorage.setItem("DB_Trade",JSON.stringify(option));
+					localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
+					localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
 			}
-			return this.setState({dbTrade:option,tradeInfo:data.info},()=>{
+			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit},()=>{
 				return this.getBittrexDBBalance();
 			});
 			
@@ -732,15 +885,33 @@ class App extends Component{
 			
 		if(data.type === "order"){
 			let _new_orders = this.state.orders;
-			_new_orders.push({"filled":data.filled,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
+			_new_orders.push({"filled":data.filled,"exchange":data.exchange,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
 			if(this.state.autosave){
 				localStorage.setItem("Orders",JSON.stringify(_new_orders));
 			}
-			return this.setState({order:_new_orders});
+			return this.setState({orders:_new_orders});
 		}		
 			
+		if(data.type === "orderRemove"){
+			let _edit_orders = [];
+			let _binanceProgress = this.state.binanceProgress;
+			for(var i = 0;i < this.state.orders.length;i++){
+				if(this.state.orders[i].order_id !== data.order_id){
+					_edit_orders.push(this.state.orders[i]);
+				}
+			}
+			if(this.state.autosave){
+				localStorage.setItem("Orders",JSON.stringify(_edit_orders));
+			}
+			_binanceProgress += 1;
+			if (_binanceProgress === 3){
+				_binanceProgress = 0;
+			}
+			return this.setState({orders:_edit_orders,binanceProgress:_binanceProgress});
+		}				
+			
 		if(data.type === "percentage"){
-			let _tradingPairs = {bittrex:{}}
+			let _tradingPairs = {bittrex:{},binance:this.state.tradingPairs.binance}
 			let date = new Date();
 			for(let key in data){
 				if(key.search('-') > -1){
@@ -836,6 +1007,11 @@ class App extends Component{
 			}		
 		}																									
 	}	
+		
+	forceMonitorBinance(checked){
+		this.setState({binanceStatus:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceMonitor","bool":checked}),this.state.privatekey).toString());				
+	}	
 			
 	menuOpen(evt){
 		return this.setState({menuAnchor:evt.currentTarget,menu_open:true});
@@ -849,23 +1025,22 @@ class App extends Component{
 		this.setState({autoconnect:checked});
 		return localStorage.setItem("AutoConnect",checked);
 	}	
-	socketMessage(message){
-		
-	}
 	
 	tick(){
 		return this.state.myWorker.postMessage("");
 	}		
 
 	toast(message){
-		if(this.state.toast.open === false){	
-			this.setState({toast:{message:message,open:true}});
-		}
-		else{
-			if(message === this.state.toast.message){
-				return;
+		if(this.state.toastNotify){
+			if(this.state.toast.open === false){	
+				this.setState({toast:{message:message,open:true}});
 			}
-			this.setState({toast:{message:message+'\r\n'+this.state.toast.message,open:true}});
+			else{
+				if(message === this.state.toast.message){
+					return;
+				}
+				this.setState({toast:{message:message+'\r\n'+this.state.toast.message,open:true}});
+			}
 		}
 		((_message)=>{
 			if(document.hasFocus() || message === "log" || !this.state.webNotify){
@@ -895,6 +1070,34 @@ class App extends Component{
 		})(message);	
 		return setTimeout(()=>{return this.setState({toast:{open:false}});},2000);
 	}	
+
+	toastNotify(checked){
+		if(!checked){
+			return localStorage.removeItem("Toast_Notify");
+		}
+		else{
+			return localStorage.setItem("Toast_Notify",true);
+		}	
+	}	
+
+	updateBinanceBalance(){
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binance_balance"}),this.state.privatekey).toString());
+	}			
+
+	updateBinanceBTCMinimum(evt){
+		this.setState({binanceBTCMinimum:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceBTCMinimum","min":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}
+	
+	updateBinanceC1Minimum(evt){
+		this.setState({binanceC1Minimum:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceC1Minimum","min":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}	
+
+	updateLogLevel(evt){
+		this.setState({logLevel:evt.currentTarget.value});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"logs","logLevel":evt.currentTarget.value}),this.state.privatekey).toString());			
+	}	
 			
 	updateBittrexBalance(){
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_balance"}),this.state.privatekey).toString());
@@ -903,7 +1106,12 @@ class App extends Component{
 	updateLiquidTrade(evt,checked){
 		this.setState({liquidTrades:checked});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTrade","bool":checked}),this.state.privatekey).toString());
-	}	
+	}
+
+	updateLiquidTradeBinance(evt,checked){
+		this.setState({liquidTradesBinance:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked}),this.state.privatekey).toString());
+	}		
 
 	updateLogLevel(evt){
 		this.setState({logLevel:evt.currentTarget.value});
@@ -1026,8 +1234,9 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			 <LinearProgress mode="determinate" value={this.state.loading} />
-			<Tabs value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label={this.state.bittrexPercentage ? this.state.bittrexPercentage.toFixed(2) : 0} icon={<InsertChart />}></Tab>
+			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
+				<Tab label="Bittrex" icon={<img className="bittrexImg" src="https://pbs.twimg.com/profile_images/552616908093001728/97DIMDFd_400x400.png"/>}></Tab>
+				<Tab label="Binance" icon={<img className="binanceImg" src="https://resource.binance.com/resources/img/favicon.ico" />}></Tab>				
 				<Tab label="Charts" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1125,7 +1334,99 @@ class App extends Component{
 					</Table> 	
 			</TabContainer>}
 			{this.state.tabValue === 1 && <TabContainer>
+			<ReactEchartsCore
+				  echarts={echarts}
+				  option={this.state.binanceGauge}
+				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+				   />	
+			{this.state.binanceStatus ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
+			{this.state.binanceProgress > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress*100/3} /> : ""}
+			<div className="monitorToggle">
+			<FormGroup>
+		        <FormControlLabel
+				  label={!this.state.binanceStatus ? "Active" : "Paused"}
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={!this.state.binanceStatus}
+			              onChange={(event, checked) => {
+							  this.forceMonitorBinance(!checked)
+							}}
+						/>}
+		        />
+			</FormGroup>
+			</div>
+			<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Asset</th>
+						<th data-field="">Balance</th>
+						<th data-field="">{this.state.binanceC1 ? this.state.binanceC1.toUpperCase() : ""}/Ratio</th>
+						<th data-field="">BTC/Ratio</th>
+						<th data-field="">&#8224;BTC</th>
+						<th data-field="">&#8224;{this.state.binanceC2.toUpperCase()}</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{this.state.binanceC1 ? this.state.binanceC1.toUpperCase() : ""}</td>	
+						<td>{this.state.balance.binance[this.state.binanceC1]}</td>	
+						<td>100%</td>				
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] ? (this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] * this.state.balance.binance[this.state.binanceC1]*100/this.state.balance.binance.btc).toFixed(2)+'%' : ""}</td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] ? this.state.tradingPairs.binance[this.state.binanceC1+'_btc'].toFixed(7) : ""}</td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2] ? this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2].toFixed(1) : ""}</td>
+					</TableRow>
+					<TableRow>
+						<td>BTC</td>	
+						<td>{this.state.balance.binance.btc}</td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] ? (this.state.balance.binance.btc/this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] *100/this.state.balance.binance[this.state.binanceC1]).toFixed(2)+'%' : ""}</td>
+						<td>100%</td>
+						<td>1</td>
+						<td>{this.state.tradingPairs.binance['btc_'+this.state.binanceC2] ? this.state.tradingPairs.binance['btc_'+this.state.binanceC2].toFixed(1) : "" }</td>
+					</TableRow>
+					<TableRow>
+						<td>USDT</td>
+						<td>{this.state.balance.binance.usdt ? this.state.balance.binance.usdt.toFixed(7) : 0}</td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2] ? (100*((this.state.balance.binance.usdt/this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2])/this.state.balance.binance[this.state.binanceC1])).toFixed(2)+ '%' : ""}</td>
+						<td>{this.state.tradingPairs.binance['btc_'+this.state.binanceC2] ? (100*((this.state.balance.binance.usdt/this.state.tradingPairs.binance['btc_'+this.state.binanceC2])/this.state.balance.binance.btc)).toFixed(2)+ '%' : ""}</td>						
+						<td>{this.state.tradingPairs.binance['btc_'+this.state.binanceC2] ? (1/this.state.tradingPairs.binance['btc_'+this.state.binanceC2]).toFixed(7) : "" }</td>
+						<td>1</td>
+					</TableRow>										
+				</TableBody>
+			</Table> 
+			<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Trade</th>
+						<th data-field="">$</th>
+						<th data-field="">{this.state.binanceC1 ? this.state.binanceC1.toUpperCase() : ""}</th>
+						<th data-field="">BTC</th>
+						<th data-field="">{this.state.binanceC2.toUpperCase()}</th>
+						<th data-field="">Status</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>BTC</td>
+						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} value={this.state.binanceBTCMinimum} onChange={this.updateBinanceBTCMinimum} /> </td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] ? (1/this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] * this.state.binanceBTCMinimum).toFixed(5) : 0}</td>
+						<td>{this.state.binanceBTCMinimum ? this.state.binanceBTCMinimum : 0}</td>						
+						<td>{this.state.tradingPairs.binance['btc_'+this.state.binanceC2] ? (this.state.tradingPairs.binance['btc_'+this.state.binanceC2] * this.state.binanceBTCMinimum).toFixed(5) : 0}</td>
+						<td>{(this.state.binanceBTCMinimum < this.state.balance.binance.btc) && ((1/this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] * this.state.binanceBTCMinimum) < this.state.balance.binance[this.state.binanceC1]) && ((this.state.tradingPairs.binance['btc_'+this.state.binanceC2] * this.state.binanceBTCMinimum) < this.state.balance.binance[this.state.binanceC2]) ? <Switch checked={true}/> :  <Switch checked={false}/>}</td>	
+					</TableRow>		
+					<TableRow>
+						<td>{this.state.binanceC1 ? this.state.binanceC1.toUpperCase() : ""}</td>
+						<td  className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} value={this.state.binanceC1Minimum} onChange={this.updateBinanceC1Minimum} /> </td>
+						<td>{this.state.binanceC1Minimum ? this.state.binanceC1Minimum : 0}</td>						
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] ? (this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] * this.state.binanceC1Minimum).toFixed(5) : 0}</td>
+						<td>{this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2] ? (this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2] * this.state.binanceC1Minimum).toFixed(5) : ""}</td>
+						<td>{(this.state.binanceC1Minimum < this.state.balance.binance[this.state.binanceC1]) &&	 ((this.state.tradingPairs.binance[this.state.binanceC1+'_btc'] * this.state.binanceC1Minimum) < this.state.balance.binance.btc) &&((this.state.tradingPairs.binance[this.state.binanceC1+'_'+this.state.binanceC2] * this.state.binanceC1Minimum) < this.state.balance.binance[this.state.binanceC2])? <Switch checked={true}/> :  <Switch checked={false}/>}</td>	
+					</TableRow>		
+				</TableBody>
+			</Table> 				
+			</TabContainer>}
+			{this.state.tabValue === 2 && <TabContainer>
 			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Balance Charts</Button>
+			   <h3>Bittrex</h3>
 			   {this.state.dbBalance.map((option) => (
 				 <div key={option.series[0].name}>
 		         <ReactEchartsCore
@@ -1160,9 +1461,29 @@ class App extends Component{
 						  return this.state.dbTrade.dataZoom =({start:zoom.start,end:zoom.end});
 						}
 				  }}
-				   />	   	   			
+				   />	
+				  <h3>Binance</h3>  
+				  <p>{this.state.binanceProfit.btc} / {this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} )%</p>
+				  <CircularProgress mode="determinate" value={this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
+				  <p>{this.state.binanceProfit[this.state.binanceC1]} / {this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1] : 0})%</p>
+				  <CircularProgress mode="determinate" value={this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
+				  <ReactEchartsCore
+			          echarts={echarts}
+					  option={this.state.dbTradeBinance}
+					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
+					  notMerge={true}
+					  lazyUpdate={true}
+					  onEvents={{
+						  'legendselectchanged':(evt)=>{
+							 return this.state.dbTradeBinance.legend.selected = evt.selected;
+							 },	
+						  'dataZoom': (zoom)=>{
+							  return this.state.dbTradeBinance.dataZoom =({start:zoom.start,end:zoom.end});
+							}
+					  }}
+				    />					     			
 			</TabContainer>}
-			{this.state.tabValue === 2 && <TabContainer>
+			{this.state.tabValue === 3 && <TabContainer>
 				<Button raised color="primary" onClick={this.clearOrders}>Clear Cache</Button>
 				<Button raised color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
 				{this.state.orders.map((order)=> 
@@ -1174,16 +1495,17 @@ class App extends Component{
 						<br/>{order.amount} @ {order.rate}
 						<br/>Created:{order.timestamp_created}
 						<br/>{order.order_id}
+						<br/>{order.exchange}
 						</Typography>
 						<LinearProgress mode="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
 						{ order.filled > 0? (((order.amount-order.filled)/order.amount)*100).toFixed(2) +'% Filled' : '0% Filled'}
 			        </CardContent>
 			      </Card>)}		
 			</TabContainer>}
-			{this.state.tabValue === 3 && <TabContainer>
+			{this.state.tabValue === 4 && <TabContainer>
 				<textarea value={this.state.log}> </textarea>		
 			</TabContainer>}
-			{this.state.tabValue === 4 && <TabContainer>
+			{this.state.tabValue === 5 && <TabContainer>
 				<div>
 				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
@@ -1212,7 +1534,7 @@ class App extends Component{
 				</Card>
 				</div>		
 			</TabContainer>}
-			{this.state.tabValue === 5 && <TabContainer>		
+			{this.state.tabValue === 6 && <TabContainer>		
 				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 		        <CardContent >
 		           <Typography type="title">Server Connection</Typography>
@@ -1275,7 +1597,7 @@ class App extends Component{
 				</FormGroup>
 		        <FormGroup>
 		        <FormControlLabel
-				  label="Notifications"
+				  label="Web Notifications"
 				  style={{margin:"auto"}}
 		          control={<Switch
 			              checked={this.state.webNotify}
@@ -1287,7 +1609,20 @@ class App extends Component{
 		        />
 				</FormGroup>	
 				</CardActions>
-				<CardActions>			
+				<CardActions>		
+				<FormGroup>
+		        <FormControlLabel
+				  label="Toast Notifications"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.state.toastNotify}
+			              onChange={(event, checked) => {
+							  this.setState({ toastNotify: checked });
+							  return this.toastNotify(checked);
+							}}
+						/>}
+		        />
+				</FormGroup>					
 				{
 				!this.state.cleared ?
 				<FormGroup>
@@ -1309,7 +1644,7 @@ class App extends Component{
 				</Card>
 				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
-			            <Typography type="title">Bot Config</Typography>
+			            <Typography type="title">Bittrex Config</Typography>
 			            <br/>
 						<InputLabel>Bot Polling Rate:{this.state.pollingRate/60000} Minutes </InputLabel>
 						<br/>
@@ -1365,12 +1700,36 @@ class App extends Component{
 			        <CardActions>
 						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>	
 			        </CardActions>
-				</Card> 		      
+				</Card> 		    
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+			        <CardContent>
+			            <Typography type="title">Binance Config</Typography>
+			            <br/>
+						 <div className="Switches">
+						<FormGroup>
+				        <FormControlLabel
+						  label="Liquid Trades"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.state.liquidTradesBinance}
+					              onChange={this.updateLiquidTradeBinance}
+				            /> }
+				        />
+				        </FormGroup>
+				        </div>
+						<InputLabel>Minimum BTC Order</InputLabel>
+						<br/>
+						<Input type="number" inputProps={{min: "0",step: "0.000001" }} value={this.state.binanceBTCMinimum} onChange={this.updateBinanceBTCMinimum}/>
+						<br/>
+						<InputLabel>Minimum {this.state.binanceC1.toUpperCase()} Order</InputLabel>
+						<br/>
+						<Input type="number" inputProps={{min: "0",step: "0.001" }} value={this.state.binanceC1Minimum} onChange={this.updateBinanceC1Minimum}/>			       					
+			        </CardContent>
+				</Card> 		    				  
 				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Bittrex Status</Typography>
 						<br/>
-						{this.state.orders? this.state.orders.length : ""} Orders Open 
 						<Table>
 							<TableHead>
 								<TableRow>
@@ -1398,6 +1757,37 @@ class App extends Component{
 						<Button raised color="primary" onClick={this.updateBittrexBalance}>Get Balance</Button>			
 			        </CardActions>
 				</Card>
+				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+			        <CardContent>
+						<Typography type="title">Binance Status</Typography>
+						<br/>
+						<Table>
+							<TableHead>
+								<TableRow>
+									<TableCell>Asset</TableCell>
+									<TableCell>Balance</TableCell>
+								</TableRow>
+							</TableHead>
+							<TableBody>
+								{
+									(()=>{
+										let p = [];
+										for(let key in this.state.balance.binance){
+											if(key !== "account" && this.state.balance.binance[key] > 0){
+												p.push([key.toString(),this.state.balance.binance[key]]);
+											}
+										}
+										return p.map(item=>(<TableRow key={item[0]}><TableCell>{item[0]}</TableCell><TableCell>{item[1]}</TableCell></TableRow>));
+										
+									})()
+								} 
+						</TableBody>
+						</Table>
+			        </CardContent>
+			        <CardActions>
+						<Button raised color="primary" onClick={this.updateBinanceBalance}>Get Balance</Button>			
+			        </CardActions>
+				</Card>				
 				<footer>
 					<div>
 						MaterialUI theme provided by <a href='https://github.com/callemall/material-ui/tree/v1-beta'>Material-UI</a>
@@ -1433,8 +1823,11 @@ class App extends Component{
 		              {option}
 		            </MenuItem>
 		          ))}
+		        <MenuItem key="xxx" onClick={this.menuClose}>
+		        Close
+		        </MenuItem>
 		        </Menu>
-		      </div> 		
+		    </div>    
 			<Snackbar
 			  anchorOrigin={{
 				vertical: 'bottom',
