@@ -7,7 +7,7 @@ import AppBar  from 'material-ui/AppBar';
 import AutoRenew from 'material-ui-icons/Autorenew';
 import Button from 'material-ui/Button';
 import BubbleChart from 'material-ui-icons/BubbleChart';
-import Card, { CardActions, CardContent } from 'material-ui/Card';
+import Card, { CardActions, CardContent,CardHeader } from 'material-ui/Card';
 import { FormControl,FormControlLabel, FormGroup } from 'material-ui/Form';
 import IconButton from 'material-ui/IconButton';
 import Input, { InputLabel } from 'material-ui/Input';
@@ -885,7 +885,13 @@ class App extends Component{
 			
 		if(data.type === "order"){
 			let _new_orders = this.state.orders;
-			_new_orders.push({"filled":data.filled,"exchange":data.exchange,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
+			if(data.exchange === "binance"){
+				data.image = "url('https://pbs.twimg.com/profile_banners/877807935493033984/1511522262/1500x500')";
+			}
+			else{
+				data.image = "url('https://pbs.twimg.com/profile_banners/2309637680/1420589155/1500x500')";
+			}
+			_new_orders.push({"image":data.image,"filled":data.filled,"exchange":data.exchange,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
 			if(this.state.autosave){
 				localStorage.setItem("Orders",JSON.stringify(_new_orders));
 			}
@@ -1488,14 +1494,15 @@ class App extends Component{
 				<Button raised color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
 				{this.state.orders.map((order)=> 
 					<Card key={order.order_id} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+					<CardHeader style={{backgroundPosition:"center",backgroundImage: order.image}}>
+					</CardHeader>
 			        <CardContent>
 			           <Typography type="headline">{order.type}</Typography>
 						<Typography component="p">
 						{order.pair.replace('_','/')}
 						<br/>{order.amount} @ {order.rate}
-						<br/>Created:{order.timestamp_created}
+						<br/>Created:{Number(order.timestamp_created) ? new Date(order.timestamp_created).toString() : order.timestamp_created}
 						<br/>{order.order_id}
-						<br/>{order.exchange}
 						</Typography>
 						<LinearProgress mode="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
 						{ order.filled > 0? (((order.amount-order.filled)/order.amount)*100).toFixed(2) +'% Filled' : '0% Filled'}
