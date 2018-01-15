@@ -475,7 +475,11 @@ class App extends Component{
 					}
 					else{
 						msc *= this.state.tradeInfo[k].Profit;
-						bank[this.state.tradingPairs.misc.toUpperCase()].push({value:[new Date(date),msc.toFixed(8)],name:date.toString()});
+						try{
+							bank[this.state.tradingPairs.misc.toUpperCase()].push({value:[new Date(date),msc.toFixed(8)],name:date.toString()});
+						}
+						catch(e){
+						}
 					}
 				}				
 				let format = function(obj,dataArray,name){
@@ -753,11 +757,11 @@ class App extends Component{
 		            ]
 		        }	
 		    let option2 = JSON.parse(JSON.stringify(option));
-		    option2.legend.data = ['BTC Profitable','Total',msc2+' Profitable'];
+		    option2.legend.data = ['BTC Profitable','Total',msc2.toUpperCase()+' Profitable'];
 		    option2.series[0].data = v2;
 		    option2.series[1].data = btc2;
 		    option2.series[2].data = _msc2;
-		    option2.series[2].name = _msc2 + ' Profitable';
+		    option2.series[2].name = msc2.toUpperCase() + ' Profitable';
 			if(this.state.autosave){
 					localStorage.setItem("DB_Trade",JSON.stringify(option));
 					localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
@@ -1243,7 +1247,7 @@ class App extends Component{
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
 				<Tab label="Bittrex" icon={<img className="bittrexImg" src="https://pbs.twimg.com/profile_images/552616908093001728/97DIMDFd_400x400.png"/>}></Tab>
 				<Tab label="Binance" icon={<img className="binanceImg" src="https://resource.binance.com/resources/img/favicon.ico" />}></Tab>				
-				<Tab label="Charts" icon={<BubbleChart />}></Tab>
+				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
 				<Tab label="Swing" icon={<AutoRenew />} onClick={()=>{this.updateSwingPrice()}}></Tab>
@@ -1431,7 +1435,7 @@ class App extends Component{
 			</Table> 				
 			</TabContainer>}
 			{this.state.tabValue === 2 && <TabContainer>
-			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Balance Charts</Button>
+			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
 			   <h3>Bittrex</h3>
 			   {this.state.dbBalance.map((option) => (
 				 <div key={option.series[0].name}>
@@ -1469,10 +1473,14 @@ class App extends Component{
 				  }}
 				   />	
 				  <h3>Binance</h3>  
-				  <p>{this.state.binanceProfit.btc} / {this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} )%</p>
-				  <CircularProgress mode="determinate" value={this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
-				  <p>{this.state.binanceProfit[this.state.binanceC1]} / {this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1] : 0})%</p>
-				  <CircularProgress mode="determinate" value={this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
+				  <p>
+					{this.state.binanceProfit.btc.toFixed(8)}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0})%
+					<LinearProgress mode="determinate" value={this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
+				  </p>
+				  <p>
+					{this.state.binanceProfit[this.state.binanceC1].toFixed(8)}/{this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceC1Minimum > 0 ?  (this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]).toFixed(8) : 0})%
+					<LinearProgress mode="determinate" value={this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
+				  </p>
 				  <ReactEchartsCore
 			          echarts={echarts}
 					  option={this.state.dbTradeBinance}
