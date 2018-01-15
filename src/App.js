@@ -420,6 +420,7 @@ class App extends Component{
 		}		
 		
 		if(data.type === "binancePercent"){
+			if(!Number(data.percentage)){return;}
 			let _binance = {}
 			let gauge = this.state.binanceGauge;
 			gauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
@@ -628,7 +629,7 @@ class App extends Component{
 				}
 				else{
 					date2 = new Date(data.info[k].Time).toISOString().split("T")[0];
-					if(dat[date2]){
+					if(dat2[date2]){
 						dat2[date2]++;
 					}
 					else{
@@ -757,7 +758,7 @@ class App extends Component{
 		            ]
 		        }	
 		    let option2 = JSON.parse(JSON.stringify(option));
-		    option2.legend.data = ['BTC Profitable','Total',msc2.toUpperCase()+' Profitable'];
+		    option2.legend.data = ['Total','BTC Profitable',msc2.toUpperCase()+' Profitable'];
 		    option2.series[0].data = v2;
 		    option2.series[1].data = btc2;
 		    option2.series[2].data = _msc2;
