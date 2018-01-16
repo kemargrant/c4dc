@@ -15,7 +15,7 @@ import InsertChart from 'material-ui-icons/Dashboard';
 import InsertSettings from 'material-ui-icons/Settings';
 import InsertFile from 'material-ui-icons/ShopTwo';
 import InsertLogs from 'material-ui-icons/LibraryBooks';
-import { CircularProgress,LinearProgress } from 'material-ui/Progress';
+import {LinearProgress } from 'material-ui/Progress';
 import Menu, { MenuItem } from 'material-ui/Menu';
 import MoreVertIcon from 'material-ui-icons/MoreVert';
 import Snackbar from 'material-ui/Snackbar';
@@ -157,7 +157,7 @@ class App extends Component{
 						data: [{value: 0, name: "Percent"}]
 					}]
 			},
-			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {},
+			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {btc:0},
 			binanceProgress:0,
 			bittrexPercentage:0,
 			binanceStatus:false,
@@ -1474,14 +1474,14 @@ class App extends Component{
 				  }}
 				   />	
 				  <h3>Binance</h3>  
-				  <p>
-					{this.state.binanceProfit.btc.toFixed(8)}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0})%
+				  <div>
+					{this.state.binanceProfit.btc ? this.state.binanceProfit.btc.toFixed(8) : 0}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0})%
 					<LinearProgress mode="determinate" value={this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
-				  </p>
-				  <p>
+				  </div>
+				  <div>
 					{this.state.binanceProfit[this.state.binanceC1].toFixed(8)}/{this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceC1Minimum > 0 ?  (this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]).toFixed(8) : 0})%
 					<LinearProgress mode="determinate" value={this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
-				  </p>
+				  </div>
 				  <ReactEchartsCore
 			          echarts={echarts}
 					  option={this.state.dbTradeBinance}
@@ -1519,7 +1519,7 @@ class App extends Component{
 			      </Card>)}		
 			</TabContainer>}
 			{this.state.tabValue === 4 && <TabContainer>
-				<textarea value={this.state.log}> </textarea>		
+				<textarea value={this.state.log} readOnly> </textarea>		
 			</TabContainer>}
 			{this.state.tabValue === 5 && <TabContainer>
 				<div>
