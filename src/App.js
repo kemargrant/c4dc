@@ -1476,11 +1476,11 @@ class App extends Component{
 				  <h3>Binance</h3>  
 				  <div>
 					{this.state.binanceProfit.btc ? this.state.binanceProfit.btc.toFixed(8) : 0}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0})%
-					<LinearProgress mode="determinate" value={this.state.binanceBTCMinimum > 0 ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
+					<LinearProgress mode="determinate" value={this.state.binanceProfit.btc ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
 				  </div>
 				  <div>
-					{this.state.binanceProfit[this.state.binanceC1].toFixed(8)}/{this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceC1Minimum > 0 ?  (this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]).toFixed(8) : 0})%
-					<LinearProgress mode="determinate" value={this.state.binanceC1Minimum > 0 ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
+					{this.state.binanceProfit[this.state.binanceC1] ? this.state.binanceProfit[this.state.binanceC1].toFixed(8) : 0}/{this.state.balance.binance[this.state.binanceC1]} {this.state.binanceC1} ({this.state.binanceProfit[this.state.binanceC1] ? (this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]).toFixed(8) : 0.00000000})%
+					<LinearProgress mode="determinate" value={this.state.binanceProfit[this.state.binanceC1] ?  this.state.binanceProfit[this.state.binanceC1]*100/this.state.balance.binance[this.state.binanceC1]: 0} />
 				  </div>
 				  <ReactEchartsCore
 			          echarts={echarts}
