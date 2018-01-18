@@ -11,7 +11,6 @@ import Card, { CardActions, CardContent,CardHeader } from 'material-ui/Card';
 import { FormControl,FormControlLabel, FormGroup } from 'material-ui/Form';
 import IconButton from 'material-ui/IconButton';
 import Input, { InputLabel } from 'material-ui/Input';
-import InsertChart from 'material-ui-icons/Dashboard';
 import InsertSettings from 'material-ui-icons/Settings';
 import InsertFile from 'material-ui-icons/ShopTwo';
 import InsertLogs from 'material-ui-icons/LibraryBooks';
@@ -33,81 +32,12 @@ import 'echarts/lib/component/markLine';
 import 'echarts/lib/component/title';
 import 'echarts/lib/component/tooltip';
 
-function balanceMinMax(_array){
-	var _min = 0;
-	var _max = 0;
-	for(var i = 0;i < _array.length;i++)
-		{
-			if(_array[i][1] < _min || _min === 0){_min = _array[i][1];}
-			if(_array[i][1] > _max || _max === 0){_max = _array[i][1];}
-		}
-	return [_min,_max];
-}
+
 			
 function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
 			
-function slope(array,_points,name){
-	function minmax(_array){
-		var _min = [0,0];
-		var _max = [0,0];
-		for(var i = 0;i < _array.length;i++)
-			{
-				if(_array[i][0] < _min[0] || _min[0] === 0){_min = _array[i];}
-				if(_array[i][0] > _max[0] || _max[0] === 0){_max = _array[i];}
-			}
-		return [{x:_min[0],y:_min[1]},{x:_max[0],y:_max[1]}];
-		
-	}
-	let line = {lineStyle:{normal:{type:'solid'}}};	
-	if(!_points){
-		if(!array){return [];}
-		let detmm = minmax(array);
-		let coord1 = detmm[0];
-		let coord2 = detmm[1];
-		let m = (coord2.y-coord1.y)/(coord2.x - coord1.x);
-		let b = coord1.y - (m * coord1.x);
-		line.label= {
-	        normal: {
-				show:true,
-				formatter: 'y = '+m.toFixed(3)+' * x + '+b.toFixed(3)+'\r\n Break Even >= '+(m+b)+'%',
-	            textStyle: {
-					align: m < 0 ? "right":"left",
-					verticalAlign:m < 0 ? "top":"top"
-	            }
-	        }
-		}
-		line.data=[
-			[{
-				coord: [1.000001, m*(1.000001)+b],
-			    symbol: 'none'
-			 },{
-			    coord: [coord2.x*1.000001,m*(coord2.x*1.000001)+b],
-			    symbol: 'none'
-			}]
-		]
-		return line;
-	}
-	else{
-		let points = JSON.parse(JSON.stringify(_points));
-		points.map((v,i)=>{
-			return points[i] =[Number(points[i].name),points[i].value[1]]
-		});
-		let r = (Math.log(points[points.length-1][1]/points[0][1]))/(points.length-2);
-		let data = [];			
-		for(let i=0;i<points.length;i++){
-			data.push([points[i][0],(points[0][1] * Math.pow(Math.E,(r*i))).toFixed(7)])
-		}
-		line.smooth = true;
-		line.data = data;
-		line.type = "line"
-		line.name ="Projection -"+name;
-		line.text = 'P = '+points[0][1]+'e^('+r.toFixed(10)+'t) \r\nGained:'+ (points[points.length-1][1] - points[0][1]).toFixed(12) +"("+ (100*(points[points.length-1][1] -points[0][1])/points[0][1]).toFixed(8) + "%)";
-	}			
-	return line;
-}
-
 class App extends Component{
 	constructor(props){
 	    super(props);
@@ -158,6 +88,7 @@ class App extends Component{
 					}]
 			},
 			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {btc:0},
+			bittrexProfit:JSON.parse(localStorage.getItem("Bittrex_Profit"))? JSON.parse(localStorage.getItem("Bittrex_Profit")) : {btc:0},
 			binanceProgress:0,
 			bittrexPercentage:0,
 			binanceStatus:false,
@@ -187,7 +118,6 @@ class App extends Component{
                     },
                 ]
             },					
-			dbBalance:JSON.parse(localStorage.getItem("DB_Balance"))? JSON.parse(localStorage.getItem("DB_Balance")) : [],
 			dbTrade:JSON.parse(localStorage.getItem("DB_Trade"))? JSON.parse(localStorage.getItem("DB_Trade")) : {
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
@@ -204,13 +134,11 @@ class App extends Component{
 			connected:false,
 			liquidTrades:true,
 			liquidTradesBinance:true,
-			loading:0,
 			log:"",
 			logLevel:0,
 			lowerLimit:89,
 			menuAnchor: null,
 			menu_open:false,
-			myWorker:{},
 			option:{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
@@ -234,7 +162,6 @@ class App extends Component{
 				open:false,
 				message:""
 			},	
-			time:0,			
 			toastNotify: JSON.parse(localStorage.getItem("Toast_Notify")) ? true : false,
 			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{},binance:{},msc:""},
 			tradeInfo:undefined,
@@ -246,7 +173,6 @@ class App extends Component{
 		this.clearData = this.clearData.bind(this);
 		this.clearOrders = this.clearOrders.bind(this);
 		this.connect = this.connect.bind(this);		
-		this.getBittrexDBBalance = this.getBittrexDBBalance.bind(this);
 		this.getBittrexDBTrade = this.getBittrexDBTrade.bind(this);
 		this.getOrders = this.getOrders.bind(this);
 		this.getPollingRate = this.getPollingRate.bind(this);
@@ -316,7 +242,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","DB_Balance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			localStorage.removeItem(list[i]);
 		}
@@ -329,14 +255,6 @@ class App extends Component{
 	}		
 
 	componentDidMount(){
-		let blob = new Blob(["onmessage = function(e) { return setTimeout(()=>{ return postMessage('')},2000) }"]);			
-		let blobURL = window.URL.createObjectURL(blob);
-		let dataWorker = new Worker(blobURL);
-		dataWorker.onmessage =(e)=> {
-			this.setState({time:this.state.time+2000,loading:((this.state.time+2000)/this.state.pollingRate) * 100});
-			return this.state.myWorker.postMessage("");
-		};		
-		this.setState({myWorker:dataWorker});
 		if(this.state.autoconnect === true && this.state.previous.length > 1){
 			this.connect(this.state.previous[1]);
 		}
@@ -354,10 +272,6 @@ class App extends Component{
 			});
 		}
 	}	
-		
-	getBittrexDBBalance(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"balance"}),this.state.privatekey).toString());
-	}
 	
 	getBittrexDBHistory(){
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"history"}),this.state.privatekey).toString());
@@ -446,107 +360,7 @@ class App extends Component{
 				
 			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},liquidTradesBinance:data.liquid,binanceStatus:data.status,binanceC1:data.pair.slice(0,3),binanceC2:data.pair.slice(3,data.pair.length),binanceBTCMinimum:data.minBTC,binanceC1Minimum:data.minXXX});
 		}		
-		
-		if(data.type === "db_balance"){
-				let bank = {};
-				let dbBalances = [];
-				let btc;
-				let coins = [];
-				let date;
-				let quick_format = function(x){return new Date(x).toString().split(" ").slice(0,3).join("\r\n");}
-				let quick_format2 = function(params){params=params[0];return params.value[0].toString().split("GMT")[0]+" / "+params.value[1];}
-				let msc;
-				for(let key in data.info[0]){
-					if(key !== 'Time' && key !== '_id'){
-						coins.push(key);
-						bank[key]= [];
-					}
-				}
-				coins = ['BTC',this.state.tradingPairs.misc.toUpperCase()];
-				btc = data.info[0]['BTC'];
-				msc = data.info[0][this.state.tradingPairs.misc.toUpperCase()];
-				for(let k=0;k<this.state.tradeInfo.length;k++){
-					if(this.state.tradeInfo[k].OrdersFilled !== 3){
-						continue;
-					}
-					date = this.state.tradeInfo[k].Time;
-					if(this.state.tradeInfo[k].Percent > 100){
-						btc *= this.state.tradeInfo[k].Profit;
-						bank['BTC'].push({value:[new Date(date),btc.toFixed(8)],name:date.toString()});
-					}
-					else{
-						msc *= this.state.tradeInfo[k].Profit;
-						try{
-							bank[this.state.tradingPairs.misc.toUpperCase()].push({value:[new Date(date),msc.toFixed(8)],name:date.toString()});
-						}
-						catch(e){
-						}
-					}
-				}				
-				let format = function(obj,dataArray,name){
-					obj.legend = {data:[name,"Projection -"+name]}  
-					obj.yAxis = [{min:"dataMin",max:"dataMax"}];
-					obj.xAxis = [{type:"time",min:"dataMin",max:"dataMax",axisLabel:{formatter:quick_format}}];
-					obj.tooltip = {trigger:"axis",formatter:quick_format2}
-					obj.grid =  {left:"1%",right:"1%",bottom:'7%',containLabel:true}
-					let proj = slope(null,dataArray,name);
-					obj.series = [{smooth:true,name:name,type:'line',data:dataArray},proj];
-					obj.title = {textStyle:{fontSize:13},text:proj.text,top:'5.5%',left:"30%"}
-					obj.range = balanceMinMax(dataArray);
-					obj.dataZoom=[{realtime:true,show:true,start:80,end:100}];
-					return obj;
-				}
-				let extraOption = {				    
-				    xAxis: {
-						animation:true,
-				        type: 'time',   
-						axisPointer: {
-				            snap: true,
-				            lineStyle: {
-				                color:'#004E52',
-				                opacity: 0.5,
-				                width: 2
-				            },
-				            label: {
-				                show: true,
-				                formatter:function(f){
-									return new Date(f.value);
-								},
-				                backgroundColor:'#004E52'
-				            },
-				            handle: {
-				                show: true,
-				                color:'#004E52'
-				            }
-				        },
-				        splitLine: {
-				            show: false
-				        }
-				    },
-				    yAxis: {
-				        type: 'value',
-				        axisTick: {
-				            inside: true
-				        },
-				        splitLine: {
-				            show: false
-				        },
-				        axisLabel: {
-				            inside: true,
-				            formatter: '{value}\n'
-				        },
-				    },
-				    series: [{name:" ",type:"line"}]
-				}	
-				for(let j=0; j<coins.length;j++){
-					dbBalances.push(format(JSON.parse(JSON.stringify(extraOption)),bank[coins[j]],coins[j]));
-				}
-				if(this.state.autosave){
-					localStorage.setItem("DB_Balance",JSON.stringify(dbBalances));
-				}
-				return this.setState({dbBalance:dbBalances});
-			}			
-							
+					
 		if(data.type === "db_history"){
 			let date;
 			let new_option = this.state.option; 
@@ -584,6 +398,7 @@ class App extends Component{
 				return order;
 			}
 			let _binanceProfit ={}
+			let _bittrexProfit ={}
 			let date;
 			let date2;
 			let v = [];
@@ -601,6 +416,8 @@ class App extends Component{
 			data.info = sort(data.info);
 			_binanceProfit.btc = 0;
 			_binanceProfit[msc2] = 0;
+			_bittrexProfit.btc = 0;
+			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
 				if(data.info[k].Exchange !== "Binance"){
 					date = new Date(data.info[k].Time).toISOString().split("T")[0];
@@ -611,6 +428,9 @@ class App extends Component{
 						dat[date]=1;
 					}
 					if(data.info[k].Percent > 100){
+						if(Number(data.info[k].After - data.info[k].Before)){
+							_bittrexProfit.btc += (data.info[k].After - data.info[k].Before);
+						}
 						if(btcCount[date]){
 							btcCount[date]++;
 						}
@@ -619,6 +439,9 @@ class App extends Component{
 						}
 					}
 					else{
+						if(Number(data.info[k].After - data.info[k].Before)){
+							_bittrexProfit[msc.toLowerCase()] += (data.info[k].After - data.info[k].Before);
+						}
 						if(_mscCount[date]){
 							_mscCount[date]++;
 						}
@@ -677,6 +500,8 @@ class App extends Component{
 				_msc2.push({value:[key,_mscCount2[key]],name:key});
 			}									
 			let option = {
+					animation:true,
+					animationDuration:9000,
 		            dataZoom:[
 				            {
 				            show: true,
@@ -732,24 +557,21 @@ class App extends Component{
 		            ],
 		            series:[
 		                {
-							animationDuration:4000,
-							animationEasing: 'CubicOut',
+						
 		                    name:'Total',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:v,
 		                },
 		                {
-							animationDuration:4000,
-							animationEasing: 'CubicOut',
+							
 		                    name:'BTC Profitable',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:btc,
 		                },
 		                {
-							animationDuration:4000,
-							animationEasing: 'CubicOut',
+						
 		                    name:msc+' Profitable',
 		                    type:'line',
 		                    smooth:'true',
@@ -767,11 +589,9 @@ class App extends Component{
 					localStorage.setItem("DB_Trade",JSON.stringify(option));
 					localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
 					localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
+					localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
-			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit},()=>{
-				return this.getBittrexDBBalance();
-			});
-			
+			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit});
 		}				
 		
 		if(data.type === "history"){
@@ -790,7 +610,6 @@ class App extends Component{
 				for(let k=0;k<dates.length;k++){
 					v.push({value:[new Date(dates[k]),data.bittrex_history1[k]],name:new Date(dates[k]).toString()});
 				}
-				let lastTime = new Date().getTime() - dates[dates.length-1];
 				let option = {
 					animation:false,
 		            dataZoom:[
@@ -870,8 +689,8 @@ class App extends Component{
 		            ]
 		        }
 				let _bittrexPercentage = data.bittrex_history1 ? data.bittrex_history1[data.bittrex_history1.length-1] : 0;
-				this.setState({time:lastTime,option:option,bittrexPercentage:_bittrexPercentage});
-				return this.tick()
+				this.setState({option:option,bittrexPercentage:_bittrexPercentage});
+				return;
 			}
 			catch(e){
 				return this.toast(e);
@@ -880,12 +699,6 @@ class App extends Component{
 			
 		if(data.type === "log"){
 			this.setState({log:data.log+'\r\n<----------->\r\n'+this.state.log+'\r\n'});
-			if(this.state.loading === 0){
-				return this.tick();
-			}
-			else{
-				return this.setState({time:0});
-			}
 		}	
 			
 		if(data.type === "order"){
@@ -1035,10 +848,6 @@ class App extends Component{
 	setStartup(checked){
 		this.setState({autoconnect:checked});
 		return localStorage.setItem("AutoConnect",checked);
-	}	
-	
-	tick(){
-		return this.state.myWorker.postMessage("");
 	}		
 
 	toast(message){
@@ -1123,11 +932,6 @@ class App extends Component{
 		this.setState({liquidTradesBinance:checked});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked}),this.state.privatekey).toString());
 	}		
-
-	updateLogLevel(evt){
-		this.setState({logLevel:evt.currentTarget.value});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"logs","logLevel":evt.currentTarget.value}),this.state.privatekey).toString());			
-	}
 	
 	updateLowerLimit(evt){
 		this.setState({lowerLimit:evt.currentTarget.value});
@@ -1244,10 +1048,9 @@ class App extends Component{
 		return (
 		  <div className="App">
 			<AppBar position="static">
-			 <LinearProgress mode="determinate" value={this.state.loading} />
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={<img className="bittrexImg" src="https://pbs.twimg.com/profile_images/552616908093001728/97DIMDFd_400x400.png"/>}></Tab>
-				<Tab label="Binance" icon={<img className="binanceImg" src="https://resource.binance.com/resources/img/favicon.ico" />}></Tab>				
+				<Tab label="Bittrex" icon={<img className="bittrexImg" alt="Bittrex Logo" src="https://pbs.twimg.com/profile_images/552616908093001728/97DIMDFd_400x400.png"/>}></Tab>
+				<Tab label="Binance" icon={<img className="binanceImg" alt="Binance Logo" src="https://resource.binance.com/resources/img/favicon.ico" />}></Tab>				
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1438,29 +1241,18 @@ class App extends Component{
 			{this.state.tabValue === 2 && <TabContainer>
 			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
 			   <h3>Bittrex</h3>
-			   {this.state.dbBalance.map((option) => (
-				 <div key={option.series[0].name}>
-		         <ReactEchartsCore
-		          echarts={echarts}
-				  option={option}
-				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
-				  notMerge={true}
-				  lazyUpdate={true}
-				  onEvents={{
-						'legendselectchanged':(evt)=>{
-						 return option.legend.selected = evt.selected;
-						 },	 
-					  'dataZoom': (zoom)=>{
-					   return option.dataZoom = ({start:zoom.start,end:zoom.end});
-						}
-				  }}
-				   />	
-				   </div>
-				))} 
+			  <div>
+				{this.state.bittrexProfit.btc ? this.state.bittrexProfit.btc.toFixed(8) : 0}/{this.state.balance.bittrex.btc} btc ({this.state.bittrexProfit.btc > 0 ?  (this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc).toFixed(8) :  0.00000000})%
+				<LinearProgress mode="determinate" value={this.state.bittrexProfit.btc ?  this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc : 0} />
+			  </div>
+			  <div>
+				{this.state.bittrexProfit[this.state.tradingPairs.misc] ? this.state.bittrexProfit[this.state.tradingPairs.misc].toFixed(8) : 0}/{this.state.balance.bittrex[this.state.tradingPairs.misc]} {this.state.tradingPairs.misc} ({this.state.bittrexProfit[this.state.tradingPairs.misc] ? (this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(8) : 0.00000000})%
+				<LinearProgress mode="determinate" value={this.state.bittrexProfit[this.state.tradingPairs.misc] ?  this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]: 0} />
+			  </div>			   
 				 <ReactEchartsCore
 		          echarts={echarts}
 				  option={this.state.dbTrade}
-				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
+				  style={{height: this.state.chartSize.height+'px', width:'97%'}}
 				  notMerge={true}
 				  lazyUpdate={true}
 				  onEvents={{
@@ -1475,7 +1267,7 @@ class App extends Component{
 				   />	
 				  <h3>Binance</h3>  
 				  <div>
-					{this.state.binanceProfit.btc ? this.state.binanceProfit.btc.toFixed(8) : 0}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0})%
+					{this.state.binanceProfit.btc ? this.state.binanceProfit.btc.toFixed(8) : 0}/{this.state.balance.binance.btc} btc ({this.state.binanceBTCMinimum > 0 ?  (this.state.binanceProfit.btc * 100/this.state.balance.binance.btc).toFixed(8) : 0.00000000})%
 					<LinearProgress mode="determinate" value={this.state.binanceProfit.btc ?  this.state.binanceProfit.btc * 100/this.state.balance.binance.btc : 0} />
 				  </div>
 				  <div>
@@ -1485,7 +1277,7 @@ class App extends Component{
 				  <ReactEchartsCore
 			          echarts={echarts}
 					  option={this.state.dbTradeBinance}
-					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
+					  style={{height: this.state.chartSize.height+'px', width:'97%'}}
 					  notMerge={true}
 					  lazyUpdate={true}
 					  onEvents={{
@@ -1808,7 +1600,7 @@ class App extends Component{
 					<div>
 						MaterialUI theme provided by <a href='https://github.com/callemall/material-ui/tree/v1-beta'>Material-UI</a>
 					</div>
-				    <div>Favicon made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+				    <div>Favicon made by <a rel="noopener noreferrer" href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 				</footer> 				
 			</TabContainer>}   
 			</div>	
