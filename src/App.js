@@ -368,13 +368,24 @@ class App extends Component{
 			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
 		}
 
-		if(data.type === "configBinance"){	
+		if(data.type === "configBinance"){
+			let _binance = {};
+			let _tradingPairs;
+			for(let i = 0;i < data.pairs.length;i++){
+					_binance[data.pairs[i].pair1] = {}
+					_binance[data.pairs[i].pair1]['pairs'] = [data.pairs[i].pair1,data.pairs[i].pair2,data.pairs[i].pair3]
+					_binance[data.pairs[i].pair1][data.pairs[i].pair1] = 0;
+					_binance[data.pairs[i].pair1][data.pairs[i].pair2] = 0;
+					_binance[data.pairs[i].pair1][data.pairs[i].pair3] = 0;
+			}
+			_tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
 			return this.setState({
 				balance:{bittrex:this.state.balance.bittrex,binance:data.balance},
 				liquidTradesBinance:data.liquid,binanceStatus:data.status,
 				binancePairs:data.pairs,
 				binanceB1Minimum:data.minBTC,
-				binanceC1Minimum:data.minXXX
+				binanceC1Minimum:data.minXXX,
+				tradingPairs:_tradingPairs
 			});
 		}		
 					
@@ -395,6 +406,7 @@ class App extends Component{
 				_temp.misc = "xxx";
 				this.setState({tradingPairs:_temp});
 			}
+			let _b1 = Object.keys(this.state.tradingPairs.bittrex).map((v,i)=>{if(v.split("_")[1] === this.state.tradingPairs.misc){return v.split("_")[0]}})[0]
 			let msc = this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : "XXX";
 			let msc2 = Object.keys(this.state.tradingPairs.binance);
 			function sort(array){
@@ -445,7 +457,7 @@ class App extends Component{
 				//mc2/eth
 				_binanceProfit[msc2[i]][msc2[i].slice(0,3)] = 0;
 			}			
-			_bittrexProfit.b1 = 0;
+			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
 				if(data.info[k].Exchange !== "Binance"){
@@ -458,7 +470,7 @@ class App extends Component{
 					}
 					if(data.info[k].Percent > 100){
 						if(Number(data.info[k].After - data.info[k].Before)){
-							_bittrexProfit.b1 += (data.info[k].After - data.info[k].Before);
+							_bittrexProfit[_b1] += (data.info[k].After - data.info[k].Before);
 						}
 						if(b1Count[date]){
 							b1Count[date]++;
@@ -480,36 +492,40 @@ class App extends Component{
 					}
 				}
 				else{
-					if(!data.info[k].Pair){
-						data.info[k].Pair = msc2[0];
-					}
-					date2[data.info[k].Pair] = new Date(data.info[k].Time).toISOString().split("T")[0];
-					if(dat2[data.info[k].Pair][date2[data.info[k].Pair]]){
-						dat2[data.info[k].Pair][date2[data.info[k].Pair]]++;
-					}
-					else{
-						dat2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
-					}
-					if(data.info[k].Percent > 100){
-						_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
-						if(data.info[k].Profit2){
-							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit2;
+					try{
+						if(!data.info[k].Pair){
+							data.info[k].Pair = msc2[0];
 						}
-						if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
-							b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+						date2[data.info[k].Pair] = new Date(data.info[k].Time).toISOString().split("T")[0];
+						if(dat2[data.info[k].Pair][date2[data.info[k].Pair]]){
+							dat2[data.info[k].Pair][date2[data.info[k].Pair]]++;
 						}
 						else{
-							b1Count2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							dat2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
 						}
-					}
-					else{
-						_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit;
-						if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
-							_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+						if(data.info[k].Percent > 100){
+							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
+							if(data.info[k].Profit2){
+								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit2;
+							}
+							if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
+								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+							}
+							else{
+								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							}
 						}
 						else{
-							_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit;
+							if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
+								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+							}
+							else{
+								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							}
 						}
+					}
+					catch(e){
 					}
 				}
 			}
