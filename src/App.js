@@ -121,10 +121,10 @@ class App extends Component{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
 			},
-			dbTradeBinance:JSON.parse(localStorage.getItem("DB_TradeBinance"))? JSON.parse(localStorage.getItem("DB_TradeBinance")) : {
+			dbTradeBinance:JSON.parse(localStorage.getItem("DB_TradeBinance"))? JSON.parse(localStorage.getItem("DB_TradeBinance")) : [{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
-			},			
+			}],			
 			cleared:false,
 			chartSize:{
 				width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9 : 1000,
@@ -241,7 +241,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			localStorage.removeItem(list[i]);
 		}
@@ -1363,7 +1363,8 @@ class App extends Component{
 					}
 		          {
 					(()=>{
-					return this.state.dbTradeBinance.map((option) => (
+					if(this.state.dbTradeBinance.length > 0)
+					{return this.state.dbTradeBinance.map((option) => (
 					<div  key={option.key}>
 					<ReactEchartsCore
 			          echarts={echarts}
@@ -1381,7 +1382,7 @@ class App extends Component{
 					  }}
 				    />	
 				    </div>
-					))
+					))}
 					})()						
 				}
 			</TabContainer>}
