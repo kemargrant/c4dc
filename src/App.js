@@ -91,6 +91,7 @@ class App extends Component{
 			binanceProgress:{},
 			bittrexPercentage:0,
 			binanceStatus:{},
+			binanceStatusTime:{},
 			border:{
 			    color:"#f9431a",
 			        lineStyle: {
@@ -132,7 +133,7 @@ class App extends Component{
 			},				
 			connected:false,
 			liquidTrades:true,
-			liquidTradesBinance:true,
+			liquidTradesBinance:{},
 			log:"",
 			logLevel:0,
 			lowerLimit:89,
@@ -356,12 +357,14 @@ class App extends Component{
 
 		if(data.type === "binanceStatus"){
 			let _binanceProgress = this.state.binanceProgress;
+			let _binanceStatusTime = this.state.binanceStatusTime;
 			for(let key in data.value){
 				if(data.value[key] === false){
 					_binanceProgress[key] = 0;
+					_binanceStatusTime[key] = 0;
 				}
 			}			
-			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress});
+			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress,binanceStatusTime:data.time});
 		}			
 		
 		if(data.type === "config"){
@@ -369,10 +372,12 @@ class App extends Component{
 		}
 
 		if(data.type === "configBinance"){
-			let _binance = {};
+			let _binance = {}
 			let _tradingPairs;
+			let _progress = {}
 			for(let i = 0;i < data.pairs.length;i++){
 					_binance[data.pairs[i].pair1] = {}
+					_progress[data.pairs[i].pair1] = 0;
 					_binance[data.pairs[i].pair1]['pairs'] = [data.pairs[i].pair1,data.pairs[i].pair2,data.pairs[i].pair3]
 					_binance[data.pairs[i].pair1][data.pairs[i].pair1] = 0;
 					_binance[data.pairs[i].pair1][data.pairs[i].pair2] = 0;
@@ -381,9 +386,12 @@ class App extends Component{
 			_tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
 			return this.setState({
 				balance:{bittrex:this.state.balance.bittrex,binance:data.balance},
-				liquidTradesBinance:data.liquid,binanceStatus:data.status,
+				liquidTradesBinance:data.liquid,
+				binanceStatus:data.status,
 				binancePairs:data.pairs,
-				binanceB1Minimum:data.minBTC,
+				binanceProgress:_progress,
+				binanceStatusTime:data.time,
+				binanceB1Minimum:data.minB1,
 				binanceC1Minimum:data.minXXX,
 				tradingPairs:_tradingPairs
 			});
@@ -775,6 +783,7 @@ class App extends Component{
 			
 		if(data.type === "orderRemove"){
 			let base;
+			let _pair;
 			let _binanceProgress = this.state.binanceProgress;
 			let _edit_orders = [];			
 			for(let i = 0;i < this.state.orders.length;i++){
@@ -782,19 +791,20 @@ class App extends Component{
 					_edit_orders.push(this.state.orders[i]);
 				}
 				else{
-					this.state.binancePairs.map((v,i)=>{
-						if(this.state.binancePairs[i].pair1 === this.state.orders[i].pair.toLowerCase() || this.state.binancePairs[i].pair2 === this.state.orders[i].pair.toLowerCase() || this.state.binancePairs[i].pair3 ===  this.state.orders[i].pair.toLowerCase() ){
-							base = this.state.binancePairs[i].pair1;
-						}
-					})
+					_pair = this.state.orders[i].pair.toLowerCase();
 				}
 			}
+			this.state.binancePairs.map((v,j)=>{
+				if(this.state.binancePairs[j].pair1 === _pair || this.state.binancePairs[j].pair2 === _pair || this.state.binancePairs[j].pair3 ===  _pair){
+					base = this.state.binancePairs[j].pair1;
+				}
+			});
 			if(this.state.autosave){
 				localStorage.setItem("Orders",JSON.stringify(_edit_orders));
 			}
 			_binanceProgress[base] += 1;
-			if (_binanceProgress[base] === 3){
-				_binanceProgress[base] = 0;
+			if (_binanceProgress[base] === 4){
+				_binanceProgress[base] = 2;
 			}
 			return this.setState({orders:_edit_orders,binanceProgress:_binanceProgress});
 		}				
@@ -1001,7 +1011,7 @@ class App extends Component{
 
 	updateLiquidTradeBinance(evt,checked){
 		this.setState({liquidTradesBinance:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked}),this.state.privatekey).toString());
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked,"pair":evt.currentTarget.id}),this.state.privatekey).toString());
 	}		
 	
 	updateLowerLimit(evt){
@@ -1233,8 +1243,18 @@ class App extends Component{
 				}
 				return p.map((Pair) => (
 				<div key={Pair[0]}>
-					{this.state.binanceProgress[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> : ""}
+					{this.state.binanceProgress[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/4} /> : ""}
 					{this.state.binanceStatus[Pair[0]] ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
+					{
+						this.state.binanceStatusTime[Pair[0]] ?
+						(()=>{
+						 return (<b>
+							<br/>
+							{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+						 </b>)
+						})()
+						: ""
+					}
 					<div className="monitorToggle">
 					<FormGroup>
 				        <FormControlLabel
@@ -1275,7 +1295,7 @@ class App extends Component{
 								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].slice(3,Pair[0].length)]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].slice(0,3)]).toFixed(2)+'%' : ""}</td>
 								<td>100%</td>
 								<td>1</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] : ""}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]].toFixed(1) : ""}</td>
 							</TableRow>
 							<TableRow>
 								<td>{Pair[1][1].slice(3,Pair[1][1].length).toUpperCase()}</td>
@@ -1314,7 +1334,7 @@ class App extends Component{
 					</TableRow>		
 					<TableRow>
 						<td>{Pair[0].slice(0,3).toUpperCase()}</td>
-						<td  className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={Pair[0]} value={this.state.binanceC1Minimum[Pair[0]]} onChange={this.updateBinanceC1Minimum} /> </td>
+						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={Pair[0]} value={this.state.binanceC1Minimum[Pair[0]]} onChange={this.updateBinanceC1Minimum} /> </td>
 						<td>{this.state.binanceC1Minimum[Pair[0]]}</td>						
 						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0]]).toFixed(5) : ""}</td>
 						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0]]).toFixed(5) : ""}</td>
@@ -1625,18 +1645,6 @@ class App extends Component{
 			        <CardContent>
 			            <Typography type="title">Binance Config</Typography>
 			            <br/>
-						 <div className="Switches">
-						<FormGroup>
-				        <FormControlLabel
-						  label="Liquid Trades"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.liquidTradesBinance}
-					              onChange={this.updateLiquidTradeBinance}
-				            /> }
-				        />
-				        </FormGroup>
-				        </div>				       
 				        {
 							(()=>{
 							let p = [];
@@ -1645,7 +1653,20 @@ class App extends Component{
 							}
 							return p.map((Pair) => (
 							<div key={Pair[0]}>
-							<InputLabel>Minimum Order({Pair[0]})</InputLabel>
+							 <div className="Switches">
+							<FormGroup>
+					        <FormControlLabel
+							  id={Pair[0]}
+							  label="Liquid Trades"
+							  style={{margin:"auto"}}
+					          control={<Switch
+						              checked={this.state.liquidTradesBinance[Pair[0]]}
+						              onChange={this.updateLiquidTradeBinance}
+					            /> }
+					        />
+					        </FormGroup>
+					        </div>	
+							<InputLabel>Minimum {Pair[0].slice(3,Pair[0].length).toUpperCase()} Order</InputLabel>
 							<br/>
 							<Input type="number" id={Pair[0]} inputProps={{min: "0",step: "0.000001" }} value={this.state.binanceB1Minimum[Pair[0]]} onChange={this.updateBinanceB1Minimum}/>
 							<br/>
@@ -1743,7 +1764,7 @@ class App extends Component{
 		          id="long-menu"
 		          anchorEl={this.state.menuAnchor}
 		          open={this.state.menu_open}
-		          onRequestClose={this.menuClose}
+		          onClose={this.menuClose}
 		          PaperProps={{
 		            style: {
 		              maxHeight: 48 * 4.5,
