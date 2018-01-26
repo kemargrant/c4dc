@@ -5,6 +5,7 @@ import Enc from 'crypto-js/enc-utf8';
 import Typography from 'material-ui/Typography';
 import AppBar  from 'material-ui/AppBar';
 import AutoRenew from 'material-ui-icons/Autorenew';
+import Badge from 'material-ui/Badge';
 import Button from 'material-ui/Button';
 import BubbleChart from 'material-ui-icons/BubbleChart';
 import Card, { CardActions, CardContent,CardHeader } from 'material-ui/Card';
@@ -21,6 +22,8 @@ import Snackbar from 'material-ui/Snackbar';
 import Switch from 'material-ui/Switch';
 import Table,{TableBody,TableCell,TableHead,TableRow} from 'material-ui/Table';
 import Tabs, {Tab} from 'material-ui/Tabs';
+import TrendingDown from 'material-ui-icons/TrendingDown';
+import TrendingUp from 'material-ui-icons/TrendingUp';
 import ReactEchartsCore from 'echarts-for-react/lib/core';
 import echarts from 'echarts/lib/echarts';
 import 'echarts/lib/chart/line';
@@ -54,7 +57,7 @@ class App extends Component{
 				},
 				title : {
 						text:"Binance Meter",
-						show:true,
+						show:false,
 		            },				
 				series:[{
 						axisLine:{
@@ -65,7 +68,7 @@ class App extends Component{
 						splitLine: {          
 			                length:document.documentElement.clientHeight > 0 ? (document.documentElement.clientHeight/1.9)/15 : 500/15,      
 			                lineStyle: {
-			                    color: 'blue'
+			                    color: 'gold'
 			                }
 			            },
 						radius:"90%",
@@ -85,13 +88,55 @@ class App extends Component{
 						data: [{value: 0, name: "Percent"}]
 					}]
 			},
+			bittrexGauge:{
+				tooltip : {
+					formatter: "{c}"
+				},
+				title : {
+						text:"Bittrex Meter",
+						show:false,
+		            },				
+				series:[{
+						axisLine:{
+							lineStyle:{
+								width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9/120 : 100/12,
+							}
+						},
+						splitLine: {          
+			                length:document.documentElement.clientHeight > 0 ? (document.documentElement.clientHeight/1.9)/15 : 500/15,      
+			                lineStyle: {
+			                    color: 'blue'
+			                }
+			            },
+						radius:"90%",
+						name:"Percent",
+						type: 'gauge',
+						splitNumber: 16,
+						min: 98.8,
+						max:101.2,
+						detail:{
+			                formatter:"{value}",
+			                textBorderColor: 'aliceblue',
+			                fontFamily: 'Roboto',
+			                fontSize:15,
+			                width: 100,
+			                color: 'black',
+			            },
+						data: [{value: 0, name: "Percent"}]
+					}]
+			},			
 			binancePairs:[],
 			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {},
 			bittrexProfit:JSON.parse(localStorage.getItem("Bittrex_Profit"))? JSON.parse(localStorage.getItem("Bittrex_Profit")) : {btc:0},
 			binanceProgress:{},
+			bittrexProgress:0,
 			bittrexPercentage:0,
 			binanceStatus:{},
+			bittrexStatus:true,
 			binanceStatusTime:{},
+			binanceUserStreamStatus:false,
+			bittrexSocketStatus:false,
+			bittrexStatusTime:0,
 			border:{
 			    color:"#f9431a",
 			        lineStyle: {
@@ -139,12 +184,8 @@ class App extends Component{
 			lowerLimit:89,
 			menuAnchor: null,
 			menu_open:false,
-			option:{
-				xAxis:{type:'time'},
-				yAxis:{type:'value'}
-			},
 			orders:JSON.parse(localStorage.getItem("Orders"))? JSON.parse(localStorage.getItem("Orders")):[],
-			previous:JSON.parse(localStorage.getItem("Previous_Connections"))? JSON.parse(localStorage.getItem("Previous_Connections")) : ["Full History"],
+			previous:JSON.parse(localStorage.getItem("Previous_Connections"))? JSON.parse(localStorage.getItem("Previous_Connections")) : [],
 			percentage1:null,
 			percentage2:null,
 			pollingRate:0,
@@ -263,18 +304,9 @@ class App extends Component{
 	
 	connect(net){
 		this.setState({menuAnchor:null,menu_open:false});
-		if(net === "Full History"){
-			return this.getBittrexDBHistory();
-		}
-		else{
-			return this.setState({websocketNetwork:net.split(':')[1].replace('//',''),port:Number(net.split(':')[2])},()=>{
-				return this.begin();
-			});
-		}
-	}	
-	
-	getBittrexDBHistory(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"history"}),this.state.privatekey).toString());
+		return this.setState({websocketNetwork:net.split(':')[1].replace('//',''),port:Number(net.split(':')[2])},()=>{
+			return this.begin();
+		});
 	}	
 	
 	getBittrexDBTrade(){
@@ -364,11 +396,19 @@ class App extends Component{
 					_binanceStatusTime[key] = 0;
 				}
 			}			
-			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress,binanceStatusTime:data.time});
+			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
 		}			
+
+		if(data.type === "bittrexStatus"){
+			let _bittrexProgress = this.state.bittrexProgress;
+			if(data.value !== true){
+				_bittrexProgress = 0;
+			}			
+			return this.setState({bittrexStatus:data.value,bittrexProgress:_bittrexProgress,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
+		}
 		
 		if(data.type === "config"){
-			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100});
+			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100,bittrexStatus:data.status,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
 		}
 
 		if(data.type === "configBinance"){
@@ -391,23 +431,13 @@ class App extends Component{
 				binancePairs:data.pairs,
 				binanceProgress:_progress,
 				binanceStatusTime:data.time,
+				binanceUserStreamStatus:data.ustream,
 				binanceB1Minimum:data.minB1,
 				binanceC1Minimum:data.minXXX,
 				tradingPairs:_tradingPairs
 			});
 		}		
 					
-		if(data.type === "db_history"){
-			let date;
-			let new_option = this.state.option; 
-			let v = [];
-			for(let k=0;k<data.info.length;k++){
-				date = new Date(data.info[k].Time);
-				v.push({value:[date,data.info[k].Percent],name:date.toString()});
-			}
-			new_option.series = [{sampling:"average",smooth:true,animation:false,name:'Percentages',type:'line',data:v,markLine:this.state.border}];
-			return this.setState({option:new_option});
-		}	
 		if(data.type === "db_trade"){
 			if(!this.state.tradingPairs.misc){
 				let _temp = this.state.tradingPairs;
@@ -659,109 +689,6 @@ class App extends Component{
 			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit});
 		}				
 		
-		if(data.type === "history"){
-			if(this.state.autosave && !this.state.previous.includes("ws://"+this.state.websocketNetwork+":"+this.state.port)){
-				let prev = this.state.previous.slice();
-				prev.push("ws://"+this.state.websocketNetwork+":"+this.state.port);
-				localStorage.setItem("Previous_Connections",JSON.stringify(prev));
-				this.setState({previous:prev});
-			}
-			try{
-				let dates;
-				let v = [];
-				if(data.bittrex_history2){ 
-					dates = data.bittrex_history2.length > 0 ? data.bittrex_history2 : []; 
-				}	
-				for(let k=0;k<dates.length;k++){
-					v.push({value:[new Date(dates[k]),data.bittrex_history1[k]],name:new Date(dates[k]).toString()});
-				}
-				let option = {
-					animation:false,
-		            dataZoom:[
-				            {
-				            show: true,
-				            realtime: true,
-				            start: 80,
-				            end: 100
-				        },
-				    ],
-		            tooltip:{
-		                trigger: 'axis',
-						formatter: function(params){
-							params = params[0];
-							return params.name.split("GMT")[0]+ '/' + params.value[1].toFixed(2);
-						},            
-		            },
-		            legend: {
-						textStyle:{
-							color:'white'
-							},
-		                data:['Percentage']
-		            },
-		            toolbox:{
-						feature:{restore:{}}
-		            },
-		            grid: {
-						top:'2%',
-		                left: '3%',
-		                right: '3%',
-		                bottom: '15%',
-		                containLabel: true
-		            },
-		            xAxis:[
-						{
-							axisLabel:{color:"#fbfcfb"},
-							axisLine: {onZero: false},
-							boundaryGap : false,
-		                    type : 'time',
-		                    splitLine:{
-								show: true,
-								lineStyle:{
-									type:'dashed',
-									width:1
-								}
-							},					
-		                }
-		            ],
-		            yAxis:[
-						{
-							axisLabel:{color:"#fbfcfb"},
-							min:99.1,
-							max:100.9,
-		                    type : 'value',
-		                    boundaryGap: [0, '100%'],
-		                    splitNumber:5,
-		                    splitLine: {
-								show:true,
-								lineStyle:{type:'dashed',width:1}
-							}
-		                }
-		            ],
-		            backgroundColor:"black",
-		            series:[
-		                {
-							lineStyle:{normal:{width:4.5}},
-							animation:false,
-							color:["green"],
-							animationDuration:4000,
-							animationEasing: 'CubicOut',
-		                    name:'Percentage',
-		                    type:'line',
-		                    smooth:'true',
-		                    data:v,
-		                    markLine:this.state.border,
-		                },
-		            ]
-		        }
-				let _bittrexPercentage = data.bittrex_history1 ? data.bittrex_history1[data.bittrex_history1.length-1] : 0;
-				this.setState({option:option,bittrexPercentage:_bittrexPercentage});
-				return;
-			}
-			catch(e){
-				return this.toast(e);
-			}
-		}	
-			
 		if(data.type === "log"){
 			this.setState({log:data.log+'\r\n<----------->\r\n'+this.state.log+'\r\n'});
 		}	
@@ -783,14 +710,17 @@ class App extends Component{
 			
 		if(data.type === "orderRemove"){
 			let base;
+			let exchange;
 			let _pair;
 			let _binanceProgress = this.state.binanceProgress;
+			let _bittrexProgress = this.state.bittrexProgress;
 			let _edit_orders = [];			
 			for(let i = 0;i < this.state.orders.length;i++){
 				if(this.state.orders[i].order_id !== data.order_id){
 					_edit_orders.push(this.state.orders[i]);
 				}
 				else{
+					exchange = this.state.orders[i].exchange;
 					_pair = this.state.orders[i].pair.toLowerCase();
 				}
 			}
@@ -799,19 +729,27 @@ class App extends Component{
 					base = this.state.binancePairs[j].pair1;
 				}
 			});
+			if(exchange === "Binance"){
+				_binanceProgress[base] += 1;
+				if (_binanceProgress[base] === 3){
+					_binanceProgress[base] = 0;
+				}
+			}
+			else{
+				_bittrexProgress += 1;
+				if (_bittrexProgress === 3){
+					_bittrexProgress = 0;
+				}
+			}
 			if(this.state.autosave){
 				localStorage.setItem("Orders",JSON.stringify(_edit_orders));
-			}
-			_binanceProgress[base] += 1;
-			if (_binanceProgress[base] === 4){
-				_binanceProgress[base] = 2;
-			}
-			return this.setState({orders:_edit_orders,binanceProgress:_binanceProgress});
+			}			
+			return this.setState({orders:_edit_orders,binanceProgress:_binanceProgress,bittrexProgress:_bittrexProgress});
 		}				
 			
 		if(data.type === "percentage"){
+			if(!Number(data.percentage)){return;}
 			let _tradingPairs = {bittrex:{},binance:this.state.tradingPairs.binance}
-			let date = new Date();
 			for(let key in data){
 				if(key.search('-') > -1){
 					_tradingPairs.bittrex[key.toLowerCase().replace('-','_')] = data[key];
@@ -820,22 +758,12 @@ class App extends Component{
 					}
 				}
 			}
-			let v = this.state.option.series ? this.state.option.series[0].data.slice() : []
-			v.push({value:[date,data.percentage],name:date.toString()})
-			let new_option = this.state.option; 
-			new_option.series = [{
-				animation:false,
-				lineStyle:{normal:{width:5}},
-				name:'Percentage',
-				type:'line',
-				data:v,
-				smooth:true,
-				markLine:this.state.border
-			}];
+			let _bittrexGauge = this.state.bittrexGauge;
+			_bittrexGauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
 			if(this.state.autosave){
 				localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
 			}
-			return this.setState({option:new_option,tradingPairs:_tradingPairs,bittrexPercentage:data.percentage});
+			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:_bittrexGauge});
 		}		
 	
 		if(data.type === "poll_rate"){
@@ -912,7 +840,12 @@ class App extends Component{
 		_binanceStatus[pair] = checked;
 		this.setState({binanceStatus:_binanceStatus});
 		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceMonitor","bool":checked,"pair":pair}),this.state.privatekey).toString());				
-	}	
+	}
+	
+	forceMonitorBittrex(checked){
+		this.setState({bittrexStatus:checked});
+		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrexMonitor","bool":checked}),this.state.privatekey).toString());				
+	}		
 			
 	menuOpen(evt){
 		return this.setState({menuAnchor:evt.currentTarget,menu_open:true});
@@ -1130,8 +1063,8 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={<img className="bittrexImg" alt="Bittrex Logo" src="https://pbs.twimg.com/profile_images/552616908093001728/97DIMDFd_400x400.png"/>}></Tab>
-				<Tab label="Binance" icon={<img className="binanceImg" alt="Binance Logo" src="https://resource.binance.com/resources/img/favicon.ico" />}></Tab>				
+				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
+				<Tab label="Binance" icon={this.state.binanceUserStreamStatus ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>				
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1142,98 +1075,103 @@ class App extends Component{
 			<div className="body">     
 			{this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
+				{this.state.bittrexProgress > 0 ? <LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> : ""}
+				{this.state.bittrexStatus ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
 				<ReactEchartsCore
 				  echarts={echarts}
-				  option={this.state.option}
-				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
-				  notMerge={true}
-				  lazyUpdate={true}
-				  onEvents={{
-					  'legendselectchanged':(evt)=>{
-						 return this.state.option.legend.selected = evt.selected;
-						 },	
-					  'dataZoom': (zoom)=>{
-						  //mutate state directly for smoother experience;
-						  return this.state.option.dataZoom =({start:zoom.start,end:zoom.end});
-						}
-				  }}
-				   />
+				  option={this.state.bittrexGauge}
+				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+				   />	
+				<div className="monitorToggle">
+				<FormGroup>
+			        <FormControlLabel
+					  label={!this.state.bittrexStatus ? "Active" : "Paused"}
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={!this.state.bittrexStatus}
+				              onChange={(event, checked) => {
+								  this.forceMonitorBittrex(!checked)
+								}}
+							/>}
+			        />
+				</FormGroup>
+				</div>   
 				</div>
-					<Table>
-					<TableHead>
-						<TableRow>
-							<th data-field="">Asset</th>
-							<th data-field="">Balance</th>
-							<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}/Ratio</th>
-							<th data-field="">BTC/Ratio</th>
-							<th data-field="">&#8224;BTC</th>
-							<th data-field="">&#8224;USDT</th>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						<TableRow>
-							<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>	
-							<td>{this.state.balance.bittrex[this.state.tradingPairs.misc]}</td>	
-							<td>100%</td>				
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] * this.state.balance.bittrex[this.state.tradingPairs.misc]*100/this.state.balance.bittrex.btc).toFixed(2)+'%' : ""}</td>
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc].toFixed(7) : ""}</td>
-							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc].toFixed(1) : ""}</td>
-						</TableRow>
-						<TableRow>
-							<td>BTC</td>	
-							<td>{this.state.balance.bittrex.btc}</td>
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc/this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] *100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(2)+'%' : ""}</td>
-							<td>100%</td>
-							<td>1</td>
-							<td>{this.state.tradingPairs.bittrex.usdt_btc ? this.state.tradingPairs.bittrex.usdt_btc.toFixed(1) : "" }</td>
-						</TableRow>
-						<TableRow>
-							<td>USDT</td>
-							<td>{this.state.balance.bittrex.usdt ? this.state.balance.bittrex.usdt.toFixed(7) : 0}</td>
-							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc])/this.state.balance.bittrex[this.state.tradingPairs.misc])).toFixed(2)+ '%' : ""}</td>
-							<td>{this.state.tradingPairs.bittrex.usdt_btc ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex.usdt_btc)/this.state.balance.bittrex.btc)).toFixed(2)+ '%' : ""}</td>						
-							<td>{this.state.tradingPairs.bittrex.usdt_btc ? (1/this.state.tradingPairs.bittrex.usdt_btc).toFixed(7) : "" }</td>
-							<td>1</td>
-						</TableRow>										
-					</TableBody>
-					</Table> 
-					<Table>
-					<TableHead>
-						<TableRow>
-							<th data-field="">Trade</th>
-							<th data-field="">%</th>
-							<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</th>
-							<th data-field="">BTC</th>
-							<th data-field="">USDT</th>
-							<th data-field="">Status</th>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						<TableRow>
-							<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>
-							<td className="td_input"> <Input type="number" step={1} max={100} min={0} value={this.state.percentage1 * 100} onChange={this.updatePercentage1} /> </td>
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1).toFixed(5) : 0}</td>
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-							<td>{(this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 * this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) > 0.0001 && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.btc && (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
-						</TableRow>
-						<TableRow>
-							<td>BTC</td>
-							<td  className="td_input"> <Input step={1} type="number" max={100} min={0} value={this.state.percentage2 * 100} onChange={this.updatePercentage2} /> </td>
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>						
-							<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2).toFixed(5) : 0}</td>
-							<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-							<td>{(this.state.balance.bittrex.btc * this.state.percentage2) > 0.0001 &&	(this.state.balance.bittrex.btc * this.state.percentage2) < this.state.balance.bittrex.btc && (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
-						</TableRow>		
-					</TableBody>
-					</Table> 	
+				<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Asset</th>
+						<th data-field="">Balance</th>
+						<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}/Ratio</th>
+						<th data-field="">BTC/Ratio</th>
+						<th data-field="">&#8224;BTC</th>
+						<th data-field="">&#8224;USDT</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>	
+						<td>{this.state.balance.bittrex[this.state.tradingPairs.misc]}</td>	
+						<td>100%</td>				
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] * this.state.balance.bittrex[this.state.tradingPairs.misc]*100/this.state.balance.bittrex.btc).toFixed(2)+'%' : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc].toFixed(7) : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc].toFixed(1) : ""}</td>
+					</TableRow>
+					<TableRow>
+						<td>BTC</td>	
+						<td>{this.state.balance.bittrex.btc}</td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc/this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] *100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(2)+'%' : ""}</td>
+						<td>100%</td>
+						<td>1</td>
+						<td>{this.state.tradingPairs.bittrex.usdt_btc ? this.state.tradingPairs.bittrex.usdt_btc.toFixed(1) : "" }</td>
+					</TableRow>
+					<TableRow>
+						<td>USDT</td>
+						<td>{this.state.balance.bittrex.usdt ? this.state.balance.bittrex.usdt.toFixed(7) : 0}</td>
+						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc])/this.state.balance.bittrex[this.state.tradingPairs.misc])).toFixed(2)+ '%' : ""}</td>
+						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex.usdt_btc)/this.state.balance.bittrex.btc)).toFixed(2)+ '%' : ""}</td>						
+						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (1/this.state.tradingPairs.bittrex.usdt_btc).toFixed(7) : "" }</td>
+						<td>1</td>
+					</TableRow>										
+				</TableBody>
+				</Table> 
+				<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Trade</th>
+						<th data-field="">%</th>
+						<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</th>
+						<th data-field="">BTC</th>
+						<th data-field="">USDT</th>
+						<th data-field="">Status</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>
+						<td className="td_input"> <Input type="number" step={1} max={100} min={0} value={this.state.percentage1 * 100} onChange={this.updatePercentage1} /> </td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1).toFixed(5) : 0}</td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 * this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) > 0.002 && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.btc && (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
+					</TableRow>
+					<TableRow>
+						<td>BTC</td>
+						<td  className="td_input"> <Input step={1} type="number" max={100} min={0} value={this.state.percentage2 * 100} onChange={this.updatePercentage2} /> </td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>						
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2).toFixed(5) : 0}</td>
+						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.state.balance.bittrex.btc * this.state.percentage2) > 0.002 &&	(this.state.balance.bittrex.btc * this.state.percentage2) < this.state.balance.bittrex.btc && (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
+					</TableRow>		
+				</TableBody>
+				</Table> 	
 			</TabContainer>}
 			{this.state.tabValue === 1 && <TabContainer>
 			<ReactEchartsCore
-				  echarts={echarts}
-				  option={this.state.binanceGauge}
-				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-				   />	
+			  echarts={echarts}
+			  option={this.state.binanceGauge}
+			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+			   />	
 			{
 				
 				(()=>{
@@ -1243,7 +1181,7 @@ class App extends Component{
 				}
 				return p.map((Pair) => (
 				<div key={Pair[0]}>
-					{this.state.binanceProgress[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/4} /> : ""}
+					{this.state.binanceProgress[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> : ""}
 					{this.state.binanceStatus[Pair[0]] ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
 					{
 						this.state.binanceStatusTime[Pair[0]] ?
@@ -1664,6 +1602,7 @@ class App extends Component{
 						              onChange={this.updateLiquidTradeBinance}
 					            /> }
 					        />
+					        ({Pair[0]})
 					        </FormGroup>
 					        </div>	
 							<InputLabel>Minimum {Pair[0].slice(3,Pair[0].length).toUpperCase()} Order</InputLabel>
