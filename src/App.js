@@ -5,7 +5,6 @@ import Enc from 'crypto-js/enc-utf8';
 import Typography from 'material-ui/Typography';
 import AppBar  from 'material-ui/AppBar';
 import AutoRenew from 'material-ui-icons/Autorenew';
-import Badge from 'material-ui/Badge';
 import Button from 'material-ui/Button';
 import BubbleChart from 'material-ui-icons/BubbleChart';
 import Card, { CardActions, CardContent,CardHeader } from 'material-ui/Card';
@@ -272,10 +271,16 @@ class App extends Component{
 			}
 			return this.faux_socket(e.data);
 		};	
+		let _previous = this.state.previous;
 		if(this.state.autosave && this.state.privatekey){
 			localStorage.setItem("xxpkeyxx",this.state.privatekey);
+			var network = "ws://"+this.state.websocketNetwork+":"+this.state.port;
+			if(_previous.indexOf(network) === -1){
+				_previous.push(network);
+				localStorage.setItem("Previous_Connections",JSON.stringify(_previous));
+			}
 		}
-		return this.setState({socketMessage:function(x){return bsocket.postMessage(x)}});
+		return this.setState({previous:_previous,bsocket:bsocket});
 	}
 	
 	changeTab(evt,value){
@@ -296,8 +301,11 @@ class App extends Component{
 	}		
 
 	componentDidMount(){
-		if(this.state.autoconnect === true && this.state.previous.length > 1){
-			this.connect(this.state.previous[1]);
+		if(this.state.autoconnect === true && this.state.previous.length > 0){
+			this.connect(this.state.previous[0]);
+		}
+		else if(this.state.previous[0]){
+			this.setState({websocketNetwork:this.state.previous[0].split(':')[1].replace('//',''),port:Number(this.state.previous[0].split(':')[2])});
 		}
 		return;
 	}
@@ -307,25 +315,16 @@ class App extends Component{
 		return this.setState({websocketNetwork:net.split(':')[1].replace('//',''),port:Number(net.split(':')[2])},()=>{
 			return this.begin();
 		});
-	}	
-	
-	getBittrexDBTrade(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"trade"}),this.state.privatekey).toString());
-	}		
-						
-	getOrders(){
-		this.clearOrders();
-		this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binance_orders"}),this.state.privatekey).toString());
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_orders"}),this.state.privatekey).toString());
-	}		
-	
-	getPollingRate(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"poll_rate"}),this.state.privatekey).toString());			
 	}					
+	
+	end(){
+		this.state.bsocket.terminate();
+		return this.setState({bsocket:null,connected:false,bittrexSocketStatus:false,binanceUserStreamStatus:false,binancePairs:[],bittrexStatus:true});
+	}
 	
 	faux_socket(data){
 		if(data === 0){
-			this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"connect"}),this.state.privatekey).toString());
+			this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"connect"}),this.state.privatekey).toString());
 			return this.setState({connected:true});
 		}
 		try{
@@ -839,13 +838,27 @@ class App extends Component{
 		let _binanceStatus = this.state.binanceStatus;
 		_binanceStatus[pair] = checked;
 		this.setState({binanceStatus:_binanceStatus});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceMonitor","bool":checked,"pair":pair}),this.state.privatekey).toString());				
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceMonitor","bool":checked,"pair":pair}),this.state.privatekey).toString());				
 	}
 	
 	forceMonitorBittrex(checked){
 		this.setState({bittrexStatus:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrexMonitor","bool":checked}),this.state.privatekey).toString());				
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrexMonitor","bool":checked}),this.state.privatekey).toString());				
 	}		
+
+	getBittrexDBTrade(){
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_db","db":"trade"}),this.state.privatekey).toString());
+	}		
+						
+	getOrders(){
+		this.clearOrders();
+		this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binance_orders"}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_orders"}),this.state.privatekey).toString());
+	}		
+	
+	getPollingRate(){
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"poll_rate"}),this.state.privatekey).toString());			
+	}	
 			
 	menuOpen(evt){
 		return this.setState({menuAnchor:evt.currentTarget,menu_open:true});
@@ -911,45 +924,45 @@ class App extends Component{
 	}	
 
 	updateBinanceBalance(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binance_balance"}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binance_balance"}),this.state.privatekey).toString());
 	}			
 
 	updateBinanceB1Minimum(evt){
 		let _B1Min = this.state.binanceB1Minimum;
 		_B1Min[evt.currentTarget.id] = evt.currentTarget.value;
 		this.setState({binanceB1Minimum:_B1Min});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceB1Minimum","min":evt.currentTarget.value,"pair":evt.currentTarget.id}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceB1Minimum","min":evt.currentTarget.value,"pair":evt.currentTarget.id}),this.state.privatekey).toString());			
 	}
 	
 	updateBinanceC1Minimum(evt){	
 		let _C1Min = this.state.binanceC1Minimum;
 		_C1Min[evt.currentTarget.id] = evt.currentTarget.value;		
 		this.setState({binanceC1Minimum:_C1Min});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"binanceC1Minimum","min":evt.currentTarget.value,"pair":evt.currentTarget.id}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceC1Minimum","min":evt.currentTarget.value,"pair":evt.currentTarget.id}),this.state.privatekey).toString());			
 	}	
 
 	updateLogLevel(evt){
 		this.setState({logLevel:evt.currentTarget.value});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"logs","logLevel":evt.currentTarget.value}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"logs","logLevel":evt.currentTarget.value}),this.state.privatekey).toString());			
 	}	
 			
 	updateBittrexBalance(){
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"bittrex_balance"}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_balance"}),this.state.privatekey).toString());
 	}					
 
 	updateLiquidTrade(evt,checked){
 		this.setState({liquidTrades:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTrade","bool":checked}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"liquidTrade","bool":checked}),this.state.privatekey).toString());
 	}
 
 	updateLiquidTradeBinance(evt,checked){
 		this.setState({liquidTradesBinance:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked,"pair":evt.currentTarget.id}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"liquidTradeBinance","bool":checked,"pair":evt.currentTarget.id}),this.state.privatekey).toString());
 	}		
 	
 	updateLowerLimit(evt){
 		this.setState({lowerLimit:evt.currentTarget.value});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"lowerLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"lowerLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
 	}
 	
 	updateNetwork(evt){
@@ -963,12 +976,12 @@ class App extends Component{
 	
 	updatePercentage1(evt){
 		this.setState({percentage1:evt.currentTarget.value/100});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage1":evt.currentTarget.value/100,"percentage2":this.state.percentage2}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage1":evt.currentTarget.value/100,"percentage2":this.state.percentage2}),this.state.privatekey).toString());
 	}
 	
 	updatePercentage2(evt){
 		this.setState({percentage2:evt.currentTarget.value/100});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage2":evt.currentTarget.value/100,"percentage1":this.state.percentage1}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage2":evt.currentTarget.value/100,"percentage1":this.state.percentage1}),this.state.privatekey).toString());			
 	}		
 
 	updatePkey(evt){
@@ -992,24 +1005,24 @@ class App extends Component{
 	updatePollingRate(evt){
 		let rate = evt.currentTarget.value; 
 		this.setState({pollingRate:rate * 1000});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
 	}	
 
 	updateSanity(evt,checked){
 		this.setState({sanity:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"sanity","bool":checked}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"sanity","bool":checked}),this.state.privatekey).toString());
 	}
 
 	updateSwingPercentage(evt){
 		let rate = evt.currentTarget.value; 
 		this.setState({swingPercentage:rate});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingPercentage","percentage":rate}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"swingPercentage","percentage":rate}),this.state.privatekey).toString());
 	}
 	
 	updateSwingPollingRate(evt){
 		let rate = evt.currentTarget.value; 
 		this.setState({swingPollingRate:rate * 1000});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingPoll","rate":rate}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"swingPoll","rate":rate}),this.state.privatekey).toString());
 	}	
 		
 	updateSwingPrice(){
@@ -1042,12 +1055,12 @@ class App extends Component{
 		
 	updateSwingTrade(evt,checked){
 		this.setState({swingTrade:checked});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"swingTrade","bool":checked}),this.state.privatekey).toString());
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"swingTrade","bool":checked}),this.state.privatekey).toString());
 	}		
 
 	updateUpperLimit(evt){
 		this.setState({upperLimit:evt.currentTarget.value});
-		return this.state.socketMessage(AES.encrypt(JSON.stringify({"command":"upperLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"upperLimit","limit":evt.currentTarget.value}),this.state.privatekey).toString());			
 	}		
 		
 	webNotify(checked){
@@ -1076,7 +1089,7 @@ class App extends Component{
 			{this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
 				{this.state.bittrexProgress > 0 ? <LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> : ""}
-				{this.state.bittrexStatus ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
+				{this.state.bittrexStatus && this.state.bittrexProgress > 0 ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
 				<ReactEchartsCore
 				  echarts={echarts}
 				  option={this.state.bittrexGauge}
@@ -1173,7 +1186,6 @@ class App extends Component{
 			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
 			   />	
 			{
-				
 				(()=>{
 				let p = [];
 				for(let i=0;i < this.state.binancePairs.length;i++){
@@ -1441,6 +1453,9 @@ class App extends Component{
 				              onChange={(event, checked) => {
 								  if(checked){
 									  return this.begin();
+								  }
+								  else{
+									  return this.end();
 								  }
 								}}
 							/>}
@@ -1712,7 +1727,7 @@ class App extends Component{
 		          }}
 		        >
 		       {this.state.previous.map(option => (
-		            <MenuItem key={option} selected={this.state.previous.length > 1 ? option === this.state.previous[1] : false} onClick={()=>{this.connect(option)}}>
+		            <MenuItem key={option} onClick={()=>{this.connect(option)}}>
 		              {option}
 		            </MenuItem>
 		          ))}
