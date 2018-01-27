@@ -1089,7 +1089,12 @@ class App extends Component{
 			{this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
 				{this.state.bittrexProgress > 0 ? <LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> : ""}
-				{this.state.bittrexStatus && this.state.bittrexProgress > 0 ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
+				{
+					this.state.bittrexStatusTime > 0 ? 
+					((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage" : ""
+				} 
+				<br/>
+				{this.state.bittrexStatus && this.state.bittrexStatusTime > 0 ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
 				<ReactEchartsCore
 				  echarts={echarts}
 				  option={this.state.bittrexGauge}
