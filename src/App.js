@@ -1198,7 +1198,7 @@ class App extends Component{
 				}
 				return p.map((Pair) => (
 				<div key={Pair[0]}>
-					{this.state.binanceProgress[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> : ""}
+					{this.state.binanceStatusTime[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> : ""}
 					{this.state.binanceStatus[Pair[0]] ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
 					{
 						this.state.binanceStatusTime[Pair[0]] ?
