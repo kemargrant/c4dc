@@ -134,6 +134,7 @@ class App extends Component{
 			bittrexStatus:true,
 			binanceStatusTime:{},
 			binanceUserStreamStatus:false,
+			bittrexBook:{1:{"Bids":{},"Asks":{}},2:{"Bids":{},"Asks":{}},3:{"Bids":{},"Asks":{}}},
 			bittrexSocketStatus:false,
 			bittrexStatusTime:0,
 			border:{
@@ -208,11 +209,13 @@ class App extends Component{
 			upperLimit:101.79,
 			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
+			viewBittrexBook:false
 		}
 		this.changeTab = this.changeTab.bind(this);	
 		this.clearData = this.clearData.bind(this);
 		this.clearOrders = this.clearOrders.bind(this);
 		this.connect = this.connect.bind(this);		
+		this.forceBittrexView = this.forceBittrexView.bind(this);
 		this.getBittrexDBTrade = this.getBittrexDBTrade.bind(this);
 		this.getOrders = this.getOrders.bind(this);
 		this.getPollingRate = this.getPollingRate.bind(this);
@@ -397,7 +400,21 @@ class App extends Component{
 			}			
 			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
 		}			
-
+		
+		if(data.type === "bittrexBook"){
+			let random = Math.floor(100* Math.random(0,1));
+			//if(random % 5 !== 0 ){return}
+			let keys = Object.keys(data.book);
+				for(let i = 0; i < keys.length;i++){
+					try{
+						data.book[keys[i]]["Sorted"][0] = data.book[keys[i]]["Sorted"][0].reverse().slice(0,7);
+						data.book[keys[i]]["Sorted"][1] = data.book[keys[i]]["Sorted"][1].slice(0,7); 
+					}
+					catch(e){}
+				}
+				return this.setState({bittrexBook:data.book});
+		}
+		
 		if(data.type === "bittrexStatus"){
 			let _bittrexProgress = this.state.bittrexProgress;
 			if(data.value !== true){
@@ -407,7 +424,7 @@ class App extends Component{
 		}
 		
 		if(data.type === "config"){
-			return this.setState({logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100,bittrexStatus:data.status,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
+			return this.setState({viewBittrexBook:data.viewBook,logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100,bittrexStatus:data.status,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
 		}
 
 		if(data.type === "configBinance"){
@@ -834,6 +851,11 @@ class App extends Component{
 		}																									
 	}	
 		
+	forceBittrexView(evt,checked){
+		this.setState({viewBittrexBook:checked});
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_book","bool":checked}),this.state.privatekey).toString());				
+	}	
+		
 	forceMonitorBinance(pair,checked){
 		let _binanceStatus = this.state.binanceStatus;
 		_binanceStatus[pair] = checked;
@@ -884,6 +906,7 @@ class App extends Component{
 				}
 				this.setState({toast:{message:message+'\r\n'+this.state.toast.message,open:true}});
 			}
+			setTimeout(()=>{return this.setState({toast:{open:false}});},2000);
 		}
 		((_message)=>{
 			if(document.hasFocus() || message === "log" || !this.state.webNotify){
@@ -911,7 +934,6 @@ class App extends Component{
 				return setTimeout(n.close.bind(n),5000);
 			}
 		})(message);	
-		return setTimeout(()=>{return this.setState({toast:{open:false}});},2000);
 	}	
 
 	toastNotify(checked){
@@ -1095,15 +1117,10 @@ class App extends Component{
 				} 
 				<br/>
 				{this.state.bittrexStatus && this.state.bittrexStatusTime > 0 ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
-				<ReactEchartsCore
-				  echarts={echarts}
-				  option={this.state.bittrexGauge}
-				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-				   />	
 				<div className="monitorToggle">
 				<FormGroup>
 			        <FormControlLabel
-					  label={!this.state.bittrexStatus ? "Active" : "Paused"}
+					  label={!this.state.bittrexStatus ? "Pause" : "Activate"}
 					  style={{margin:"auto"}}
 			          control={<Switch
 				              checked={!this.state.bittrexStatus}
@@ -1112,8 +1129,125 @@ class App extends Component{
 								}}
 							/>}
 			        />
+				</FormGroup>				
+				</div>
+				<ReactEchartsCore
+				  echarts={echarts}
+				  option={this.state.bittrexGauge}
+				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+				   />					
+				<FormGroup>
+			        <FormControlLabel
+					  label={this.state.viewBittrexBook ? "Close OrderBook" : "Open OrderBook"}
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.state.viewBittrexBook}
+				              onChange={ this.forceBittrexView}
+							/>}
+			        />
 				</FormGroup>
-				</div>   
+				{
+					this.state.viewBittrexBook ? 
+					<div className="orderBooks">
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Amount</th> 		
+					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[0].toLowerCase()} </th>	    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"][1].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Bids"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(order).toFixed(7)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[0].toLowerCase()} </th>
+					    <th>Amount</th> 			    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"][0].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(order).toFixed(7)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Asks"][order]).toFixed(3)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Amount</th> 		
+					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[1].toLowerCase()} </th>	    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][1].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Bids"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(order).toFixed(2)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[1].toLowerCase()} </th>
+					    <th>Amount</th> 			    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][0].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(order).toFixed(2)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Asks"][order]).toFixed(3)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Amount</th> 		
+					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[2].toLowerCase()} </th>	    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][1].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Bids"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(order).toFixed(2)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					<table className="myTable">
+					<tbody>
+					  <tr className="stripeTable">
+					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[2].toLowerCase()} </th>
+					    <th>Amount</th> 			    
+					  </tr>
+						{
+							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][0].map((order) => (
+							<tr key={Math.random(0,1)}>
+								<td className="stripeTable">{Number(order).toFixed(2)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Asks"][order]).toFixed(3)}</td>
+							</tr>
+							))
+						}
+					</tbody>
+					</table>
+					</div>		
+					:""
+				}		
 				</div>
 				<Table>
 				<TableHead>
@@ -1567,6 +1701,14 @@ class App extends Component{
 				          control={<Switch
 					              checked={this.state.liquidTrades}
 					              onChange={this.updateLiquidTrade}
+				            /> }
+				        />
+				        <FormControlLabel
+						  label="View Bittrex Order Book"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.viewBittrexBook}
+					              onChange={this.forceBittrexView}
 				            /> }
 				        />
 				        <FormControlLabel

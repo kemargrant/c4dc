@@ -39,6 +39,10 @@ body{
 
 label{font-size:medium}
 
+.orderBooks{
+display:flex;
+}
+
 .menu{
 	position:absolute;
 	bottom:1em;
@@ -50,6 +54,10 @@ position:absolute;
 top:5.5em;
 }
 
+.myTable{
+width:10em;
+background:aliceblue;
+}
 .c60{
 max-width:16.5vw !important;
 min-width:1em !important;
@@ -86,7 +94,9 @@ td,th{
 	padding-bottom:0.2em !important;
 	padding-top:0.2em !important;
 }
-
+.stripeTable {
+    border: 1px solid black;
+}
 .td_input{width:5em !important;}
 
 /*
