@@ -1111,9 +1111,10 @@ class App extends Component{
 			{this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
 				{
-					this.state.bittrexStatus && this.state.bittrexProgress > 0 ?
+					this.state.bittrexStatusTime > 0 ?
 					(<div>
 					<LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> 
+					<Button raised color="primary">Arbitrage In Progress</Button>
 					<p className="simpleText">{((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage"}</p>
 					 </div>) : ""
 				}
