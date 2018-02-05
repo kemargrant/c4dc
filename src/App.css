@@ -63,6 +63,9 @@ max-width:16.5vw !important;
 min-width:1em !important;
 }
 
+.simpleText{
+margin:auto;
+}
 .slider{
 	display:block;
 	margin:auto;

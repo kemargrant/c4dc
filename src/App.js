@@ -407,8 +407,8 @@ class App extends Component{
 			let keys = Object.keys(data.book);
 				for(let i = 0; i < keys.length;i++){
 					try{
-						data.book[keys[i]]["Sorted"][0] = data.book[keys[i]]["Sorted"][0].reverse().slice(0,7);
-						data.book[keys[i]]["Sorted"][1] = data.book[keys[i]]["Sorted"][1].slice(0,7); 
+						data.book[keys[i]]["Sorted"][0] = data.book[keys[i]]["Sorted"][0].reverse().slice(0,10);
+						data.book[keys[i]]["Sorted"][1] = data.book[keys[i]]["Sorted"][1].slice(0,10); 
 					}
 					catch(e){}
 				}
@@ -1098,8 +1098,8 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
-				<Tab label="Binance" icon={this.state.binanceUserStreamStatus ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>				
+				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus &&this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
+				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>				
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1110,13 +1110,13 @@ class App extends Component{
 			<div className="body">     
 			{this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
-				{this.state.bittrexProgress > 0 ? <LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> : ""}
 				{
-					this.state.bittrexStatusTime > 0 ? 
-					((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage" : ""
-				} 
-				<br/>
-				{this.state.bittrexStatus && this.state.bittrexStatusTime > 0 ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
+					this.state.bittrexStatus && this.state.bittrexProgress > 0 ?
+					(<div>
+					<LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> 
+					<p className="simpleText">{((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage"}</p>
+					 </div>) : ""
+				}
 				<div className="monitorToggle">
 				<FormGroup>
 			        <FormControlLabel
@@ -1332,16 +1332,13 @@ class App extends Component{
 				}
 				return p.map((Pair) => (
 				<div key={Pair[0]}>
-					{this.state.binanceStatusTime[Pair[0]] > 0 ? <LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> : ""}
-					{this.state.binanceStatus[Pair[0]] ? <Button raised color="primary">Arbitrage In Progress</Button>: ""}
-					{
-						this.state.binanceStatusTime[Pair[0]] ?
-						(()=>{
-						 return (<b>
-							<br/>
-							{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
-						 </b>)
-						})()
+					{this.state.binanceStatusTime[Pair[0]] > 0 ? 
+						(<div>
+						<LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
+						<Button raised color="primary">Arbitrage In Progress</Button>
+						<br/>
+						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+						</div>)
 						: ""
 					}
 					<div className="monitorToggle">
