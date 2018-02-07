@@ -40,7 +40,8 @@ body{
 label{font-size:medium}
 
 .orderBooks{
-display:flex;
+display:block;
+margin:auto;
 }
 
 .menu{
@@ -55,8 +56,8 @@ top:5.5em;
 }
 
 .myTable{
-width:10em;
 background:aliceblue;
+display:inline-block;
 }
 .c60{
 max-width:16.5vw !important;

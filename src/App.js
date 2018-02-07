@@ -214,7 +214,9 @@ class App extends Component{
 		this.changeTab = this.changeTab.bind(this);	
 		this.clearData = this.clearData.bind(this);
 		this.clearOrders = this.clearOrders.bind(this);
-		this.connect = this.connect.bind(this);		
+		this.connect = this.connect.bind(this);	
+		this.controlBinance = this.controlBinance.bind(this);			
+		this.controlBittrex = this.controlBittrex.bind(this);			
 		this.forceBittrexView = this.forceBittrexView.bind(this);
 		this.getBittrexDBTrade = this.getBittrexDBTrade.bind(this);
 		this.getOrders = this.getOrders.bind(this);
@@ -318,8 +320,16 @@ class App extends Component{
 		return this.setState({websocketNetwork:net.split(':')[1].replace('//',''),port:Number(net.split(':')[2])},()=>{
 			return this.begin();
 		});
-	}					
-	
+	}	
+
+	controlBinance(evt,checked){
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binance_control","bool":checked}),this.state.privatekey).toString());
+	}				
+					
+	controlBittrex(evt,checked){
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_control","bool":checked}),this.state.privatekey).toString());
+	}	
+		
 	end(){
 		this.state.bsocket.terminate();
 		return this.setState({bsocket:null,connected:false,bittrexSocketStatus:false,binanceUserStreamStatus:false,binancePairs:[],bittrexStatus:true});
@@ -403,7 +413,7 @@ class App extends Component{
 		
 		if(data.type === "bittrexBook"){
 			let random = Math.floor(100* Math.random(0,1));
-			//if(random % 5 !== 0 ){return}
+			if(random % 5 !== 0 ){return}
 			let keys = Object.keys(data.book);
 				for(let i = 0; i < keys.length;i++){
 					try{
@@ -1685,6 +1695,14 @@ class App extends Component{
 						<Input type="number" min={10} max={1400001} value={this.state.swingPollingRate/1000} onChange={this.updateSwingPollingRate}/>
 						 <div className="Switches">
 						<FormGroup>
+						<FormControlLabel
+						  label="WebSocket Connection Enabled"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.state.bittrexSocketStatus}
+					              onChange={(evt,checked)=>{this.controlBittrex(evt,checked)}}
+				            /> }
+				        />
 				        <FormControlLabel
 						  label="Sane Trades"
 						  style={{margin:"auto"}}
@@ -1705,7 +1723,7 @@ class App extends Component{
 						  label="View Bittrex Order Book"
 						  style={{margin:"auto"}}
 				          control={<Switch
-					              checked={this.viewBittrexBook}
+					              checked={this.state.viewBittrexBook}
 					              onChange={this.forceBittrexView}
 				            /> }
 				        />
@@ -1743,6 +1761,23 @@ class App extends Component{
 			        <CardContent>
 			            <Typography type="title">Binance Config</Typography>
 			            <br/>
+			            <FormControlLabel
+						  label="WebSocket Connection Enabled"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={
+									  (()=>{
+										  let count = Object.keys(this.state.binanceStatus).length;
+										  for(var key in this.state.binanceStatus){
+											  if(this.state.binanceStatus[key] === true){count--;}
+										  }
+										  if(this.state.connected && count !== 0){return true;}
+										  else{return false}
+										 })()
+									  }
+					              onChange={(evt,checked)=>{this.controlBinance(evt,checked)}}
+				            /> }
+				        />
 				        {
 							(()=>{
 							let p = [];
