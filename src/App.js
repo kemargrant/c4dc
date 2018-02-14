@@ -259,14 +259,7 @@ class App extends Component{
 	}
 
 	backgroundSocketSetup(){
-		let js = "let closed = function(){return postMessage(null)};\
-		let ws;\
-		try{ws = new WebSocket('ws://sub_network');}catch(e){};\
-		onmessage = function(text){return ws.send(text.data)};\
-		ws.onopen = function(){return postMessage(0);};\
-		ws.onmessage = function(m){return postMessage({data:m.data,type:m.type})};\
-		ws.onclose = closed;\
-		ws.onerror = closed;"
+		let js = "let closed = function(){return postMessage(null)};let ws;try{ws = new WebSocket('ws://sub_network');}catch(e){};onmessage = function(text){return ws.send(text.data)};ws.onopen = function(){return postMessage(0);};ws.onmessage = function(m){return postMessage({data:m.data,type:m.type})};ws.onclose = closed;ws.onerror = closed;"
 		js = js.replace('sub_network',this.state.websocketNetwork+":"+this.state.port);
 		let blob = new Blob([js]);			
 		let blobURL = window.URL.createObjectURL(blob);
@@ -414,8 +407,6 @@ class App extends Component{
 		}			
 		
 		if(data.type === "bittrexBook"){
-			let random = Math.floor(100* Math.random(0,1));
-			//if(random % 5 !== 0 ){return}
 			let keys = Object.keys(data.book);
 				for(let i = 0; i < keys.length;i++){
 					try{
