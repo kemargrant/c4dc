@@ -312,6 +312,9 @@ class App extends Component{
 	
 	connect(net){
 		this.setState({menuAnchor:null,menu_open:false});
+		if(!net.split(':')[1]){
+			return;
+		}
 		return this.setState({websocketNetwork:net.split(':')[1].replace('//',''),port:Number(net.split(':')[2])},()=>{
 			return this.begin();
 		});
