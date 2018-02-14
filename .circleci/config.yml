@@ -1,0 +1,28 @@
+version: 2
+jobs:    
+  deploy-production:
+    docker:
+      - image: circleci/node:7.10
+    working_directory: ~/c4dc
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          - v1-dependencies-      
+      - run: sudo apt-get update && sudo apt-get install -qq -y python-pip libpython-dev
+      - run: curl -O https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
+      - run: sudo pip install -q awscli --upgrade     
+      - run: npm test 
+      - run: npm run build 
+      - run:
+          name: Deploy to S3 if tests pass and branch is Master
+          command: aws s3 sync ~/c4dc/build/ s3://aws-website-arbitrage-ldddk/ --delete
+workflows:
+  version: 2
+  deploy:
+    jobs:
+      - deploy-production:
+          filters:
+            branches:
+              only: master
