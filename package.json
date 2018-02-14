@@ -6,7 +6,7 @@
     "crypto-js": "^3.1.9-1",
     "echarts": "^3.7.2",
     "echarts-for-react": "^2.0.0",
-    "material-ui": "^1.0.0-beta.18",
+    "material-ui": "^1.0.0-beta.33",
     "material-ui-icons": "^1.0.0-beta.5",
     "react-materialize": "^1.0.11",
     "react-scripts": "1.0.13",

@@ -1122,8 +1122,8 @@ class App extends Component{
 				{
 					this.state.bittrexStatusTime > 0 ?
 					(<div>
-					<LinearProgress mode="determinate" value={this.state.bittrexProgress * 100/3} /> 
-					<Button raised color="primary">Arbitrage In Progress</Button>
+					<LinearProgress variant="determinate" value={this.state.bittrexProgress * 100/3} /> 
+					<Button variant="raised" color="primary">Arbitrage In Progress</Button>
 					<p className="simpleText">{((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage"}</p>
 					 </div>) : ""
 				}
@@ -1348,8 +1348,8 @@ class App extends Component{
 				<div key={Pair[0]}>
 					{this.state.binanceStatusTime[Pair[0]] > 0 ? 
 						(<div>
-						<LinearProgress mode="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
-						<Button raised color="primary">Arbitrage In Progress</Button>
+						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
+						<Button variant="raised" color="primary">Arbitrage In Progress</Button>
 						<br/>
 						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
 						</div>)
@@ -1454,15 +1454,15 @@ class App extends Component{
 			}	
 			</TabContainer>}
 			{this.state.tabValue === 2 && <TabContainer>
-			   <Button raised color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
+			   <Button variant="raised" color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
 			   <h3>Bittrex</h3>
 			  <div>
 				{this.state.bittrexProfit.btc ? this.state.bittrexProfit.btc.toFixed(8) : 0}/{this.state.balance.bittrex.btc} btc ({this.state.bittrexProfit.btc > 0 ?  (this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc).toFixed(8) :  0.00000000})%
-				<LinearProgress mode="determinate" value={this.state.bittrexProfit.btc ?  this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc : 0} />
+				<LinearProgress variant="determinate" value={this.state.bittrexProfit.btc ?  this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc : 0} />
 			  </div>
 			  <div>
 				{this.state.bittrexProfit[this.state.tradingPairs.misc] ? this.state.bittrexProfit[this.state.tradingPairs.misc].toFixed(8) : 0}/{this.state.balance.bittrex[this.state.tradingPairs.misc]} {this.state.tradingPairs.misc} ({this.state.bittrexProfit[this.state.tradingPairs.misc] ? (this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(8) : 0.00000000})%
-				<LinearProgress mode="determinate" value={this.state.bittrexProfit[this.state.tradingPairs.misc] ?  this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]: 0} />
+				<LinearProgress variant="determinate" value={this.state.bittrexProfit[this.state.tradingPairs.misc] ?  this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]: 0} />
 			  </div>			   
 				 <ReactEchartsCore
 		          echarts={echarts}
@@ -1495,7 +1495,7 @@ class App extends Component{
 						return results.map((profit)=>(
 							<div key={profit[1]}>
 							{profit[1].toFixed(8)}/{this.state.balance.binance[profit[0]]} {profit[0]} ({([profit[1]] * 100/this.state.balance.binance[profit[0]]).toFixed(8)})%
-							<LinearProgress mode="determinate" value={profit[1] * 100/this.state.balance.binance[profit[0]]} />	
+							<LinearProgress variant="determinate" value={profit[1] * 100/this.state.balance.binance[profit[0]]} />	
 							</div>					
 						))
 					})()
@@ -1526,10 +1526,10 @@ class App extends Component{
 				}
 			</TabContainer>}
 			{this.state.tabValue === 3 && <TabContainer>
-				<Button raised color="primary" onClick={this.clearOrders}>Clear Cache</Button>
-				<Button raised color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
+				<Button variant="raised" color="primary" onClick={this.clearOrders}>Clear Cache</Button>
+				<Button variant="raised" color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
 				{this.state.orders.map((order)=> 
-					<Card key={order.order_id} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+					<Card key={order.order_id} variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					<CardHeader style={{backgroundPosition:"center",backgroundImage: order.image}}>
 					</CardHeader>
 			        <CardContent>
@@ -1540,7 +1540,7 @@ class App extends Component{
 						<br/>Created:{Number(order.timestamp_created) ? new Date(order.timestamp_created).toString() : order.timestamp_created}
 						<br/>{order.order_id}
 						</Typography>
-						<LinearProgress mode="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
+						<LinearProgress variant="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
 						{ order.filled > 0? (((order.amount-order.filled)/order.amount)*100).toFixed(2) +'% Filled' : '0% Filled'}
 			        </CardContent>
 			      </Card>)}		
@@ -1550,7 +1550,7 @@ class App extends Component{
 			</TabContainer>}
 			{this.state.tabValue === 5 && <TabContainer>
 				<div>
-				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">Previous Trade</Typography>
 						<Typography component="p">
@@ -1559,7 +1559,7 @@ class App extends Component{
 						<br/>Created:{this.state.swingOrder.order.Opened}
 						<br/>{this.state.swingOrder.order.OrderUuid}
 						</Typography>
-						<LinearProgress mode="determinate" value={ this.state.swingOrder.order.QuantityRemaining >= 0? ((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100 : 0} />					
+						<LinearProgress variant="determinate" value={ this.state.swingOrder.order.QuantityRemaining >= 0? ((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100 : 0} />					
 						{ this.state.swingOrder.order.QuantityRemaining >= 0? (((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100).toFixed(2) +'% Filled' : '0% Filled'}
 			        </CardContent>
 			      </Card>}
@@ -1568,7 +1568,7 @@ class App extends Component{
 				  option={this.state.swingGauge}
 				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
 				   />
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
 						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
@@ -1578,7 +1578,7 @@ class App extends Component{
 				</div>		
 			</TabContainer>}
 			{this.state.tabValue === 6 && <TabContainer>		
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 		        <CardContent >
 		           <Typography type="title">Server Connection</Typography>
 		           <br/>
@@ -1688,7 +1688,7 @@ class App extends Component{
 				}							
 		        </CardActions>
 				</Card>
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 			            <Typography type="title">Bittrex Config</Typography>
 			            <br/>
@@ -1760,11 +1760,11 @@ class App extends Component{
 						<Input type="number" min={0} max={3} value={this.state.logLevel} onChange={this.updateLogLevel}/>						
 			        </CardContent>
 			        <CardActions>
-						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>
-						<Button raised color="primary" onClick={this.swing_reset}>Reset Swing Trading</Button>	
+						<Button variant="raised" color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>
+						<Button variant="raised" color="primary" onClick={this.swing_reset}>Reset Swing Trading</Button>	
 			        </CardActions>
 				</Card> 		    
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 			            <Typography type="title">Binance Config</Typography>
 			            <br/>
@@ -1817,7 +1817,7 @@ class App extends Component{
 						       					
 			        </CardContent>
 				</Card> 		    				  
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Bittrex Status</Typography>
 						<br/>
@@ -1845,10 +1845,10 @@ class App extends Component{
 						</Table>
 			        </CardContent>
 			        <CardActions>
-						<Button raised color="primary" onClick={this.updateBittrexBalance}>Get Balance</Button>			
+						<Button variant="raised" color="primary" onClick={this.updateBittrexBalance}>Get Balance</Button>			
 			        </CardActions>
 				</Card>
-				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Binance Status</Typography>
 						<br/>
@@ -1876,7 +1876,7 @@ class App extends Component{
 						</Table>
 			        </CardContent>
 			        <CardActions>
-						<Button raised color="primary" onClick={this.updateBinanceBalance}>Get Balance</Button>			
+						<Button variant="raised" color="primary" onClick={this.updateBinanceBalance}>Get Balance</Button>			
 			        </CardActions>
 				</Card>				
 				<footer>
