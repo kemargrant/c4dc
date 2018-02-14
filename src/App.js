@@ -1549,8 +1549,10 @@ class App extends Component{
 				<textarea value={this.state.log} readOnly> </textarea>		
 			</TabContainer>}
 			{this.state.tabValue === 5 && <TabContainer>
-				<div>
-				{this.state.swingOrder.order && <Card key={this.state.swingOrder.order.OrderUuid} variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				{
+				this.state.swingOrder.order ?	
+				<div>						
+				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">Previous Trade</Typography>
 						<Typography component="p">
@@ -1561,8 +1563,9 @@ class App extends Component{
 						</Typography>
 						<LinearProgress variant="determinate" value={ this.state.swingOrder.order.QuantityRemaining >= 0? ((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100 : 0} />					
 						{ this.state.swingOrder.order.QuantityRemaining >= 0? (((this.state.swingOrder.order.Quantity-this.state.swingOrder.order.QuantityRemaining)/this.state.swingOrder.order.Quantity)*100).toFixed(2) +'% Filled' : '0% Filled'}
+			        
 			        </CardContent>
-			      </Card>}
+			      </Card>
 				<ReactEchartsCore
 				  echarts={echarts}
 				  option={this.state.swingGauge}
@@ -1575,7 +1578,8 @@ class App extends Component{
 						<br/>{this.state.swingOrder.order.Quantity} @ {this.state.swingOrder.order.Type === "LIMIT_SELL" ? this.state.swingOrder.order.Limit * (1-(this.state.swingPercentage/100)) : this.state.swingOrder.order.Limit * (1+(this.state.swingPercentage/100))}
 					</CardContent>}
 				</Card>
-				</div>		
+				</div>
+				: ""}
 			</TabContainer>}
 			{this.state.tabValue === 6 && <TabContainer>		
 				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
