@@ -10,6 +10,11 @@ jobs:
           keys:
           - v1-dependencies-{{ checksum "package.json" }}
           - v1-dependencies-      
+      - run npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}            
       - run: sudo apt-get update && sudo apt-get install -qq -y python-pip libpython-dev
       - run: curl -O https://bootstrap.pypa.io/get-pip.py && sudo python get-pip.py
       - run: sudo pip install -q awscli --upgrade     
