@@ -1469,11 +1469,14 @@ class App extends Component{
 				  lazyUpdate={true}
 				  onEvents={{
 					  'legendselectchanged':(evt)=>{
-						 return this.state.dbTrade.legend.selected = evt.selected;
+						  let _dbTrade = this.state.dbTrade;
+						  _dbTrade.legend.selected = evt.selected;
+						  return this.setState({dbTrade:_dbTrade})
 						 },	
 					  'dataZoom': (zoom)=>{
-						  //mutate state directly for smoother experience;
-						  return this.state.dbTrade.dataZoom =({start:zoom.start,end:zoom.end});
+						  let _dbTrade = this.state.dbTrade;
+						  _dbTrade.dataZoom = ({start:zoom.start,end:zoom.end});
+						  return this.setState({dbTrade:_dbTrade})
 						}
 				  }}
 				   />	
