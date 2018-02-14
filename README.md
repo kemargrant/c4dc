@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/kemargrant/c4dc/tree/master.svg?style=svg)](https://circleci.com/gh/kemargrant/c4dc/tree/master)
 # Description
 
 C4DC is a web client to interact with [C4D](https://github.com/kemargrant/c4d)
