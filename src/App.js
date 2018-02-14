@@ -45,11 +45,12 @@ class App extends Component{
 	    super(props);
 	    this.state = {
 			anch_menu:null,
-			autoconnect: localStorage.getItem("AutoConnect") ? JSON.parse(localStorage.getItem("AutoConnect")) : false,
-			autosave: JSON.parse(localStorage.getItem("Autosave")) ? true : false,
-			balance:JSON.parse(localStorage.getItem("Bittrex_Balance")) ? JSON.parse(localStorage.getItem("Bittrex_Balance")):{binance:{account:"Binance"},bittrex:{account:"Bittrex"}},
+			autoconnect: window.localStorage && window.localStorage.getItem("AutoConnect") ? JSON.parse(window.localStorage.getItem("AutoConnect")) : false,
+			autosave: window.localStorage && JSON.parse(window.localStorage.getItem("Autosave")) ? true : false,
+			balance: window.localStorage && JSON.parse(window.localStorage.getItem("Bittrex_Balance")) ? JSON.parse(window.localStorage.getItem("Bittrex_Balance")):{binance:{account:"Binance"},bittrex:{account:"Bittrex"}},
 			binanceB1Minimum:{},
 			binanceC1Minimum:{},
+			binanceConnections:0,
 			binanceGauge:{
 				tooltip : {
 					formatter: "{c}"
@@ -125,8 +126,8 @@ class App extends Component{
 					}]
 			},			
 			binancePairs:[],
-			binanceProfit:JSON.parse(localStorage.getItem("Binance_Profit"))? JSON.parse(localStorage.getItem("Binance_Profit")) : {},
-			bittrexProfit:JSON.parse(localStorage.getItem("Bittrex_Profit"))? JSON.parse(localStorage.getItem("Bittrex_Profit")) : {btc:0},
+			binanceProfit: window.localStorage && JSON.parse(window.localStorage.getItem("Binance_Profit"))? JSON.parse(window.localStorage.getItem("Binance_Profit")) : {},
+			bittrexProfit: window.localStorage && JSON.parse(window.localStorage.getItem("Bittrex_Profit"))? JSON.parse(window.localStorage.getItem("Bittrex_Profit")) : {btc:0},
 			binanceProgress:{},
 			bittrexProgress:0,
 			bittrexPercentage:0,
@@ -163,11 +164,11 @@ class App extends Component{
                     },
                 ]
             },					
-			dbTrade:JSON.parse(localStorage.getItem("DB_Trade"))? JSON.parse(localStorage.getItem("DB_Trade")) : {
+			dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) : {
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
 			},
-			dbTradeBinance:JSON.parse(localStorage.getItem("DB_TradeBinance"))? JSON.parse(localStorage.getItem("DB_TradeBinance")) : [{
+			dbTradeBinance:window.localStorage && JSON.parse(window.localStorage.getItem("DB_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_TradeBinance")) : [{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
 			}],			
@@ -184,13 +185,13 @@ class App extends Component{
 			lowerLimit:89,
 			menuAnchor: null,
 			menu_open:false,
-			orders:JSON.parse(localStorage.getItem("Orders"))? JSON.parse(localStorage.getItem("Orders")):[],
-			previous:JSON.parse(localStorage.getItem("Previous_Connections"))? JSON.parse(localStorage.getItem("Previous_Connections")) : [],
+			orders: window.localStorage && JSON.parse(window.localStorage.getItem("Orders"))? JSON.parse(window.localStorage.getItem("Orders")):[],
+			previous: window.localStorage && JSON.parse(window.localStorage.getItem("Previous_Connections"))? JSON.parse(window.localStorage.getItem("Previous_Connections")) : [],
 			percentage1:null,
 			percentage2:null,
 			pollingRate:0,
 			port:7071,
-			privatekey:localStorage.getItem("xxpkeyxx") ? localStorage.getItem("xxpkeyxx"): "",
+			privatekey: window.localStorage && window.localStorage.getItem("xxpkeyxx") ? window.localStorage.getItem("xxpkeyxx"): "",
 			sanity:true,
 			socketMessage:function(){},
 			swingGauge:{},
@@ -203,11 +204,11 @@ class App extends Component{
 				open:false,
 				message:""
 			},	
-			toastNotify: JSON.parse(localStorage.getItem("Toast_Notify")) ? true : false,
-			tradingPairs:JSON.parse(localStorage.getItem("Trading_Pairs"))? JSON.parse(localStorage.getItem("Trading_Pairs")) : {bittrex:{},binance:{},msc:""},
+			toastNotify: window.localStorage && JSON.parse(window.localStorage.getItem("Toast_Notify")) ? true : false,
+			tradingPairs: window.localStorage && JSON.parse(window.localStorage.getItem("Trading_Pairs"))? JSON.parse(window.localStorage.getItem("Trading_Pairs")) : {bittrex:{},binance:{},msc:""},
 			tradeInfo:undefined,
 			upperLimit:101.79,
-			webNotify: JSON.parse(localStorage.getItem("Web_Notify")) ? true : false,
+			webNotify: window.localStorage && JSON.parse(window.localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
 			viewBittrexBook:false
 		}
@@ -223,6 +224,7 @@ class App extends Component{
 		this.getPollingRate = this.getPollingRate.bind(this);
 		this.menuClose = this.menuClose.bind(this);
 		this.menuOpen = this.menuOpen.bind(this);
+		this.swing_reset = this.swing_reset.bind(this);
 		this.updateBinanceBalance = this.updateBinanceBalance.bind(this);	
 		this.updateBinanceB1Minimum = this.updateBinanceB1Minimum.bind(this);	
 		this.updateBinanceC1Minimum = this.updateBinanceC1Minimum.bind(this);	
@@ -245,10 +247,10 @@ class App extends Component{
 	}
 	autosave(checked){
 		if(!checked){
-			return localStorage.removeItem("Autosave");
+			return window.localStorage.removeItem("Autosave");
 		}
 		else{
-			return localStorage.setItem("Autosave",true);
+			return window.localStorage.setItem("Autosave",true);
 		}	
 	}
 	
@@ -278,11 +280,11 @@ class App extends Component{
 		};	
 		let _previous = this.state.previous;
 		if(this.state.autosave && this.state.privatekey){
-			localStorage.setItem("xxpkeyxx",this.state.privatekey);
+			window.localStorage.setItem("xxpkeyxx",this.state.privatekey);
 			var network = "ws://"+this.state.websocketNetwork+":"+this.state.port;
 			if(_previous.indexOf(network) === -1){
 				_previous.push(network);
-				localStorage.setItem("Previous_Connections",JSON.stringify(_previous));
+				window.localStorage.setItem("Previous_Connections",JSON.stringify(_previous));
 			}
 		}
 		return this.setState({previous:_previous,bsocket:bsocket});
@@ -295,13 +297,13 @@ class App extends Component{
 	clearData(){
 		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
-			localStorage.removeItem(list[i]);
+			window.localStorage.removeItem(list[i]);
 		}
 		return this.setState({autosave:false});
 	}
 	
 	clearOrders(){
-		localStorage.removeItem("Orders");
+		window.localStorage.removeItem("Orders");
 		return this.setState({orders:[]});
 	}		
 
@@ -359,7 +361,7 @@ class App extends Component{
 		if(data.type === "balance"){
 			return this.setState({balance:{bittrex:data.balance,binance:this.state.balance.binance}},()=>{
 				if(this.state.autosave){
-					localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
+					window.localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
 				}
 				if(data.polling){
 					this.setState({pollingRate:data.polling});
@@ -372,7 +374,7 @@ class App extends Component{
 		if(data.type === "balanceBinance"){
 			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance}},()=>{
 				if(this.state.autosave){
-					localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
+					window.localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
 				}
 			});
 		}		
@@ -408,17 +410,17 @@ class App extends Component{
 					_binanceStatusTime[key] = 0;
 				}
 			}			
-			return this.setState({binanceStatus:data.value,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
+			return this.setState({binanceStatus:data.value,binanceConnections:data.connections,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
 		}			
 		
 		if(data.type === "bittrexBook"){
 			let random = Math.floor(100* Math.random(0,1));
-			if(random % 5 !== 0 ){return}
+			//if(random % 5 !== 0 ){return}
 			let keys = Object.keys(data.book);
 				for(let i = 0; i < keys.length;i++){
 					try{
-						data.book[keys[i]]["Sorted"][0] = data.book[keys[i]]["Sorted"][0].reverse().slice(0,10);
-						data.book[keys[i]]["Sorted"][1] = data.book[keys[i]]["Sorted"][1].slice(0,10); 
+						data.book[keys[i]]["Sorted"][0] = data.book[keys[i]]["Sorted"][0].reverse().slice(0,15);
+						data.book[keys[i]]["Sorted"][1] = data.book[keys[i]]["Sorted"][1].slice(0,15); 
 					}
 					catch(e){}
 				}
@@ -450,18 +452,7 @@ class App extends Component{
 					_binance[data.pairs[i].pair1][data.pairs[i].pair3] = 0;
 			}
 			_tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
-			return this.setState({
-				balance:{bittrex:this.state.balance.bittrex,binance:data.balance},
-				liquidTradesBinance:data.liquid,
-				binanceStatus:data.status,
-				binancePairs:data.pairs,
-				binanceProgress:_progress,
-				binanceStatusTime:data.time,
-				binanceUserStreamStatus:data.ustream,
-				binanceB1Minimum:data.minB1,
-				binanceC1Minimum:data.minXXX,
-				tradingPairs:_tradingPairs
-			});
+			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},liquidTradesBinance:data.liquid,binanceConnections:data.connections,binanceStatus:data.status,binancePairs:data.pairs,binanceProgress:_progress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream,binanceB1Minimum:data.minB1,binanceC1Minimum:data.minXXX,tradingPairs:_tradingPairs});
 		}		
 					
 		if(data.type === "db_trade"){
@@ -707,10 +698,10 @@ class App extends Component{
 			    option2.push(_option2);
 			}
 			if(this.state.autosave){
-					localStorage.setItem("DB_Trade",JSON.stringify(option));
-					localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
-					localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
-					localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
+					window.localStorage.setItem("DB_Trade",JSON.stringify(option));
+					window.localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
+					window.localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
+					window.localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
 			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit});
 		}				
@@ -729,7 +720,7 @@ class App extends Component{
 			}
 			_new_orders.push({"image":data.image,"filled":data.filled,"exchange":data.exchange,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
 			if(this.state.autosave){
-				localStorage.setItem("Orders",JSON.stringify(_new_orders));
+				window.localStorage.setItem("Orders",JSON.stringify(_new_orders));
 			}
 			return this.setState({orders:_new_orders});
 		}		
@@ -768,7 +759,7 @@ class App extends Component{
 				}
 			}
 			if(this.state.autosave){
-				localStorage.setItem("Orders",JSON.stringify(_edit_orders));
+				window.localStorage.setItem("Orders",JSON.stringify(_edit_orders));
 			}			
 			return this.setState({orders:_edit_orders,binanceProgress:_binanceProgress,bittrexProgress:_bittrexProgress});
 		}				
@@ -787,7 +778,7 @@ class App extends Component{
 			let _bittrexGauge = this.state.bittrexGauge;
 			_bittrexGauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
 			if(this.state.autosave){
-				localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
+				window.localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
 			}
 			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:_bittrexGauge});
 		}		
@@ -902,9 +893,13 @@ class App extends Component{
 	
 	setStartup(checked){
 		this.setState({autoconnect:checked});
-		return localStorage.setItem("AutoConnect",checked);
+		return window.localStorage.setItem("AutoConnect",checked);
 	}		
-
+	
+	swing_reset(){
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"swingReset"}),this.state.privatekey).toString());
+	}
+	
 	toast(message){
 		if(this.state.toastNotify){
 			if(this.state.toast.open === false){	
@@ -948,10 +943,10 @@ class App extends Component{
 
 	toastNotify(checked){
 		if(!checked){
-			return localStorage.removeItem("Toast_Notify");
+			return window.localStorage.removeItem("Toast_Notify");
 		}
 		else{
-			return localStorage.setItem("Toast_Notify",true);
+			return window.localStorage.setItem("Toast_Notify",true);
 		}	
 	}	
 
@@ -1097,10 +1092,10 @@ class App extends Component{
 		
 	webNotify(checked){
 		if(!checked){
-			return localStorage.removeItem("Web_Notify");
+			return window.localStorage.removeItem("Web_Notify");
 		}
 		else{
-			return localStorage.setItem("Web_Notify",true);
+			return window.localStorage.setItem("Web_Notify",true);
 		}	
 	}	
 	render(){  	
@@ -1108,7 +1103,7 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus &&this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
+				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
 				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>				
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
@@ -1118,7 +1113,8 @@ class App extends Component{
 			</Tabs>
 			</AppBar>	
 			<div className="body">     
-			{this.state.tabValue === 0 && <TabContainer>
+			{
+			this.state.tabValue === 0 && <TabContainer>
 				<div className="graph">
 				{
 					this.state.bittrexStatusTime > 0 ?
@@ -1142,11 +1138,13 @@ class App extends Component{
 			        />
 				</FormGroup>				
 				</div>
-				<ReactEchartsCore
+				{
+					this.state.connected ? <ReactEchartsCore
 				  echarts={echarts}
 				  option={this.state.bittrexGauge}
-				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-				   />					
+				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}/>
+				  : <div style={{width:"100%",height:this.state.chartSize.height*1.3+"px"}}></div>
+				  }					
 				<FormGroup>
 			        <FormControlLabel
 					  label={this.state.viewBittrexBook ? "Close OrderBook" : "Open OrderBook"}
@@ -1328,7 +1326,9 @@ class App extends Component{
 					</TableRow>		
 				</TableBody>
 				</Table> 	
-			</TabContainer>}
+			</TabContainer>
+			}
+			
 			{this.state.tabValue === 1 && <TabContainer>
 			<ReactEchartsCore
 			  echarts={echarts}
@@ -1754,7 +1754,8 @@ class App extends Component{
 						<Input type="number" min={0} max={3} value={this.state.logLevel} onChange={this.updateLogLevel}/>						
 			        </CardContent>
 			        <CardActions>
-						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>	
+						<Button raised color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>
+						<Button raised color="primary" onClick={this.swing_reset}>Reset Swing Trading</Button>	
 			        </CardActions>
 				</Card> 		    
 				<Card raised style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
@@ -1769,9 +1770,9 @@ class App extends Component{
 									  (()=>{
 										  let count = Object.keys(this.state.binanceStatus).length;
 										  for(var key in this.state.binanceStatus){
-											  if(this.state.binanceStatus[key] === true){count--;}
+											  if(this.state.binanceStatus[key] === "killed"){count--;}
 										  }
-										  if(this.state.connected && count !== 0){return true;}
+										  if(this.state.connections > 0 && this.state.connected){return true;}
 										  else{return false}
 										 })()
 									  }
@@ -1898,7 +1899,7 @@ class App extends Component{
 		          id="long-menu"
 		          anchorEl={this.state.menuAnchor}
 		          open={this.state.menu_open}
-		          onClose={this.menuClose}
+		          onClick={this.menuClose}
 		          PaperProps={{
 		            style: {
 		              maxHeight: 48 * 4.5,
