@@ -452,7 +452,12 @@ class App extends Component{
 				_temp.misc = "xxx";
 				this.setState({tradingPairs:_temp});
 			}
-			let _b1 = Object.keys(this.state.tradingPairs.bittrex).map((v,i)=>{if(v.split("_")[1] === this.state.tradingPairs.misc){return v.split("_")[0]}})[0]
+			let _b1 = Object.keys(this.state.tradingPairs.bittrex).map((v,i)=>{
+				if(v.split("_")[1] === this.state.tradingPairs.misc){
+					return v.split("_")[0]
+				}
+				else{return null}
+			})[0]
 			let msc = this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : "XXX";
 			let msc2 = Object.keys(this.state.tradingPairs.binance);
 			function sort(array){
@@ -735,6 +740,10 @@ class App extends Component{
 			this.state.binancePairs.map((v,j)=>{
 				if(this.state.binancePairs[j].pair1 === _pair || this.state.binancePairs[j].pair2 === _pair || this.state.binancePairs[j].pair3 ===  _pair){
 					base = this.state.binancePairs[j].pair1;
+					return base;
+				}
+				else{
+					return base;
 				}
 			});
 			if(exchange === "Binance"){
@@ -1759,10 +1768,6 @@ class App extends Component{
 				          control={<Switch
 					              checked={
 									  (()=>{
-										  let count = Object.keys(this.state.binanceStatus).length;
-										  for(var key in this.state.binanceStatus){
-											  if(this.state.binanceStatus[key] === "killed"){count--;}
-										  }
 										  if(this.state.connections > 0 && this.state.connected){return true;}
 										  else{return false}
 										 })()
