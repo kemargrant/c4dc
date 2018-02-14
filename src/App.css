@@ -101,6 +101,7 @@ td,th{
 .stripeTable {
     border: 1px solid black;
 }
+table{font-size:small !important}
 .td_input{width:5em !important;}
 
 /*

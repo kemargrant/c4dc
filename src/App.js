@@ -1202,7 +1202,7 @@ class App extends Component{
 						{
 							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][1].map((order) => (
 							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Bids"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Bids"][order]).toFixed(4)}</td>
 								<td className="stripeTable">{Number(order).toFixed(2)}</td>
 							</tr>
 							))
@@ -1219,7 +1219,7 @@ class App extends Component{
 							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][0].map((order) => (
 							<tr key={Math.random(0,1)}>
 								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Asks"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Asks"][order]).toFixed(4)}</td>
 							</tr>
 							))
 						}
@@ -1234,7 +1234,7 @@ class App extends Component{
 						{
 							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][1].map((order) => (
 							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Bids"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Bids"][order]).toFixed(4)}</td>
 								<td className="stripeTable">{Number(order).toFixed(2)}</td>
 							</tr>
 							))
@@ -1251,7 +1251,7 @@ class App extends Component{
 							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][0].map((order) => (
 							<tr key={Math.random(0,1)}>
 								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Asks"][order]).toFixed(3)}</td>
+								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Asks"][order]).toFixed(4)}</td>
 							</tr>
 							))
 						}
