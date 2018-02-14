@@ -4,8 +4,8 @@
   "private": true,
   "dependencies": {
     "crypto-js": "^3.1.9-1",
-    "echarts": "^3.7.2",
-    "echarts-for-react": "^2.0.0",
+    "echarts": "^3.8.5",
+    "echarts-for-react": "^2.0.6",
     "material-ui": "^1.0.0-beta.33",
     "material-ui-icons": "^1.0.0-beta.5",
     "react-materialize": "^1.0.11",
