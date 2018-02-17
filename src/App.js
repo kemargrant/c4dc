@@ -1778,7 +1778,7 @@ class App extends Component{
 				          control={<Switch
 					              checked={
 									  (()=>{
-										  if(this.state.connections > 0 && this.state.connected){return true;}
+										  if(this.state.binanceConnections > 0 && this.state.connected){return true;}
 										  else{return false}
 										 })()
 									  }
