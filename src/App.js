@@ -570,6 +570,9 @@ class App extends Component{
 							}
 						}
 						else{
+							if(data.info[k].Profit2){
+								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
+							}
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit;
 							if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
 								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
