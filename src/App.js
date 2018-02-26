@@ -508,8 +508,10 @@ class App extends Component{
 				_mscCount2[msc2[i]] = {};
 				//b1
 				_binanceProfit[msc2[i]][msc2[i].slice(3,msc2[i].length)] = 0;
-				//mc2/eth
+				//mc2
 				_binanceProfit[msc2[i]][msc2[i].slice(0,3)] = 0;
+				//u1
+				_binanceProfit[msc2[i]][this.state.tradingPairs.binance[msc2[i]].pairs[1].slice(3)] = 0;
 			}			
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
@@ -562,6 +564,9 @@ class App extends Component{
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit2;
 							}
+							if(data.info[k].Profit3){
+								_binanceProfit[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1].slice(3)] += data.info[k].Profit3;
+							}
 							if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
 								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
 							}
@@ -572,6 +577,9 @@ class App extends Component{
 						else{
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
+							}
+							if(data.info[k].Profit3){
+								_binanceProfit[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1].slice(3)] += data.info[k].Profit3;
 							}
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit;
 							if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
@@ -1109,8 +1117,8 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>
-				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="contrast"/> : <TrendingDown color="error"/>}></Tab>				
+				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>
+				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>				
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1495,9 +1503,10 @@ class App extends Component{
 								results.push([key2,this.state.binanceProfit[key][key2]]);
 							}
 						}
+						
 						return results.map((profit)=>(
 							<div key={profit[1]}>
-							{profit[1].toFixed(8)}/{this.state.balance.binance[profit[0]]} {profit[0]} ({([profit[1]] * 100/this.state.balance.binance[profit[0]]).toFixed(8)})%
+							{ profit[1] ? profit[1].toFixed(8) :""}/{this.state.balance.binance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/this.state.balance.binance[profit[0]]).toFixed(8) : ""})%
 							<LinearProgress variant="determinate" value={profit[1] * 100/this.state.balance.binance[profit[0]]} />	
 							</div>					
 						))
