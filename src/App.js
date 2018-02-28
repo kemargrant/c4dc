@@ -1588,7 +1588,7 @@ class App extends Component{
 				 <ReactEchartsCore
 		          echarts={echarts}
 				  option={this.state.dbTrade}
-				  style={{height: this.state.chartSize.height+'px', width:'97%'}}
+				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
 				  notMerge={true}
 				  lazyUpdate={true}
 				  onEvents={{
@@ -1630,7 +1630,7 @@ class App extends Component{
 					<ReactEchartsCore
 			          echarts={echarts}
 					  option={option}
-					  style={{height: this.state.chartSize.height+'px', width:'97%'}}
+					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
 					  notMerge={true}
 					  lazyUpdate={true}
 					  onEvents={{
@@ -1654,7 +1654,7 @@ class App extends Component{
 					<ReactEchartsCore
 			          echarts={echarts}
 					  option={option}
-					  style={{height: this.state.chartSize.height+'px', width:'97%'}}
+					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
 					  notMerge={true}
 					  lazyUpdate={true}
 					  onEvents={{
