@@ -1697,7 +1697,7 @@ class App extends Component{
 				{
 				this.state.swingOrder.order ?	
 				<div>						
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 			        <CardContent>
 			           <Typography type="headline">Previous Trade</Typography>
 						<Typography component="p">
@@ -1716,7 +1716,7 @@ class App extends Component{
 				  option={this.state.swingGauge}
 				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
 				   />
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
 						{this.state.swingOrder.order.Type === "LIMIT_SELL" ? "LIMIT_BUY" : "LIMIT_SELL"} {this.state.swingOrder.order.Exchange}
@@ -1727,7 +1727,7 @@ class App extends Component{
 				: ""}
 			</TabContainer>}
 			{this.state.tabValue === 6 && <TabContainer>		
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 		        <CardContent >
 		           <Typography type="title">Server Connection</Typography>
 		           <br/>
@@ -1837,7 +1837,7 @@ class App extends Component{
 				}							
 		        </CardActions>
 				</Card>
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 			            <Typography type="title">Bittrex Config</Typography>
 			            <br/>
@@ -1913,7 +1913,7 @@ class App extends Component{
 						<Button variant="raised" color="primary" onClick={this.swing_reset}>Reset Swing Trading</Button>	
 			        </CardActions>
 				</Card> 		    
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 			            <Typography type="title">Binance Config</Typography>
 			            <br/>
@@ -1966,7 +1966,7 @@ class App extends Component{
 						       					
 			        </CardContent>
 				</Card> 		    				  
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Bittrex Status</Typography>
 						<br/>
@@ -1997,7 +1997,7 @@ class App extends Component{
 						<Button variant="raised" color="primary" onClick={this.updateBittrexBalance}>Get Balance</Button>			
 			        </CardActions>
 				</Card>
-				<Card variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
 						<Typography type="title">Binance Status</Typography>
 						<br/>
