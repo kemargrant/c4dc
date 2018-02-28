@@ -233,6 +233,8 @@ class App extends Component{
 	                containLabel: true,
 	            },
 	            xAxis:{
+					min:0,
+					max:"dataMax",
 					type : 'value',
 					name:'Time',
 					nameGap:30,
@@ -248,6 +250,8 @@ class App extends Component{
 			        }
 	            },
 	            yAxis:{
+					min:'dataMin',
+					max:"dataMax",
 					name:'Percent',
 					nameGap:50,
 					nameLocation:'middle',
@@ -270,16 +274,14 @@ class App extends Component{
 	                    name:'>100%',
 	                    type:'scatter',
 	                    data:[0,0],
-	                    symbolSize: function (data) {
-						    var size = Math.sqrt(data[0]) * Math.sqrt(data[1]);
-				            return size;
-				        },
+	                    symbolSize: 10
 	                },
 	                {
 					
 	                    name:'<100%',
 	                    type:'scatter',
 	                    data:[0,0],
+	                    symbolSize:10
 	                }
 	            ]
 	        },		
