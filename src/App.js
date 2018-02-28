@@ -1674,7 +1674,7 @@ class App extends Component{
 				<Button variant="raised" color="primary" onClick={this.clearOrders}>Clear Cache</Button>
 				<Button variant="raised" color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
 				{this.state.orders.map((order)=> 
-					<Card key={order.order_id} variant="raised" style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+					<Card key={order.order_id} style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					<CardHeader style={{backgroundPosition:"center",backgroundImage: order.image}}>
 					</CardHeader>
 			        <CardContent>
