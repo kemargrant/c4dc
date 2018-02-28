@@ -14,7 +14,7 @@ import Input, { InputLabel } from 'material-ui/Input';
 import InsertSettings from 'material-ui-icons/Settings';
 import InsertFile from 'material-ui-icons/ShopTwo';
 import InsertLogs from 'material-ui-icons/LibraryBooks';
-import {CircularProgress,LinearProgress } from 'material-ui/Progress';
+import {LinearProgress } from 'material-ui/Progress';
 import Menu, { MenuItem } from 'material-ui/Menu';
 import MoreVertIcon from 'material-ui-icons/MoreVert';
 import Snackbar from 'material-ui/Snackbar';
