@@ -25,8 +25,9 @@ import TrendingDown from 'material-ui-icons/TrendingDown';
 import TrendingUp from 'material-ui-icons/TrendingUp';
 import ReactEchartsCore from 'echarts-for-react/lib/core';
 import echarts from 'echarts/lib/echarts';
-import 'echarts/lib/chart/line';
 import 'echarts/lib/chart/gauge';
+import 'echarts/lib/chart/line';
+import 'echarts/lib/chart/scatter';
 import 'echarts/lib/component/dataZoom';
 import 'echarts/lib/component/grid';
 import 'echarts/lib/component/legend';
@@ -164,6 +165,7 @@ class App extends Component{
                     },
                 ]
             },					
+			dbScatter:window.localStorage && JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance")) : [],
 			dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) : {
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
@@ -194,6 +196,91 @@ class App extends Component{
 			privatekey: window.localStorage && window.localStorage.getItem("xxpkeyxx") ? window.localStorage.getItem("xxpkeyxx"): "",
 			sanity:true,
 			socketMessage:function(){},
+			scatterOption:{
+				animation:true,
+				animationDuration:5000,
+				backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
+			        offset: 0,
+			        color: '#f7f8fa'
+			    }, {
+			        offset: 1,
+			        color: '#cdd0d5'
+			    }]),
+			    title:{
+					top:'5%',
+					left:"20%",
+					text:'Percentage vs Time',
+					textStyle:{
+						fontSize: window.innerHeight > window.innerWidth ? (window.innerHeight/window.innerWidth*12) :  (window.innerWidth*13/window.innerHeight)
+					}
+				},
+			    legend: {
+					textStyle:{
+						color:'black'
+					},
+					data:['<100%','>100%']
+	            },			
+	            tooltip:{
+	                trigger: 'axis', 
+	                formatter: function (param) {
+						param = param[0];
+						return "Time:"+param.data[0]+' <br/> Percent:'+param.data[1];
+					},      
+	            },
+	            grid: {
+	                containLabel: true,
+	            },
+	            xAxis:{
+					type : 'value',
+					name:'Time',
+					nameGap:30,
+					nameTextStyle:{
+						fontSize:15,
+					},
+					nameLocation:'middle',
+					 splitLine: {
+			            lineStyle: {
+			                type: 'dashed',
+			                color:'black'
+			            }
+			        }
+	            },
+	            yAxis:{
+					name:'Percent',
+					nameGap:50,
+					nameLocation:'middle',
+					nameTextStyle:{
+						fontSize:15,
+					},
+					scale:'true',
+					type: 'value',
+					splitLine: {
+			            lineStyle: {
+			                type: 'dashed',
+			                color:'black'
+			            }
+			        }
+	            }
+	            ,
+	            series:[
+	                {
+					
+	                    name:'>100%',
+	                    type:'scatter',
+	                    data:[0,0],
+	                    symbolSize: function (data) {
+						    var size = Math.sqrt(data[0]) * Math.sqrt(data[1]);
+				            return size;
+				        },
+	                },
+	                {
+					
+	                    name:'<100%',
+	                    type:'scatter',
+	                    data:[0,0],
+	                }
+	            ]
+	        },		
 			swingGauge:{},
 			swingOrder:{},
 			swingPercentage:2,
@@ -288,7 +375,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_Scatter_TradeBinance","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			window.localStorage.removeItem(list[i]);
 		}
@@ -482,6 +569,7 @@ class App extends Component{
 			}
 			let _binanceProfit = {}
 			let _bittrexProfit = {}
+			let _binanceScatter = {}
 			let date;
 			let date2 = {} //
 			let v = [];
@@ -499,6 +587,7 @@ class App extends Component{
 			data.info = sort(data.info);
 			for(var i = 0;i < msc2.length;i++){
 				_binanceProfit[msc2[i]] = {}
+				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[]}
 				date2[msc2[i]] = {}
 				b12[msc2[i]] = []
 				v2[msc2[i]] = []
@@ -560,6 +649,11 @@ class App extends Component{
 							dat2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
 						}
 						if(data.info[k].Percent > 100){
+							//Scatter Data
+							if(data.info[k].Completed){
+								_binanceScatter[data.info[k].Pair]['>100%'].push([(data.info[k].Completed - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
+							}
+							//
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit2;
@@ -575,6 +669,11 @@ class App extends Component{
 							}
 						}
 						else{
+							//Scatter Data
+							if(data.info[k].Completed){
+								_binanceScatter[data.info[k].Pair]['<100%'].push([(data.info[k].Completed - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
+							}
+							//
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
 							}
@@ -591,6 +690,7 @@ class App extends Component{
 						}
 					}
 					catch(e){
+						console.log(e)
 					}
 				}
 			}
@@ -695,6 +795,8 @@ class App extends Component{
 		            ]
 		        }	
 		    let option2 = [];
+		    let scatterOption2 = [];
+		    let _scatterOption2;
 		    let _option2;
 		    for(let i = 0;i < msc2.length;i++){
 				_option2 = JSON.parse(JSON.stringify(option));
@@ -706,14 +808,22 @@ class App extends Component{
 			    _option2.series[2].name = msc2[i].slice(0,3).toUpperCase() + ' Profitable';
 			    _option2.key = msc2[i];
 			    option2.push(_option2);
+			    //Scatter Data
+			    _scatterOption2 = this.state.scatterOption;
+			    _scatterOption2.key = msc2[i];
+			    _scatterOption2.title.text = msc2[i] + ":Time Completed";
+			    _scatterOption2.series[0].data = _binanceScatter[msc2[i]]['>100%'];
+			    _scatterOption2.series[1].data =_binanceScatter[msc2[i]]['<100%'];
+			    scatterOption2.push(_scatterOption2);			    
 			}
 			if(this.state.autosave){
 					window.localStorage.setItem("DB_Trade",JSON.stringify(option));
 					window.localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
+					window.localStorage.setItem("DB_Scatter_TradeBinance",JSON.stringify(scatterOption2));
 					window.localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
 					window.localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
-			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit});
+			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbScatter:scatterOption2});
 		}				
 		
 		if(data.type === "log"){
@@ -1531,6 +1641,29 @@ class App extends Component{
 							  return option.dataZoom =({start:zoom.start,end:zoom.end});
 							}
 					  }}
+				    />	
+				    </div>
+					))}
+					})()						
+				}
+				 {
+					(()=>{
+					if(this.state.dbScatter.length > 0)
+					{return this.state.dbScatter.map((option,i) => (
+					<div  key={option.key}>
+					<ReactEchartsCore
+			          echarts={echarts}
+					  option={option}
+					  style={{height: this.state.chartSize.height+'px', width:'97%'}}
+					  notMerge={true}
+					  lazyUpdate={true}
+					  onEvents={{
+					  'legendselectchanged':(evt)=>{
+						  let _dbScatter = this.state.dbScatter;
+						  _dbScatter[i].legend.selected = evt.selected;
+						  return this.setState({dbScatter:_dbScatter})
+						 }
+						}}
 				    />	
 				    </div>
 					))}
