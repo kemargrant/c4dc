@@ -14,7 +14,7 @@ import Input, { InputLabel } from 'material-ui/Input';
 import InsertSettings from 'material-ui-icons/Settings';
 import InsertFile from 'material-ui-icons/ShopTwo';
 import InsertLogs from 'material-ui-icons/LibraryBooks';
-import {LinearProgress } from 'material-ui/Progress';
+import {CircularProgress,LinearProgress } from 'material-ui/Progress';
 import Menu, { MenuItem } from 'material-ui/Menu';
 import MoreVertIcon from 'material-ui-icons/MoreVert';
 import Snackbar from 'material-ui/Snackbar';
@@ -182,6 +182,8 @@ class App extends Component{
 			connected:false,
 			liquidTrades:true,
 			liquidTradesBinance:{},
+			loadingBittrexSocket:false,
+			loadingBinanceSocket:false,
 			log:"",
 			logLevel:0,
 			lowerLimit:89,
@@ -408,10 +410,12 @@ class App extends Component{
 	}	
 
 	controlBinance(evt,checked){
+		this.setState({loadingBinanceSocket:true});
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binance_control","bool":checked}),this.state.privatekey).toString());
 	}				
 					
 	controlBittrex(evt,checked){
+		this.setState({loadingBittrexSocket:true});
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_control","bool":checked}),this.state.privatekey).toString());
 	}	
 		
@@ -493,7 +497,7 @@ class App extends Component{
 					_binanceStatusTime[key] = 0;
 				}
 			}			
-			return this.setState({binanceStatus:data.value,binanceConnections:data.connections,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
+			return this.setState({binanceStatus:data.value,binanceConnections:data.connections,loadingBinanceSocket:false,binanceProgress:_binanceProgress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream});
 		}			
 		
 		if(data.type === "bittrexBook"){
@@ -513,11 +517,11 @@ class App extends Component{
 			if(data.value !== true){
 				_bittrexProgress = 0;
 			}			
-			return this.setState({bittrexStatus:data.value,bittrexProgress:_bittrexProgress,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
+			return this.setState({bittrexStatus:data.value,bittrexProgress:_bittrexProgress,bittrexStatusTime:data.time,loadingBittrexSocket:false,bittrexSocketStatus:data.wsStatus});
 		}
 		
 		if(data.type === "config"){
-			return this.setState({viewBittrexBook:data.viewBook,logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100,bittrexStatus:data.status,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
+			return this.setState({viewBittrexBook:data.viewBook,loadingBittrexSocket:false,logLevel:data.logLevel,swingPollingRate:data.swingRate,sanity:data.sanity,liquidTrades:data.liquid,upperLimit:data.upperLimit,lowerLimit:data.lowerLimit,swingTrade:data.vibrate,swingPercentage:data.swingPercentage * 100,bittrexStatus:data.status,bittrexStatusTime:data.time,bittrexSocketStatus:data.wsStatus});
 		}
 
 		if(data.type === "configBinance"){
@@ -533,7 +537,7 @@ class App extends Component{
 					_binance[data.pairs[i].pair1][data.pairs[i].pair3] = 0;
 			}
 			_tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
-			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},liquidTradesBinance:data.liquid,binanceConnections:data.connections,binanceStatus:data.status,binancePairs:data.pairs,binanceProgress:_progress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream,binanceB1Minimum:data.minB1,binanceC1Minimum:data.minXXX,tradingPairs:_tradingPairs});
+			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},loadingBinanceSocket:false,liquidTradesBinance:data.liquid,binanceConnections:data.connections,binanceStatus:data.status,binancePairs:data.pairs,binanceProgress:_progress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream,binanceB1Minimum:data.minB1,binanceC1Minimum:data.minXXX,tradingPairs:_tradingPairs});
 		}		
 					
 		if(data.type === "db_trade"){
@@ -1850,14 +1854,18 @@ class App extends Component{
 						<Input type="number" min={10} max={1400001} value={this.state.swingPollingRate/1000} onChange={this.updateSwingPollingRate}/>
 						 <div className="Switches">
 						<FormGroup>
-						<FormControlLabel
-						  label="WebSocket Connection Enabled"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.bittrexSocketStatus}
-					              onChange={(evt,checked)=>{this.controlBittrex(evt,checked)}}
-				            /> }
-				        />
+						{
+							this.state.loadingBittrexSocket ? 
+							 <LinearProgress /> :
+							<FormControlLabel
+							  label="WebSocket Connection"
+							  style={{margin:"auto"}}
+					          control={<Switch
+						              checked={this.state.bittrexSocketStatus}
+						              onChange={(evt,checked)=>{this.controlBittrex(evt,checked)}}
+					            /> }
+					        />
+				        }
 				        <FormControlLabel
 						  label="Sane Trades"
 						  style={{margin:"auto"}}
@@ -1917,19 +1925,27 @@ class App extends Component{
 			        <CardContent>
 			            <Typography type="title">Binance Config</Typography>
 			            <br/>
-			            <FormControlLabel
-						  label="WebSocket Connection Enabled"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={
-									  (()=>{
-										  if(this.state.binanceConnections > 0 && this.state.connected){return true;}
-										  else{return false}
-										 })()
-									  }
-					              onChange={(evt,checked)=>{this.controlBinance(evt,checked)}}
-				            /> }
-				        />
+						{
+							this.state.loadingBinanceSocket ? 
+							<LinearProgress /> :
+				            <FormControlLabel
+							  label="WebSocket Connection"
+							  style={{margin:"auto"}}
+					          control={<Switch
+						              checked={
+										  (()=>{
+											  if(this.state.binanceConnections > 0 && this.state.connected){
+												  return true;
+												  }
+											  else{
+												  return false
+											}
+											 })()
+										  }
+						              onChange={(evt,checked)=>{this.controlBinance(evt,checked)}}
+					            /> }
+					        />
+						}
 				        {
 							(()=>{
 							let p = [];
