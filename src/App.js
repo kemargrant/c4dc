@@ -816,7 +816,7 @@ class App extends Component{
 			    //Scatter Data
 			    _scatterOption2 = this.state.scatterOption;
 			    _scatterOption2.key = msc2[i];
-			    _scatterOption2.title.text = msc2[i] + ":Time Completed";
+			    _scatterOption2.title.text = msc2[i] + ": Percent vs Duration(m)";
 			    _scatterOption2.series[0].data = _binanceScatter[msc2[i]]['>100%'];
 			    _scatterOption2.series[1].data =_binanceScatter[msc2[i]]['<100%'];
 			    scatterOption2.push(_scatterOption2);			    
