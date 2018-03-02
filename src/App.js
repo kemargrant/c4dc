@@ -226,14 +226,14 @@ class App extends Component{
 	                trigger: 'axis', 
 	                formatter: function (param) {
 						param = param[0];
-						return "Time:"+param.data[0]+' <br/> Percent:'+param.data[1];
+						return "Percent:"+param.data[0]+'<br/>Time:'+param.data[1];
 					},      
 	            },
 	            grid: {
 	                containLabel: true,
 	            },
 	            xAxis:{
-					min:0,
+					min:'dataMin',
 					max:"dataMax",
 					type : 'value',
 					name:'Time',
@@ -611,7 +611,7 @@ class App extends Component{
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
-				if(data.info[k].OrdersFilled < 2){
+				if(data.info[k].OrdersFilled !== 3){
 					continue;
 				}
 				if(data.info[k].Exchange !== "Binance"){
@@ -659,7 +659,9 @@ class App extends Component{
 						}
 						if(data.info[k].Percent > 100){
 							//Scatter Data
-							_binanceScatter[data.info[k].Pair]['>100%'].push([(data.info[k].Filled - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
+							if(data.info[k].Filled){
+								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+							}
 							//
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
 							if(data.info[k].Profit2){
@@ -677,7 +679,9 @@ class App extends Component{
 						}
 						else{
 							//Scatter Data
-							_binanceScatter[data.info[k].Pair]['<100%'].push([(data.info[k].Filled - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
+							if(data.info[k].Filled){
+								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+							}
 							//
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
