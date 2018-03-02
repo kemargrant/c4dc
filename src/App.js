@@ -659,9 +659,7 @@ class App extends Component{
 						}
 						if(data.info[k].Percent > 100){
 							//Scatter Data
-							if(data.info[k].Completed){
-								_binanceScatter[data.info[k].Pair]['>100%'].push([(data.info[k].Completed - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
-							}
+							_binanceScatter[data.info[k].Pair]['>100%'].push([(data.info[k].Filled - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
 							//
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
 							if(data.info[k].Profit2){
@@ -679,9 +677,7 @@ class App extends Component{
 						}
 						else{
 							//Scatter Data
-							if(data.info[k].Completed){
-								_binanceScatter[data.info[k].Pair]['<100%'].push([(data.info[k].Completed - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
-							}
+							_binanceScatter[data.info[k].Pair]['<100%'].push([(data.info[k].Filled - data.info[k].Time)/60000,Number(data.info[k].Percent.toFixed(3))])
 							//
 							if(data.info[k].Profit2){
 								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
