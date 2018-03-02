@@ -611,6 +611,9 @@ class App extends Component{
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
+				if(data.info[k].OrdersFilled < 2){
+					continue;
+				}
 				if(data.info[k].Exchange !== "Binance"){
 					date = new Date(data.info[k].Time).toISOString().split("T")[0];
 					if(dat[date]){
