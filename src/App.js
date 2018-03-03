@@ -1391,6 +1391,7 @@ class App extends Component{
 					:""
 				}		
 				</div>
+				<div className="bTable">
 				<Table>
 				<TableHead>
 					<TableRow>
@@ -1407,14 +1408,14 @@ class App extends Component{
 						<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>	
 						<td>{this.state.balance.bittrex[this.state.tradingPairs.misc]}</td>	
 						<td>100%</td>				
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] * this.state.balance.bittrex[this.state.tradingPairs.misc]*100/this.state.balance.bittrex.btc).toFixed(2)+'%' : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] * this.state.balance.bittrex[this.state.tradingPairs.misc]*100/this.state.balance.bittrex.btc).toFixed(0)+'%' : ""}</td>
 						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc].toFixed(7) : ""}</td>
 						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc].toFixed(1) : ""}</td>
 					</TableRow>
 					<TableRow>
 						<td>BTC</td>	
 						<td>{this.state.balance.bittrex.btc}</td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc/this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] *100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(2)+'%' : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc/this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] *100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(0)+'%' : ""}</td>
 						<td>100%</td>
 						<td>1</td>
 						<td>{this.state.tradingPairs.bittrex.usdt_btc ? this.state.tradingPairs.bittrex.usdt_btc.toFixed(1) : "" }</td>
@@ -1422,13 +1423,14 @@ class App extends Component{
 					<TableRow>
 						<td>USDT</td>
 						<td>{this.state.balance.bittrex.usdt ? this.state.balance.bittrex.usdt.toFixed(7) : 0}</td>
-						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc])/this.state.balance.bittrex[this.state.tradingPairs.misc])).toFixed(2)+ '%' : ""}</td>
+						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc])/this.state.balance.bittrex[this.state.tradingPairs.misc])).toFixed(0)+ '%' : ""}</td>
 						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex.usdt_btc)/this.state.balance.bittrex.btc)).toFixed(2)+ '%' : ""}</td>						
 						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (1/this.state.tradingPairs.bittrex.usdt_btc).toFixed(7) : "" }</td>
 						<td>1</td>
 					</TableRow>										
 				</TableBody>
 				</Table> 
+				</div>
 				<Table>
 				<TableHead>
 					<TableRow>
@@ -1499,6 +1501,7 @@ class App extends Component{
 				        />
 					</FormGroup>
 					</div>
+					<div className="bTable">
 					<Table>
 						<TableHead>
 							<TableRow>
@@ -1536,7 +1539,8 @@ class App extends Component{
 								<td>1</td>
 							</TableRow>										
 						</TableBody>
-					</Table> 							
+					</Table> 
+					</div>							
 					<Table>
 					<TableHead>
 						<TableRow>
