@@ -593,7 +593,7 @@ class App extends Component{
 			data.info = sort(data.info);
 			for(var i = 0;i < msc2.length;i++){
 				_binanceProfit[msc2[i]] = {}
-				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[],'_>100%':[],'_<100%':[]}
+				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[],'>>100%':[],'<<100%':[]}
 				date2[msc2[i]] = {}
 				b12[msc2[i]] = []
 				v2[msc2[i]] = []
@@ -662,7 +662,7 @@ class App extends Component{
 							if(data.info[k].Filled){
 								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]); 
-								_binanceScatter[data.info[k].Pair]['_>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['>>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
@@ -684,7 +684,7 @@ class App extends Component{
 							if(data.info[k].Filled){
 								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]); 
-								_binanceScatter[data.info[k].Pair]['_<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['<<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//
 							if(data.info[k].Profit2){
@@ -833,16 +833,16 @@ class App extends Component{
 			    _scatterOption3 = JSON.parse(JSON.stringify(this.state.scatterOption));
 			    _scatterOption3.key = "profit_"+msc2[i];
 			    _scatterOption3.yAxis.name = "Profit";
-			    _scatterOption3.legend.data = ['_<100%','_>100%'];
+			    _scatterOption3.legend.data = ['<<100%','>>100%'];
 			    _scatterOption3.tooltip.formatter = function (param) {
 						param = param[0];
 						return "Percent:"+param.data[0]+'<br/>Profit:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
 					}
 			    _scatterOption3.title.text = msc2[i] + ": Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].slice(3)+")";
-			    _scatterOption3.series[0].data = _binanceScatter[msc2[i]]['_>100%'];
-			    _scatterOption3.series[1].data = _binanceScatter[msc2[i]]['_<100%'];
-				_scatterOption3.series[0].name = '_>100%';
-			    _scatterOption3.series[1].name = '_<100%';			    
+			    _scatterOption3.series[0].data = _binanceScatter[msc2[i]]['>>100%'];
+			    _scatterOption3.series[1].data = _binanceScatter[msc2[i]]['<<100%'];
+				_scatterOption3.series[0].name = '>>100%';
+			    _scatterOption3.series[1].name = '<<100%';			    
 			    scatterOption2.push(_scatterOption3);			    
 			}
 			if(this.state.autosave){
