@@ -26,8 +26,8 @@ max-width:1.6em
 }
 
 .bTable{
-	width:100vw !important;
-	overflow:scroll !important;
+	width:99vw !important;
+	overflow-x:scroll !important;
 }
 
 body{

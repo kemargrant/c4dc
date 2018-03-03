@@ -211,7 +211,7 @@ class App extends Component{
 			    title:{
 					top:'5%',
 					left:"20%",
-					text:'Percentage vs Time',
+					text:'Percent vs Duration',
 					textStyle:{
 						fontSize: window.innerHeight > window.innerWidth ? (window.innerHeight/window.innerWidth*12) :  (window.innerWidth*13/window.innerHeight)
 					}
@@ -226,7 +226,7 @@ class App extends Component{
 	                trigger: 'axis', 
 	                formatter: function (param) {
 						param = param[0];
-						return "Percent:"+param.data[0]+'<br/>Time:'+param.data[1];
+						return "Percent:"+param.data[0]+'<br/>Duration:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
 					},      
 	            },
 	            grid: {
@@ -236,7 +236,7 @@ class App extends Component{
 					min:'dataMin',
 					max:"dataMax",
 					type : 'value',
-					name:'Time',
+					name:'Percent',
 					nameGap:30,
 					nameTextStyle:{
 						fontSize:15,
@@ -252,7 +252,7 @@ class App extends Component{
 	            yAxis:{
 					min:'dataMin',
 					max:"dataMax",
-					name:'Percent',
+					name:'Duration',
 					nameGap:50,
 					nameLocation:'middle',
 					nameTextStyle:{
@@ -593,7 +593,7 @@ class App extends Component{
 			data.info = sort(data.info);
 			for(var i = 0;i < msc2.length;i++){
 				_binanceProfit[msc2[i]] = {}
-				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[]}
+				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[],'_>100%':[],'_<100%':[]}
 				date2[msc2[i]] = {}
 				b12[msc2[i]] = []
 				v2[msc2[i]] = []
@@ -611,7 +611,7 @@ class App extends Component{
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
-				if(data.info[k].OrdersFilled !== 3){
+				if(data.info[k].OrdersFilled > 2){
 					continue;
 				}
 				if(data.info[k].Exchange !== "Binance"){
@@ -660,7 +660,9 @@ class App extends Component{
 						if(data.info[k].Percent > 100){
 							//Scatter Data
 							if(data.info[k].Filled){
-								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
+								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]); 
+								_binanceScatter[data.info[k].Pair]['_>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//
 							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
@@ -680,7 +682,9 @@ class App extends Component{
 						else{
 							//Scatter Data
 							if(data.info[k].Filled){
-								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
+								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]); 
+								_binanceScatter[data.info[k].Pair]['_<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//
 							if(data.info[k].Profit2){
@@ -806,6 +810,7 @@ class App extends Component{
 		    let option2 = [];
 		    let scatterOption2 = [];
 		    let _scatterOption2;
+		    let _scatterOption3;
 		    let _option2;
 		    for(let i = 0;i < msc2.length;i++){
 				_option2 = JSON.parse(JSON.stringify(option));
@@ -817,13 +822,28 @@ class App extends Component{
 			    _option2.series[2].name = msc2[i].slice(0,3).toUpperCase() + ' Profitable';
 			    _option2.key = msc2[i];
 			    option2.push(_option2);
-			    //Scatter Data
+			    //Scatter Data percent vs duration
 			    _scatterOption2 = this.state.scatterOption;
 			    _scatterOption2.key = msc2[i];
 			    _scatterOption2.title.text = msc2[i] + ": Percent vs Duration(m)";
 			    _scatterOption2.series[0].data = _binanceScatter[msc2[i]]['>100%'];
-			    _scatterOption2.series[1].data =_binanceScatter[msc2[i]]['<100%'];
-			    scatterOption2.push(_scatterOption2);			    
+			    _scatterOption2.series[1].data = _binanceScatter[msc2[i]]['<100%'];
+			    scatterOption2.push(_scatterOption2);	
+			    //Scatter Data percent vs profit
+			    _scatterOption3 = JSON.parse(JSON.stringify(this.state.scatterOption));
+			    _scatterOption3.key = "profit_"+msc2[i];
+			    _scatterOption3.yAxis.name = "Profit";
+			    _scatterOption3.legend.data = ['_<100%','_>100%'];
+			    _scatterOption3.tooltip.formatter = function (param) {
+						param = param[0];
+						return "Percent:"+param.data[0]+'<br/>Profit:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
+					}
+			    _scatterOption3.title.text = msc2[i] + ": Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].slice(3)+")";
+			    _scatterOption3.series[0].data = _binanceScatter[msc2[i]]['_>100%'];
+			    _scatterOption3.series[1].data = _binanceScatter[msc2[i]]['_<100%'];
+				_scatterOption3.series[0].name = '_>100%';
+			    _scatterOption3.series[1].name = '_<100%';			    
+			    scatterOption2.push(_scatterOption3);			    
 			}
 			if(this.state.autosave){
 					window.localStorage.setItem("DB_Trade",JSON.stringify(option));
@@ -1852,7 +1872,7 @@ class App extends Component{
 				</Card>
 				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
-			            <Typography type="title">Bittrex Config</Typography>
+			            <Typography type="title">Bittrex Configuration</Typography>
 			            <br/>
 						<InputLabel>Bot Polling Rate:{this.state.pollingRate/60000} Minutes </InputLabel>
 						<br/>
@@ -1932,7 +1952,7 @@ class App extends Component{
 				</Card> 		    
 				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
 			        <CardContent>
-			            <Typography type="title">Binance Config</Typography>
+			            <Typography type="title">Binance Configuration</Typography>
 			            <br/>
 						{
 							this.state.loadingBinanceSocket ? 
