@@ -611,7 +611,7 @@ class App extends Component{
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
-				if(data.info[k].OrdersFilled > 2){
+				if(data.info[k].OrdersFilled < 3){
 					continue;
 				}
 				if(data.info[k].Exchange !== "Binance"){
@@ -742,7 +742,7 @@ class App extends Component{
 						textStyle:{
 							color:'black'
 							},
-		                data:['BTC Profitable','Total',msc+' Profitable']
+		                data:['Total','>100%','<100%']
 		            },			
 		            title:{
 						textStyle:{fontSize:15},
@@ -793,14 +793,14 @@ class App extends Component{
 		                },
 		                {
 							
-		                    name:'BTC Profitable',
+		                    name:'>100%',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:b1,
 		                },
 		                {
 						
-		                    name:msc+' Profitable',
+		                    name:'<100%',
 		                    type:'line',
 		                    smooth:'true',
 		                    data:_msc,
@@ -814,12 +814,11 @@ class App extends Component{
 		    let _option2;
 		    for(let i = 0;i < msc2.length;i++){
 				_option2 = JSON.parse(JSON.stringify(option));
-				_option2.legend.data = ['Total',msc2[i].slice(3,msc2[i].length).toUpperCase()+' Profitable',msc2[i].slice(0,3).toUpperCase()+' Profitable'];
 			    _option2.series[0].data = v2[msc2[i]];
 			    _option2.series[1].data = b12[msc2[i]];
-			    _option2.series[1].name = msc2[i].slice(3,msc2[i].length).toUpperCase()+' Profitable';
+			    _option2.series[1].name = '>100%';
 			    _option2.series[2].data = _msc2[msc2[i]];
-			    _option2.series[2].name = msc2[i].slice(0,3).toUpperCase() + ' Profitable';
+			    _option2.series[2].name = '<100%';
 			    _option2.key = msc2[i];
 			    option2.push(_option2);
 			    //Scatter Data percent vs duration
