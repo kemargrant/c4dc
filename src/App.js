@@ -126,6 +126,8 @@ class App extends Component{
 						data: [{value: 0, name: "Percent"}]
 					}]
 			},			
+			binanceLimits:{},
+			binanceOptimalTrades:{},
 			binancePairs:[],
 			binanceProfit: window.localStorage && JSON.parse(window.localStorage.getItem("Binance_Profit"))? JSON.parse(window.localStorage.getItem("Binance_Profit")) : {},
 			bittrexProfit: window.localStorage && JSON.parse(window.localStorage.getItem("Bittrex_Profit"))? JSON.parse(window.localStorage.getItem("Bittrex_Profit")) : {btc:0},
@@ -318,7 +320,9 @@ class App extends Component{
 		this.swing_reset = this.swing_reset.bind(this);
 		this.updateBinanceBalance = this.updateBinanceBalance.bind(this);	
 		this.updateBinanceB1Minimum = this.updateBinanceB1Minimum.bind(this);	
-		this.updateBinanceC1Minimum = this.updateBinanceC1Minimum.bind(this);	
+		this.updateBinanceC1Minimum = this.updateBinanceC1Minimum.bind(this);
+		this.updateBinanceLimits= this.updateBinanceLimits.bind(this);		
+		this.updateBinanceOptimalTrades = this.updateBinanceOptimalTrades.bind(this);		
 		this.updateBittrexBalance = this.updateBittrexBalance.bind(this);
 		this.updateLiquidTrade = this.updateLiquidTrade.bind(this);
 		this.updateLiquidTradeBinance = this.updateLiquidTradeBinance.bind(this);
@@ -539,7 +543,7 @@ class App extends Component{
 					_binance[data.pairs[i].pair1][data.pairs[i].pair3] = 0;
 			}
 			_tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
-			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},loadingBinanceSocket:false,liquidTradesBinance:data.liquid,binanceConnections:data.connections,binanceStatus:data.status,binancePairs:data.pairs,binanceProgress:_progress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream,binanceB1Minimum:data.minB1,binanceC1Minimum:data.minXXX,tradingPairs:_tradingPairs});
+			return this.setState({balance:{bittrex:this.state.balance.bittrex,binance:data.balance},loadingBinanceSocket:false,liquidTradesBinance:data.liquid,binanceConnections:data.connections,binanceStatus:data.status,binancePairs:data.pairs,binanceProgress:_progress,binanceStatusTime:data.time,binanceUserStreamStatus:data.ustream,binanceB1Minimum:data.minB1,binanceC1Minimum:data.minC1,tradingPairs:_tradingPairs,binanceLimits:data.limits,binanceOptimalTrades:data.optimal});
 		}		
 					
 		if(data.type === "db_trade"){
@@ -1118,6 +1122,22 @@ class App extends Component{
 		_C1Min[evt.currentTarget.id] = evt.currentTarget.value;		
 		this.setState({binanceC1Minimum:_C1Min});
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceC1Minimum","min":evt.currentTarget.value,"pair":evt.currentTarget.id}),this.state.privatekey).toString());			
+	}	
+
+	updateBinanceLimits(evt){
+		let _limits = this.state.binanceLimits;
+		let base = evt.currentTarget.id.split("_");
+		let key = base[1].split(".");
+		_limits[base[0]][key[0]][key[1]] = evt.currentTarget.value;
+		this.setState({binanceLimits:_limits});
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceLimits","value":evt.currentTarget.value,"pair":base[0],"selection":base[1]}),this.state.privatekey).toString());			
+	}
+
+	updateBinanceOptimalTrades(pair,checked){	
+		let _optimal = this.state.binanceOptimalTrades;
+		_optimal[pair] = checked;	
+		this.setState({binanceOptimalTrades:_optimal});
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceOptimal","bool":checked,"pair":pair}),this.state.privatekey).toString());			
 	}	
 
 	updateLogLevel(evt){
@@ -1993,6 +2013,15 @@ class App extends Component{
 						              onChange={this.updateLiquidTradeBinance}
 					            /> }
 					        />
+					        <FormControlLabel
+							  id={Pair[0]+"_optimal"}
+							  label="Optimal Trades"
+							  style={{margin:"auto"}}
+					          control={<Switch
+						              checked={this.state.binanceOptimalTrades[Pair[0]] === true ? true: false}
+						              onChange={(evt,checked)=>{this.updateBinanceOptimalTrades(Pair[0],checked)}}
+					            /> }
+					        />
 					        ({Pair[0]})
 					        </FormGroup>
 					        </div>	
@@ -2003,6 +2032,22 @@ class App extends Component{
 							<InputLabel>Minimum {Pair[0].slice(0,3).toUpperCase()} Order</InputLabel>
 							<br/>
 							<Input type="number" id={Pair[0]} inputProps={{min: "0",step: "0.001" }} value={this.state.binanceC1Minimum[Pair[0]]} onChange={this.updateBinanceC1Minimum}/>
+							<br/>
+							<InputLabel> Trades &gt; 100% Lower Limit </InputLabel>
+							<br/>
+							<Input type="number" id={Pair[0]+"_over.lowerLimit"} inputProps={{min: "100",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].over.lowerLimit : 100} onChange={this.updateBinanceLimits}/>
+							<br/>
+							<InputLabel>Trades &gt; 100% Upper Limit </InputLabel>
+							<br/>
+							<Input type="number" id={Pair[0]+"_over.upperLimit"} inputProps={{min: "100.001",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].over.upperLimit : 100.001} onChange={this.updateBinanceLimits}/>
+							<br/>
+							<InputLabel> Trades &lt; 100% Lower Limit </InputLabel>
+							<br/>
+							<Input type="number" id={Pair[0]+"_under.lowerLimit"} inputProps={{min: "98",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.lowerLimit : 98} onChange={this.updateBinanceLimits}/>
+							<br/>
+							<InputLabel>Trades &lt; 100% Upper Limit </InputLabel>
+							<br/>
+							<Input type="number" id={Pair[0]+"_under.upperLimit"} inputProps={{min: "99.99",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
 							</div>	
 							))
 							})()						
