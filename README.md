@@ -47,8 +47,13 @@ The *Settings* tab controls  connection to the bot
 | ------ | ------ | ------ |
 | WebSocket Connection | Connect c4d to Binance websocket and monitor ticker prices | Switch
 | Liquid Trades | Perform arbitrage when order book has liquidity | Switch
+| Optimal Trades| Make the best trade possible(when percentage< 100%) | Switch
 | Minimum xxx| Minimum order amount for xxx currency | Number
 | Minimum yyy |Minimum order amount for yyy currency | Number
+| Trade > 100% Lower Limit |Minimum percent to perform trade when percentage > 100% | Number
+| Trade > 100% Upper Limit |Maximum percent to perform trade when percentage > 100% | Number
+| Trade < 100% Lower Limit |Minimum percent to perform trade when percentage < 100% | Number
+| Trade < 100% Upper Limit |Maximum percent to perform trade when percentage < 100% | Number
 
 ## Disclaimer
 
