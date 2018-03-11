@@ -2047,7 +2047,7 @@ class App extends Component{
 							<br/>
 							<InputLabel>Trades &lt; 100% Upper Limit </InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]+"_under.upperLimit"} inputProps={{min: "99.99",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
+							<Input type="number" id={Pair[0]+"_under.upperLimit"} inputProps={{min: "98.1",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
 							</div>	
 							))
 							})()						
