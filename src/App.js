@@ -673,9 +673,9 @@ class App extends Component{
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
-								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
 								if(data.info[k].Profit2){
-									_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
+									_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
 								}
 								if(data.info[k].Profit3){
 									_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
@@ -700,9 +700,9 @@ class App extends Component{
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
-								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
 								if(data.info[k].Profit2){
-									_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
+									_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
 								}
 								if(data.info[k].Profit3){
 									_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
@@ -1681,7 +1681,6 @@ class App extends Component{
 								results.push([key2,this.state.binanceProfit[key][key2]]);
 							}
 						}
-						
 						return results.map((profit)=>(
 							<div key={profit[1]}>
 							{ profit[1] ? profit[1].toFixed(8) :""}/{this.state.balance.binance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/this.state.balance.binance[profit[0]]).toFixed(8) : ""})%
