@@ -1299,11 +1299,16 @@ class App extends Component{
 			</AppBar>	
 			<div className="body">   
 			{this.state.tabValue === 0 && <TabContainer>
-			<ReactEchartsCore
+				
+			{ 
+				this.state.connected ?
+			  <ReactEchartsCore
 			  echarts={echarts}
 			  option={this.state.binanceGauge}
 			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-			   />	
+			   />
+			   :""
+			 }	
 			{
 				(()=>{
 				let p = [];
