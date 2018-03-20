@@ -653,60 +653,69 @@ class App extends Component{
 					}
 				}
 				else{
-					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] ? insert(data.info[k].Pair,2,"_") : insert(data.info[k].Pair,3,"_");
-					let Csplit = this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] ? this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] : this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")];
+					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? insert(data.info[k].Pair,2,"_") : insert(data.info[k].Pair,4,"_");
+					let Csplit = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] : this.state.tradingPairs.binance[insert(data.info[k].Pair,4,"_")];
 					try{
+						if(data.info[k].Time < 1)continue;
 						date2[data.info[k].Pair] = new Date(data.info[k].Time).toISOString().split("T")[0];
-						if(dat2[data.info[k].Pair][date2[data.info[k].Pair]]){
+						if(dat2[data.info[k].Pair] && dat2[data.info[k].Pair][date2[data.info[k].Pair]]){
 							dat2[data.info[k].Pair][date2[data.info[k].Pair]]++;
 						}
-						else{
+						else if(dat2[data.info[k].Pair]){
 							dat2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
 						}
 						if(data.info[k].Percent > 100){
 							//Scatter Data
-							if(data.info[k].Filled){
+							if(data.info[k].Filled && _binanceScatter[data.info[k].Pair]){
 								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[2]]) + data.info[k].Profit*(Csplit[Csplit.pairs[1]]); 
 								_binanceScatter[data.info[k].Pair]['>>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//Profits
-							_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
-							if(data.info[k].Profit2){
-								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
-							}
-							if(data.info[k].Profit3){
-								_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
+							if(_binanceProfit[data.info[k].Pair]){
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
+								if(data.info[k].Profit2){
+									_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
+								}
+								if(data.info[k].Profit3){
+									_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
+								}
 							}
 							//Trade
-							if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
-								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
-							}
-							else{
-								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							if(b1Count2[data.info[k].Pair]){
+								if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
+									b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+								}
+								else{
+									b1Count2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+								}
 							}
 						}
 						else{
 							//Scatter Data
-							if(data.info[k].Filled){
+							if(data.info[k].Filled && _binanceScatter[data.info[k].Pair]){
 								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[1]]) + data.info[k].Profit*(Csplit[Csplit.pairs[2]]); 
 								_binanceScatter[data.info[k].Pair]['<<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//Profits
-							_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
-							if(data.info[k].Profit2){
-								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
-							}
-							if(data.info[k].Profit3){
-								_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
+							if(_binanceProfit[data.info[k].Pair]){
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
+								if(data.info[k].Profit2){
+									_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
+								}
+								if(data.info[k].Profit3){
+									_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
+								}
 							}
 							//Trade
-							if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
-								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
-							}
-							else{
-								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+							if(_mscCount2[data.info[k].Pair]){
+								if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
+									_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
+								}
+								else{
+									_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]] = 1;
+								}
 							}
 						}
 					}
@@ -1666,6 +1675,7 @@ class App extends Component{
 				   {
 					(()=>{
 						let results = [];
+						
 						for(let key in this.state.binanceProfit){
 						   for(let key2 in this.state.binanceProfit[key]){
 								results.push([key2,this.state.binanceProfit[key][key2]]);
