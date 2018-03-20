@@ -480,12 +480,12 @@ class App extends Component{
 			gauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
 			for(let key in data.info){
 				for(let i = 0;i < this.state.binancePairs.length;i++){
-					if(this.state.binancePairs[i].pair1 === key){
-						_binance[key] = {}
-						_binance[key]['pairs'] = [this.state.binancePairs[i].pair1,this.state.binancePairs[i].pair2,this.state.binancePairs[i].pair3]
-						_binance[key][this.state.binancePairs[i].pair1] = data.info[key][_type].a;
-						_binance[key][this.state.binancePairs[i].pair2] = data.info[key][_type].b;
-						_binance[key][this.state.binancePairs[i].pair3] = data.info[key][_type].c;
+					if(this.state.binancePairs[i].pair1.replace("_","") === key){
+						_binance[this.state.binancePairs[i].pair1] = {}
+						_binance[this.state.binancePairs[i].pair1]['pairs'] = [this.state.binancePairs[i].pair1,this.state.binancePairs[i].pair2,this.state.binancePairs[i].pair3]
+						_binance[this.state.binancePairs[i].pair1][this.state.binancePairs[i].pair1] = data.info[key][_type].a;
+						_binance[this.state.binancePairs[i].pair1][this.state.binancePairs[i].pair2] = data.info[key][_type].b;
+						_binance[this.state.binancePairs[i].pair1][this.state.binancePairs[i].pair3] = data.info[key][_type].c;
 						break;
 					}
 				}
@@ -577,6 +577,9 @@ class App extends Component{
 				}
 				return order;
 			}
+			function insert(str, index, value) {
+			    return str.substr(0, index) + value + str.substr(index);
+			}
 			let _binanceProfit = {}
 			let _bittrexProfit = {}
 			let _binanceScatter = {}
@@ -596,21 +599,21 @@ class App extends Component{
 			let _mscCount2 = {}
 			data.info = sort(data.info);
 			for(var i = 0;i < msc2.length;i++){
-				_binanceProfit[msc2[i]] = {}
-				_binanceScatter[msc2[i]] = {'>100%':[],'<100%':[],'>>100%':[],'<<100%':[]}
-				date2[msc2[i]] = {}
-				b12[msc2[i]] = []
-				v2[msc2[i]] = []
-				_msc2[msc2[i]] = []
-				dat2[msc2[i]] = {}
-				b1Count2[msc2[i]] = {};
-				_mscCount2[msc2[i]] = {};
+				_binanceProfit[msc2[i].replace("_","")] = {}
+				_binanceScatter[msc2[i].replace("_","")] = {'>100%':[],'<100%':[],'>>100%':[],'<<100%':[]}
+				date2[msc2[i].replace("_","")] = {}
+				b12[msc2[i].replace("_","")] = []
+				v2[msc2[i].replace("_","")] = []
+				_msc2[msc2[i].replace("_","")] = []
+				dat2[msc2[i].replace("_","")] = {}
+				b1Count2[msc2[i].replace("_","")] = {};
+				_mscCount2[msc2[i].replace("_","")] = {};
 				//b1
-				_binanceProfit[msc2[i]][msc2[i].slice(3,msc2[i].length)] = 0;
+				_binanceProfit[msc2[i].replace("_","")][msc2[i].split("_")[1]] = 0;
 				//mc2
-				_binanceProfit[msc2[i]][msc2[i].slice(0,3)] = 0;
+				_binanceProfit[msc2[i].replace("_","")][msc2[i].split("_")[0]] = 0;
 				//u1
-				_binanceProfit[msc2[i]][this.state.tradingPairs.binance[msc2[i]].pairs[1].slice(3)] = 0;
+				_binanceProfit[msc2[i].replace("_","")][this.state.tradingPairs.binance[msc2[i]].pairs[1].split("_")[1]] = 0;
 			}			
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
@@ -650,10 +653,9 @@ class App extends Component{
 					}
 				}
 				else{
+					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] ? insert(data.info[k].Pair,2,"_") : insert(data.info[k].Pair,3,"_");
+					let Csplit = this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] ? this.state.tradingPairs.binance[insert(data.info[k].Pair,2,"_")] : this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")];
 					try{
-						if(!data.info[k].Pair){
-							data.info[k].Pair = msc2[0];
-						}
 						date2[data.info[k].Pair] = new Date(data.info[k].Time).toISOString().split("T")[0];
 						if(dat2[data.info[k].Pair][date2[data.info[k].Pair]]){
 							dat2[data.info[k].Pair][date2[data.info[k].Pair]]++;
@@ -665,17 +667,18 @@ class App extends Component{
 							//Scatter Data
 							if(data.info[k].Filled){
 								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
-								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]); 
+								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[2]]) + data.info[k].Profit*(Csplit[Csplit.pairs[1]]); 
 								_binanceScatter[data.info[k].Pair]['>>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
-							//
-							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit;
+							//Profits
+							_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
 							if(data.info[k].Profit2){
-								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit2;
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
 							}
 							if(data.info[k].Profit3){
-								_binanceProfit[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1].slice(3)] += data.info[k].Profit3;
+								_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
 							}
+							//Trade
 							if(b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]){
 								b1Count2[data.info[k].Pair][date2[data.info[k].Pair]]++;
 							}
@@ -687,17 +690,18 @@ class App extends Component{
 							//Scatter Data
 							if(data.info[k].Filled){
 								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
-								let profit = data.info[k].Profit3 + data.info[k].Profit2*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1]]) + data.info[k].Profit*(this.state.tradingPairs.binance[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[2]]); 
+								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[1]]) + data.info[k].Profit*(Csplit[Csplit.pairs[2]]); 
 								_binanceScatter[data.info[k].Pair]['<<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
-							//
+							//Profits
+							_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
 							if(data.info[k].Profit2){
-								_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(3,data.info[k].Pair.length)] += data.info[k].Profit2;
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
 							}
 							if(data.info[k].Profit3){
-								_binanceProfit[data.info[k].Pair][this.state.tradingPairs.binance[data.info[k].Pair].pairs[1].slice(3)] += data.info[k].Profit3;
+								_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
 							}
-							_binanceProfit[data.info[k].Pair][data.info[k].Pair.slice(0,3)] += data.info[k].Profit;
+							//Trade
 							if(_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]){
 								_mscCount2[data.info[k].Pair][date2[data.info[k].Pair]]++;
 							}
@@ -721,14 +725,14 @@ class App extends Component{
 				_msc.push({value:[key,_mscCount[key]],name:key});
 			}	
 			for(let i = 0;i < msc2.length;i++){
-				for(let key in dat2[msc2[i]]){
-					v2[msc2[i]].push({value:[key,dat2[msc2[i]][key]],name:key});
+				for(let key in dat2[msc2[i].replace("_","")]){
+					v2[msc2[i].replace("_","")].push({value:[key,dat2[msc2[i].replace("_","")][key]],name:key});
 				}
-				for(let key in b1Count2[msc2[i]]){
-					b12[msc2[i]].push({value:[key,b1Count2[msc2[i]][key]],name:key});
+				for(let key in b1Count2[msc2[i].replace("_","")]){
+					b12[msc2[i].replace("_","")].push({value:[key,b1Count2[msc2[i].replace("_","")][key]],name:key});
 				}
-				for(let key in _mscCount2[msc2[i]]){
-					_msc2[msc2[i]].push({value:[key,_mscCount2[msc2[i]][key]],name:key});
+				for(let key in _mscCount2[msc2[i].replace("_","")]){
+					_msc2[msc2[i].replace("_","")].push({value:[key,_mscCount2[msc2[i].replace("_","")][key]],name:key});
 				}		
 			}	
 			let option = {
@@ -818,32 +822,32 @@ class App extends Component{
 		    let _option2;
 		    for(let i = 0;i < msc2.length;i++){
 				_option2 = JSON.parse(JSON.stringify(option));
-			    _option2.series[0].data = v2[msc2[i]];
-			    _option2.series[1].data = b12[msc2[i]];
+			    _option2.series[0].data = v2[msc2[i].replace("_","")];
+			    _option2.series[1].data = b12[msc2[i].replace("_","")];
 			    _option2.series[1].name = '>100%';
-			    _option2.series[2].data = _msc2[msc2[i]];
+			    _option2.series[2].data = _msc2[msc2[i].replace("_","")];
 			    _option2.series[2].name = '<100%';
-			    _option2.key = msc2[i];
+			    _option2.key = msc2[i].replace("_","");
 			    option2.push(_option2);
 			    //Scatter Data percent vs duration
 			    _scatterOption2 = this.state.scatterOption;
-			    _scatterOption2.key = msc2[i];
-			    _scatterOption2.title.text = msc2[i] + ": Percent vs Duration(m)";
-			    _scatterOption2.series[0].data = _binanceScatter[msc2[i]]['>100%'];
-			    _scatterOption2.series[1].data = _binanceScatter[msc2[i]]['<100%'];
+			    _scatterOption2.key = msc2[i].replace("_","");
+			    _scatterOption2.title.text = msc2[i].replace("_","") + ": Percent vs Duration(m)";
+			    _scatterOption2.series[0].data = _binanceScatter[msc2[i].replace("_","")]['>100%'];
+			    _scatterOption2.series[1].data = _binanceScatter[msc2[i].replace("_","")]['<100%'];
 			    scatterOption2.push(_scatterOption2);	
 			    //Scatter Data percent vs profit
 			    _scatterOption3 = JSON.parse(JSON.stringify(this.state.scatterOption));
-			    _scatterOption3.key = "profit_"+msc2[i];
+			    _scatterOption3.key = "profit_"+msc2[i].replace("_","");
 			    _scatterOption3.yAxis.name = "Profit";
 			    _scatterOption3.legend.data = ['<<100%','>>100%'];
 			    _scatterOption3.tooltip.formatter = function (param) {
 						param = param[0];
 						return "Percent:"+param.data[0]+'<br/>Profit:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
 					}
-			    _scatterOption3.title.text = msc2[i] + ": Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].slice(3)+")";
-			    _scatterOption3.series[0].data = _binanceScatter[msc2[i]]['>>100%'];
-			    _scatterOption3.series[1].data = _binanceScatter[msc2[i]]['<<100%'];
+			    _scatterOption3.title.text = msc2[i].replace("_","") + ": Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].split("_")[1]+")";
+			    _scatterOption3.series[0].data = _binanceScatter[msc2[i].replace("_","")]['>>100%'];
+			    _scatterOption3.series[1].data = _binanceScatter[msc2[i].replace("_","")]['<<100%'];
 				_scatterOption3.series[0].name = '>>100%';
 			    _scatterOption3.series[1].name = '<<100%';			    
 			    scatterOption2.push(_scatterOption3);			    
@@ -1275,8 +1279,8 @@ class App extends Component{
 		  <div className="App">
 			<AppBar position="static">
 			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
-				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>
 				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>				
+				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
 				<Tab label="Orders" icon={<InsertFile />}></Tab>
 				<Tab label="Logs" icon={<InsertLogs />}></Tab>
@@ -1284,9 +1288,134 @@ class App extends Component{
 				<Tab label="Settings" icon={<InsertSettings />}></Tab>   
 			</Tabs>
 			</AppBar>	
-			<div className="body">     
+			<div className="body">   
+			{this.state.tabValue === 0 && <TabContainer>
+			<ReactEchartsCore
+			  echarts={echarts}
+			  option={this.state.binanceGauge}
+			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+			   />	
 			{
-			this.state.tabValue === 0 && <TabContainer>
+				(()=>{
+				let p = [];
+				for(let i=0;i < this.state.binancePairs.length;i++){
+					p.push([this.state.binancePairs[i].pair1,[this.state.binancePairs[i].pair1,this.state.binancePairs[i].pair2,this.state.binancePairs[i].pair3]])
+				}
+				return p.map((Pair) => (
+				<div key={Pair[0]}>
+					{this.state.binanceStatusTime[Pair[0]] > 0 ? 
+						(<div>
+						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
+						<Button variant="raised" color="primary">Arbitrage In Progress</Button>
+						<br/>
+						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+						</div>)
+						: ""
+					}
+					<div className="monitorToggle">
+					<FormGroup>
+				        <FormControlLabel
+						  label={!this.state.binanceStatus[Pair[0]] ? "Active" : "Paused"}
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={!this.state.binanceStatus[Pair[0]]}
+					              onChange={(event, checked) => {
+									  this.forceMonitorBinance(Pair[0],!checked)
+									}}
+								/>}
+				        />
+					</FormGroup>
+					</div>
+					<div className="bTable">
+					<Table>
+						<TableHead>
+							<TableRow>
+								<th data-field="">Asset</th>
+								<th data-field="">Balance</th>
+								<th data-field="">{Pair[0].split("_")[0].toUpperCase()}/Ratio</th>
+								<th data-field="">{Pair[0].split("_")[1].toUpperCase()}/Ratio</th>
+								<th data-field="">&#8224;{Pair[0].split("_")[1].toUpperCase()}</th>
+								<th data-field="">&#8224;{Pair[1][1].split("_")[1].toUpperCase()}</th>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							<TableRow>
+								<td>{Pair[0].split("_")[0].toUpperCase()}</td>	
+								<td>{this.state.balance.binance[Pair[0].split("_")[0]]}</td>	
+								<td>100%</td>				
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.balance.binance[Pair[0].split("_")[0]]*100/this.state.balance.binance[Pair[0].split("_")[1]]).toFixed(2)+'%' : ""}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[0]].toFixed(7) : "" }</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][2]].toFixed(2) : ""}</td>
+							</TableRow>
+							<TableRow>
+								<td>{Pair[0].split("_")[1].toUpperCase()}</td>	
+								<td>{this.state.balance.binance[Pair[0].split("_")[1]]}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].split("_")[0]]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].split("_")[0]]).toFixed(2)+'%' : ""}</td>
+								<td>100%</td>
+								<td>1</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]].toFixed(2) : ""}</td>
+							</TableRow>
+							<TableRow>
+								<td>{Pair[1][1].split("_")[1].toUpperCase()}</td>
+								<td>{ this.state.balance.binance[Pair[1][1].split("_")[1]] ? this.state.balance.binance[Pair[1][1].split("_")[1]].toFixed(7) : 0}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[1][2]])/this.state.balance.binance[Pair[0].split("_")[0]])).toFixed(2)+ '%' : ""}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]])/this.state.balance.binance[Pair[0].split("_")[1]])).toFixed(2)+ '%' : ""}</td>						
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]]).toFixed(7) : ""}</td>
+								<td>1</td>
+							</TableRow>										
+						</TableBody>
+					</Table> 
+					</div>							
+					<Table>
+					<TableHead>
+						<TableRow>
+							<th data-field="">Trade</th>
+							<th data-field="">$</th>
+							<th data-field="">{Pair[0].split("_")[0].toUpperCase()}</th>
+							<th data-field="">{Pair[0].split("_")[1].toUpperCase()}</th>
+							<th data-field="">{Pair[1][1].split("_")[1].toUpperCase()}</th>
+							<th data-field="">Status</th>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+					<TableRow>
+						<td>{Pair[0].split("_")[1].toUpperCase()}</td>
+						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} id={Pair[0].replace("_","")} value={this.state.binanceB1Minimum[Pair[0].replace("_","")]} onChange={this.updateBinanceB1Minimum} /> </td>
+						<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
+						<td>{this.state.binanceB1Minimum[Pair[0].replace("_","")]}</td>						
+						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
+						<td>{
+							this.state.tradingPairs.binance[Pair[0]] ? 
+							((this.state.binanceB1Minimum[Pair[0].replace("_","")] < this.state.balance.binance[Pair[0].split("_")[0]]) && ((1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[0].split("_")[0]]) && ((this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[1][1].split("_")[1]]) ? <Switch checked={true}/> : <Switch checked={false}/>)
+							: ""
+							}
+					</td>	
+					</TableRow>		
+					<TableRow>
+						<td>{Pair[0].split("_")[0].toUpperCase()}</td>
+						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={Pair[0].replace("_","")} value={this.state.binanceC1Minimum[Pair[0].replace("_","")]} onChange={this.updateBinanceC1Minimum} /> </td>
+						<td>{this.state.binanceC1Minimum[Pair[0].replace("_","")]}</td>						
+						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
+						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
+						<td>{this.state.tradingPairs.binance[Pair[0]] ?
+							((this.state.binanceC1Minimum[Pair[0].replace("_","")] < this.state.balance.binance[Pair[0].split("_")[0]]) 
+							&&	((this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[0].split("_")[0]]) &&
+							((this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[1][1].split("_")[1]])
+							? <Switch checked={true}/> :  <Switch checked={false}/>)
+							: ""
+							}</td>	
+					</TableRow>	
+					</TableBody>
+					</Table> 	
+				</div>
+				))
+				})()						
+			}	
+			</TabContainer>}
+						
+			  
+			{
+			this.state.tabValue === 1 && <TabContainer>
 				<div className="graph">
 				{
 					this.state.bittrexStatusTime > 0 ?
@@ -1503,129 +1632,6 @@ class App extends Component{
 			</TabContainer>
 			}
 			
-			{this.state.tabValue === 1 && <TabContainer>
-			<ReactEchartsCore
-			  echarts={echarts}
-			  option={this.state.binanceGauge}
-			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-			   />	
-			{
-				(()=>{
-				let p = [];
-				for(let i=0;i < this.state.binancePairs.length;i++){
-					p.push([this.state.binancePairs[i].pair1,[this.state.binancePairs[i].pair1,this.state.binancePairs[i].pair2,this.state.binancePairs[i].pair3]])
-				}
-				return p.map((Pair) => (
-				<div key={Pair[0]}>
-					{this.state.binanceStatusTime[Pair[0]] > 0 ? 
-						(<div>
-						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
-						<Button variant="raised" color="primary">Arbitrage In Progress</Button>
-						<br/>
-						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
-						</div>)
-						: ""
-					}
-					<div className="monitorToggle">
-					<FormGroup>
-				        <FormControlLabel
-						  label={!this.state.binanceStatus[Pair[0]] ? "Active" : "Paused"}
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={!this.state.binanceStatus[Pair[0]]}
-					              onChange={(event, checked) => {
-									  this.forceMonitorBinance(Pair[0],!checked)
-									}}
-								/>}
-				        />
-					</FormGroup>
-					</div>
-					<div className="bTable">
-					<Table>
-						<TableHead>
-							<TableRow>
-								<th data-field="">Asset</th>
-								<th data-field="">Balance</th>
-								<th data-field="">{Pair[0].slice(0,3).toUpperCase()}/Ratio</th>
-								<th data-field="">{Pair[0].slice(3,Pair[0].length).toUpperCase()}/Ratio</th>
-								<th data-field="">&#8224;{Pair[0].slice(3,Pair[0].length).toUpperCase()}</th>
-								<th data-field="">&#8224;{Pair[1][1].slice(3,Pair[1][1].length).toUpperCase()}</th>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							<TableRow>
-								<td>{Pair[0].slice(0,3).toUpperCase()}</td>	
-								<td>{this.state.balance.binance[Pair[0].slice(0,3)]}</td>	
-								<td>100%</td>				
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.balance.binance[Pair[0].slice(0,3)]*100/this.state.balance.binance[Pair[0].slice(3,Pair[0].length)]).toFixed(2)+'%' : ""}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[0]].toFixed(7) : "" }</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][2]].toFixed(1) : ""}</td>
-							</TableRow>
-							<TableRow>
-								<td>{Pair[0].slice(3,Pair[0].length).toUpperCase()}</td>	
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.balance.binance[Pair[0].slice(3,Pair[0].length)] : ""}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].slice(3,Pair[0].length)]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].slice(0,3)]).toFixed(2)+'%' : ""}</td>
-								<td>100%</td>
-								<td>1</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]].toFixed(1) : ""}</td>
-							</TableRow>
-							<TableRow>
-								<td>{Pair[1][1].slice(3,Pair[1][1].length).toUpperCase()}</td>
-								<td>{ this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)] ? this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)].toFixed(7) : 0}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)]/this.state.tradingPairs.binance[Pair[0]][Pair[1][2]])/this.state.balance.binance[Pair[0].slice(0,3)])).toFixed(2)+ '%' : ""}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)]/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]])/this.state.balance.binance[Pair[0].slice(3,Pair[0].length)])).toFixed(2)+ '%' : ""}</td>						
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]]).toFixed(7) : ""}</td>
-								<td>1</td>
-							</TableRow>										
-						</TableBody>
-					</Table> 
-					</div>							
-					<Table>
-					<TableHead>
-						<TableRow>
-							<th data-field="">Trade</th>
-							<th data-field="">$</th>
-							<th data-field="">{Pair[0].slice(0,3).toUpperCase()}</th>
-							<th data-field="">{Pair[0].slice(3,Pair[0].length).toUpperCase()}</th>
-							<th data-field="">{Pair[1][1].slice(3,Pair[1][1].length).toUpperCase()}</th>
-							<th data-field="">Status</th>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-					<TableRow>
-						<td>{Pair[0].slice(3,Pair[0].length).toUpperCase()}</td>
-						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} id={Pair[0]} value={this.state.binanceB1Minimum[Pair[0]]} onChange={this.updateBinanceB1Minimum} /> </td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0]]).toFixed(5) : ""}</td>
-						<td>{this.state.binanceB1Minimum[Pair[0]]}</td>						
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0]]).toFixed(5) : ""}</td>
-						<td>{
-							this.state.tradingPairs.binance[Pair[0]] ? 
-							((this.state.binanceB1Minimum[Pair[0]] < this.state.balance.binance[Pair[0].slice(3,Pair[0].length)]) && ((1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0]]) < this.state.balance.binance[Pair[0].slice(0,3)]) && ((this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0]]) < this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)]) ? <Switch checked={true}/> : <Switch checked={false}/>)
-							: ""
-							}
-					</td>	
-					</TableRow>		
-					<TableRow>
-						<td>{Pair[0].slice(0,3).toUpperCase()}</td>
-						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={Pair[0]} value={this.state.binanceC1Minimum[Pair[0]]} onChange={this.updateBinanceC1Minimum} /> </td>
-						<td>{this.state.binanceC1Minimum[Pair[0]]}</td>						
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0]]).toFixed(5) : ""}</td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0]]).toFixed(5) : ""}</td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ?
-							((this.state.binanceC1Minimum[Pair[0]] < this.state.balance.binance[Pair[0].slice(0,3)]) 
-							&&	((this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0]]) < this.state.balance.binance[Pair[0].slice(3,Pair[0].length)]) &&
-							((this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0]]) < this.state.balance.binance[Pair[1][1].slice(3,Pair[1][1].length)])
-							? <Switch checked={true}/> :  <Switch checked={false}/>)
-							: ""
-							}</td>	
-					</TableRow>	
-					</TableBody>
-					</Table> 	
-				</div>
-				))
-				})()						
-			}	
-			</TabContainer>}
 			{this.state.tabValue === 2 && <TabContainer>
 			   <Button variant="raised" color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
 			   <h3>Bittrex</h3>
@@ -1702,7 +1708,7 @@ class App extends Component{
 					(()=>{
 					if(this.state.dbScatter.length > 0)
 					{return this.state.dbScatter.map((option,i) => (
-					<div  key={option.key}>
+					<div key={option.key}>
 					<ReactEchartsCore
 			          echarts={echarts}
 					  option={option}
@@ -1997,57 +2003,57 @@ class App extends Component{
 				        {
 							(()=>{
 							let p = [];
-							for(let key in this.state.binanceB1Minimum){
-								p.push([key,this.state.binanceB1Minimum[key]]);
+							for(var i = 0;i < this.state.binancePairs.length;i++){
+								p.push(this.state.binancePairs[i].pair1);
 							}
 							return p.map((Pair) => (
-							<div key={Pair[0]}>
+							<div key={Pair}>
 							 <div className="Switches">
 							<FormGroup>
 					        <FormControlLabel
-							  id={Pair[0]}
+							  id={Pair.replace("_","")}
 							  label="Liquid Trades"
 							  style={{margin:"auto"}}
 					          control={<Switch
-						              checked={this.state.liquidTradesBinance[Pair[0]]}
+						              checked={this.state.liquidTradesBinance[Pair.replace("_","")]}
 						              onChange={this.updateLiquidTradeBinance}
 					            /> }
 					        />
 					        <FormControlLabel
-							  id={Pair[0]+"_optimal"}
+							  id={Pair.replace("_","")+"_optimal"}
 							  label="Optimal Trades"
 							  style={{margin:"auto"}}
 					          control={<Switch
-						              checked={this.state.binanceOptimalTrades[Pair[0]] === true ? true: false}
-						              onChange={(evt,checked)=>{this.updateBinanceOptimalTrades(Pair[0],checked)}}
+						              checked={this.state.binanceOptimalTrades[Pair.replace("_","")] === true ? true: false}
+						              onChange={(evt,checked)=>{this.updateBinanceOptimalTrades(Pair.replace("_",""),checked)}}
 					            /> }
 					        />
-					        ({Pair[0]})
+					        ({Pair.replace("_","")})
 					        </FormGroup>
 					        </div>	
-							<InputLabel>Minimum {Pair[0].slice(3,Pair[0].length).toUpperCase()} Order</InputLabel>
+							<InputLabel>Minimum {Pair.split("_")[1].toUpperCase()} Order</InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]} inputProps={{min: "0",step: "0.000001" }} value={this.state.binanceB1Minimum[Pair[0]]} onChange={this.updateBinanceB1Minimum}/>
+							<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.000001" }} value={this.state.binanceB1Minimum[Pair.replace("_","")]} onChange={this.updateBinanceB1Minimum}/>
 							<br/>
-							<InputLabel>Minimum {Pair[0].slice(0,3).toUpperCase()} Order</InputLabel>
+							<InputLabel>Minimum {Pair.split("_")[0].toUpperCase()} Order</InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]} inputProps={{min: "0",step: "0.001" }} value={this.state.binanceC1Minimum[Pair[0]]} onChange={this.updateBinanceC1Minimum}/>
+							<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.001" }} value={this.state.binanceC1Minimum[Pair.replace("_","")]} onChange={this.updateBinanceC1Minimum}/>
 							<br/>
 							<InputLabel> Trades &gt; 100% Lower Limit </InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]+"_over.lowerLimit"} inputProps={{min: "100",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].over.lowerLimit : 100} onChange={this.updateBinanceLimits}/>
+							<Input type="number" id={Pair.replace("_","")+"_over.lowerLimit"} inputProps={{min: "100",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].over.lowerLimit : 100} onChange={this.updateBinanceLimits}/>
 							<br/>
 							<InputLabel>Trades &gt; 100% Upper Limit </InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]+"_over.upperLimit"} inputProps={{min: "100.001",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].over.upperLimit : 100.001} onChange={this.updateBinanceLimits}/>
+							<Input type="number" id={Pair.replace("_","")+"_over.upperLimit"} inputProps={{min: "100.001",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].over.upperLimit : 100.001} onChange={this.updateBinanceLimits}/>
 							<br/>
 							<InputLabel> Trades &lt; 100% Lower Limit </InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]+"_under.lowerLimit"} inputProps={{min: "98",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.lowerLimit : 98} onChange={this.updateBinanceLimits}/>
+							<Input type="number" id={Pair.replace("_","")+"_under.lowerLimit"} inputProps={{min: "98",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].under.lowerLimit : 98} onChange={this.updateBinanceLimits}/>
 							<br/>
 							<InputLabel>Trades &lt; 100% Upper Limit </InputLabel>
 							<br/>
-							<Input type="number" id={Pair[0]+"_under.upperLimit"} inputProps={{min: "98.1",step: "0.001" }} value={this.state.binanceLimits[Pair[0]] ? this.state.binanceLimits[Pair[0]].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
+							<Input type="number" id={Pair.replace("_","")+"_under.upperLimit"} inputProps={{min: "98.1",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
 							</div>	
 							))
 							})()						
