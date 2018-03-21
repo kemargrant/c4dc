@@ -536,7 +536,7 @@ class App extends Component{
 			let _progress = {}
 			for(let i = 0;i < data.pairs.length;i++){
 					_binance[data.pairs[i].pair1] = {}
-					_progress[data.pairs[i].pair1] = 0;
+					_progress[data.pairs[i].pair1.replace("_","")] = 0;
 					_binance[data.pairs[i].pair1]['pairs'] = [data.pairs[i].pair1,data.pairs[i].pair2,data.pairs[i].pair3]
 					_binance[data.pairs[i].pair1][data.pairs[i].pair1] = 0;
 					_binance[data.pairs[i].pair1][data.pairs[i].pair2] = 0;
@@ -578,6 +578,9 @@ class App extends Component{
 				return order;
 			}
 			function insert(str, index, value) {
+				if(!str){
+					return "";
+				}
 			    return str.substr(0, index) + value + str.substr(index);
 			}
 			let _binanceProfit = {}
@@ -653,7 +656,7 @@ class App extends Component{
 					}
 				}
 				else{
-					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? insert(data.info[k].Pair,2,"_") : insert(data.info[k].Pair,4,"_");
+					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? insert(data.info[k].Pair,3,"_") : insert(data.info[k].Pair,4,"_");
 					let Csplit = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] : this.state.tradingPairs.binance[insert(data.info[k].Pair,4,"_")];
 					try{
 						if(data.info[k].Time < 1)continue;
@@ -896,7 +899,13 @@ class App extends Component{
 			let _pair;
 			let _binanceProgress = this.state.binanceProgress;
 			let _bittrexProgress = this.state.bittrexProgress;
-			let _edit_orders = [];			
+			let _edit_orders = [];		
+			function insert(str, index, value) {
+				if(!str){
+					return ""
+				}
+			    return str.substr(0, index) + value + str.substr(index);
+			}	
 			for(let i = 0;i < this.state.orders.length;i++){
 				if(this.state.orders[i].order_id !== data.order_id){
 					_edit_orders.push(this.state.orders[i]);
@@ -906,14 +915,14 @@ class App extends Component{
 					_pair = this.state.orders[i].pair.toLowerCase();
 				}
 			}
+			
 			this.state.binancePairs.map((v,j)=>{
-				if(this.state.binancePairs[j].pair1 === _pair || this.state.binancePairs[j].pair2 === _pair || this.state.binancePairs[j].pair3 ===  _pair){
-					base = this.state.binancePairs[j].pair1;
-					return base;
+				let list = [v.pair1,v.pair2,v.pair3]
+				let myPair = list.indexOf(insert(_pair,3,"_")) > -1 ? insert(_pair,3,"_") : insert(_pair,4,"_");
+				if(this.state.binancePairs[j].pair1 === myPair || this.state.binancePairs[j].pair2 === myPair || this.state.binancePairs[j].pair3 ===  myPair){
+					base = this.state.binancePairs[j].pair1.replace("_","");
 				}
-				else{
-					return base;
-				}
+				return base;
 			});
 			if(exchange === "Binance"){
 				_binanceProgress[base] += 1;
@@ -1317,24 +1326,24 @@ class App extends Component{
 				}
 				return p.map((Pair) => (
 				<div key={Pair[0]}>
-					{this.state.binanceStatusTime[Pair[0]] > 0 ? 
+					{this.state.binanceStatusTime[Pair[0].replace("_","")] > 0 ? 
 						(<div>
-						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0]]*100/3} /> 
+						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0].replace("_","")]*100/3} /> 
 						<Button variant="raised" color="primary">Arbitrage In Progress</Button>
 						<br/>
-						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0]])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0].replace("_","")])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
 						</div>)
 						: ""
 					}
 					<div className="monitorToggle">
 					<FormGroup>
 				        <FormControlLabel
-						  label={!this.state.binanceStatus[Pair[0]] ? "Active" : "Paused"}
+						  label={!this.state.binanceStatus[Pair[0].replace("_","")] ? "Active" : "Paused"}
 						  style={{margin:"auto"}}
 				          control={<Switch
-					              checked={!this.state.binanceStatus[Pair[0]]}
+					              checked={!this.state.binanceStatus[Pair[0].replace("_","")]}
 					              onChange={(event, checked) => {
-									  this.forceMonitorBinance(Pair[0],!checked)
+									  this.forceMonitorBinance(Pair[0].replace("_",""),!checked)
 									}}
 								/>}
 				        />
