@@ -1373,7 +1373,7 @@ class App extends Component{
 							<TableRow>
 								<td>{Pair[0].split("_")[1].toUpperCase()}</td>	
 								<td>{this.state.balance.binance[Pair[0].split("_")[1]]}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].split("_")[0]]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].split("_")[0]]).toFixed(2)+'%' : ""}</td>
+								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].split("_")[0]]).toFixed(2)+'%' : ""}</td>
 								<td>100%</td>
 								<td>1</td>
 								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]].toFixed(2) : ""}</td>
