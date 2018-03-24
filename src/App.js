@@ -703,9 +703,9 @@ class App extends Component{
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
-								_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit;
+								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
 								if(data.info[k].Profit2){
-									_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit2;
+									_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
 								}
 								if(data.info[k].Profit3){
 									_binanceProfit[data.info[k].Pair][Csplit.pairs[2].split("_")[1]] += data.info[k].Profit3;
