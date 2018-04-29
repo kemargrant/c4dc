@@ -811,13 +811,13 @@ class App extends Component{
 							//Scatter Data
 							if(data.info[k].Filled && _binanceScatter[data.info[k].Pair]){
 								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
-								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[1]]) + data.info[k].Profit*(Csplit[Csplit.pairs[2]]); 
+								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[2]]) + data.info[k].Profit*(Csplit[Csplit.pairs[1]]); 
 								_binanceScatter[data.info[k].Pair]['<<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
 								_binanceProfit[data.info[k].Pair][myPair.split("_")[1]] += data.info[k].Profit;
-								if(data.info[k].Profit2){
+								if(data.info[k].Profit2 && data.info[k].Profit2 > 0 ){
 									_binanceProfit[data.info[k].Pair][myPair.split("_")[0]] += data.info[k].Profit2;
 								}
 								if(data.info[k].Profit3){
