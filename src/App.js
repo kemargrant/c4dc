@@ -90,10 +90,10 @@ class BittrexProfit extends React.PureComponent{
 
 //Stat Charts
 class BinanceCharts extends React.PureComponent{
-	createCharts(){
+	createLine(){
 		const cstyle = {height: this.props.chartSize.height+'px', width:'100%'}
-		if(this.props.optionList.length > 0){
-			return this.props.optionList.map((option,i) => (
+		if(this.props.lineList.length > 0){
+			return this.props.lineList.map((option,i) => (
 				<div key={option.key}>
 					<ReactEchartsCore
 			          echarts={echarts}
@@ -103,20 +103,43 @@ class BinanceCharts extends React.PureComponent{
 					  lazyUpdate={true}
 					  onEvents={{
 					  'legendselectchanged':(evt)=>{
-						  let _dbScatter = this.state.dbScatter;
-						  _dbScatter[i].legend.selected = evt.selected;
-						  return this.setState({dbScatter:_dbScatter})
+						  return option.legend.selected = evt.selected;
+						 },
+					   'dataZoom': (zoom)=>{
+							return option.dataZoom =({start:zoom.start,end:zoom.end})
+ 						}
+						}}
+				    />	
+			    </div>
+			))
+		}
+	}
+	createScatter(){
+		const cstyle = {height: this.props.chartSize.height+'px', width:'100%'}
+		if(this.props.scatterList.length > 0){
+			return this.props.scatterList.map((option,i) => (
+				<div key={option.key}>
+					<ReactEchartsCore
+			          echarts={echarts}
+					  option={option}
+					  style={cstyle}
+					  notMerge={true}
+					  lazyUpdate={true}
+					  onEvents={{
+					  'legendselectchanged':(evt)=>{
+						  return option.legend.selected = evt.selected;
 						 }
 						}}
 				    />	
 			    </div>
 			))
 		}
-		
 	}
 	
 	render() {
-		return (<div>{this.createCharts()}</div>)
+		return (<div>
+			{this.createLine()}
+		</div>)
 	}
 		
 }
@@ -126,16 +149,10 @@ class BittrexChart extends React.PureComponent{
 		super(props)
 		this.legendEvents = {
 		  'legendselectchanged':(evt)=>{
-			  if(!this.state)return
-			  let _dbTrade = this.state.dbTrade;
-			  _dbTrade.legend.selected = evt.selected;
-			  return this.setState({dbTrade:_dbTrade})
+		     return this.props.option.legend.selected = evt.selected;
 			 },	
 		  'dataZoom': (zoom)=>{
-			  if(!this.state)return
-			  let _dbTrade = this.state.dbTrade;
-			  _dbTrade.dataZoom = ({start:zoom.start,end:zoom.end});
-			  return this.setState({dbTrade:_dbTrade})
+			  return this.props.option.dataZoom =({start:zoom.start,end:zoom.end})
 			}
 		}
 	}
@@ -315,7 +332,7 @@ class App extends Component{
 			socketMessage:function(){},
 			scatterOption:{
 				animation:true,
-				animationDuration:2000,
+				animationDuration:5000,
 				backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
 			        offset: 0,
 			        color: '#f7f8fa'
@@ -862,7 +879,7 @@ class App extends Component{
 			}	
 			let option = {
 					animation:true,
-					animationDuration:2000,
+					animationDuration:5000,
 		            dataZoom:[
 				            {
 				            show: true,
@@ -1776,7 +1793,7 @@ class App extends Component{
 			   
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
-				<BinanceCharts style={{height: this.state.chartSize.height+'px', width:'100%'}} optionList={this.state.dbScatter} chartSize={this.state.chartSize} />			
+				<BinanceCharts style={{height: this.state.chartSize.height+'px', width:'100%'}} lineList={this.state.dbTradeBinance} scatterList={this.state.dbScatter} chartSize={this.state.chartSize} />			
 		
 			</TabContainer>}
 			{this.state.tabValue === 3 && <TabContainer>
