@@ -40,6 +40,119 @@ import 'echarts/lib/component/tooltip';
 function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
+	
+//Profit Components
+class BinanceProfit extends React.PureComponent{
+	constructor(props){
+		super(props)
+		this.binanceProfitInfo = this.binanceProfitInfo.bind(this)
+	}
+	
+	binanceProfitInfo(){
+		let results = [];
+		var balance = this.props.balance
+		for(let key in this.props.profit){
+		   for(let key2 in this.props.profit[key]){
+				results.push([key2,this.props.profit[key][key2]]);
+			}
+		}
+		return results.map((profit)=>(
+				<div key={profit[1]}>
+					{profit[1] ? profit[1].toFixed(8) :""}/{balance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/balance[profit[0]]).toFixed(8) : ""})%
+					<LinearProgress variant="determinate" value={profit[1] * 100/balance[profit[0]]} />	
+				</div>		
+		))
+	}
+	render() {
+		return (<div>{this.binanceProfitInfo()}</div>)
+	}
+}
+
+class BittrexProfit extends React.PureComponent{
+	render() {
+		return (
+			<div>
+			<div>
+				{this.props.profit.btc ? this.props.profit.btc.toFixed(8) : 0}/{this.props.balance.btc} btc ({this.props.profit.btc > 0 ?  (this.props.profit.btc * 100/this.props.balance.btc).toFixed(8) :  0.00000000})%
+				<LinearProgress variant="determinate" value={this.props.profit.btc ?  this.props.profit.btc * 100/this.props.balance.btc : 0} />
+			</div>
+	
+				<div>
+					{this.props.profit[this.props.tradingPairs.misc] ? this.props.profit[this.props.tradingPairs.misc].toFixed(8) : 0}/{this.props.balance[this.props.tradingPairs.misc]} {this.props.tradingPairs.misc} ({this.props.profit[this.props.tradingPairs.misc] ? (this.props.profit[this.props.tradingPairs.misc]*100/this.props.balance[this.props.tradingPairs.misc]).toFixed(8) : 0.00000000})%
+					<LinearProgress variant="determinate" value={this.props.profit[this.props.tradingPairs.misc] ?  this.props.profit[this.props.tradingPairs.misc]*100/this.props.balance[this.props.tradingPairs.misc]: 0} />
+				</div>
+		
+			</div>
+		
+		)
+	}
+}
+
+//Stat Charts
+class BinanceCharts extends React.PureComponent{
+	createCharts(){
+		const cstyle = {height: this.props.chartSize.height+'px', width:'100%'}
+		if(this.props.optionList.length > 0){
+			return this.props.optionList.map((option,i) => (
+				<div key={option.key}>
+					<ReactEchartsCore
+			          echarts={echarts}
+					  option={option}
+					  style={cstyle}
+					  notMerge={true}
+					  lazyUpdate={true}
+					  onEvents={{
+					  'legendselectchanged':(evt)=>{
+						  let _dbScatter = this.state.dbScatter;
+						  _dbScatter[i].legend.selected = evt.selected;
+						  return this.setState({dbScatter:_dbScatter})
+						 }
+						}}
+				    />	
+			    </div>
+			))
+		}
+		
+	}
+	
+	render() {
+		return (<div>{this.createCharts()}</div>)
+	}
+		
+}
+
+class BittrexChart extends React.PureComponent{
+	constructor(props){
+		super(props)
+		this.legendEvents = {
+		  'legendselectchanged':(evt)=>{
+			  if(!this.state)return
+			  let _dbTrade = this.state.dbTrade;
+			  _dbTrade.legend.selected = evt.selected;
+			  return this.setState({dbTrade:_dbTrade})
+			 },	
+		  'dataZoom': (zoom)=>{
+			  if(!this.state)return
+			  let _dbTrade = this.state.dbTrade;
+			  _dbTrade.dataZoom = ({start:zoom.start,end:zoom.end});
+			  return this.setState({dbTrade:_dbTrade})
+			}
+		}
+	}
+	render() {
+		return (
+			<ReactEchartsCore
+	          echarts={echarts}
+			  option={this.props.option}
+			  style={this.props.style}
+			  notMerge={true}
+			  lazyUpdate={true}
+			  onEvents={this.legendEvents}
+			   />
+	)}
+		
+}
+
 			
 class App extends Component{
 	constructor(props){
@@ -202,7 +315,7 @@ class App extends Component{
 			socketMessage:function(){},
 			scatterOption:{
 				animation:true,
-				animationDuration:5000,
+				animationDuration:2000,
 				backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
 			        offset: 0,
 			        color: '#f7f8fa'
@@ -749,7 +862,7 @@ class App extends Component{
 			}	
 			let option = {
 					animation:true,
-					animationDuration:9000,
+					animationDuration:2000,
 		            dataZoom:[
 				            {
 				            show: true,
@@ -1658,98 +1771,13 @@ class App extends Component{
 			{this.state.tabValue === 2 && <TabContainer>
 			   <Button variant="raised" color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
 			   <h3>Bittrex</h3>
-			  <div>
-				{this.state.bittrexProfit.btc ? this.state.bittrexProfit.btc.toFixed(8) : 0}/{this.state.balance.bittrex.btc} btc ({this.state.bittrexProfit.btc > 0 ?  (this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc).toFixed(8) :  0.00000000})%
-				<LinearProgress variant="determinate" value={this.state.bittrexProfit.btc ?  this.state.bittrexProfit.btc * 100/this.state.balance.bittrex.btc : 0} />
-			  </div>
-			  <div>
-				{this.state.bittrexProfit[this.state.tradingPairs.misc] ? this.state.bittrexProfit[this.state.tradingPairs.misc].toFixed(8) : 0}/{this.state.balance.bittrex[this.state.tradingPairs.misc]} {this.state.tradingPairs.misc} ({this.state.bittrexProfit[this.state.tradingPairs.misc] ? (this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(8) : 0.00000000})%
-				<LinearProgress variant="determinate" value={this.state.bittrexProfit[this.state.tradingPairs.misc] ?  this.state.bittrexProfit[this.state.tradingPairs.misc]*100/this.state.balance.bittrex[this.state.tradingPairs.misc]: 0} />
-			  </div>			   
-				 <ReactEchartsCore
-		          echarts={echarts}
-				  option={this.state.dbTrade}
-				  style={{height: this.state.chartSize.height+'px', width:'100%'}}
-				  notMerge={true}
-				  lazyUpdate={true}
-				  onEvents={{
-					  'legendselectchanged':(evt)=>{
-						  let _dbTrade = this.state.dbTrade;
-						  _dbTrade.legend.selected = evt.selected;
-						  return this.setState({dbTrade:_dbTrade})
-						 },	
-					  'dataZoom': (zoom)=>{
-						  let _dbTrade = this.state.dbTrade;
-						  _dbTrade.dataZoom = ({start:zoom.start,end:zoom.end});
-						  return this.setState({dbTrade:_dbTrade})
-						}
-				  }}
-				   />	
-				  <h3>Binance</h3>  
-				   {
-					(()=>{
-						let results = [];
-						
-						for(let key in this.state.binanceProfit){
-						   for(let key2 in this.state.binanceProfit[key]){
-								results.push([key2,this.state.binanceProfit[key][key2]]);
-							}
-						}
-						return results.map((profit)=>(
-							<div key={profit[1]}>
-							{ profit[1] ? profit[1].toFixed(8) :""}/{this.state.balance.binance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/this.state.balance.binance[profit[0]]).toFixed(8) : ""})%
-							<LinearProgress variant="determinate" value={profit[1] * 100/this.state.balance.binance[profit[0]]} />	
-							</div>					
-						))
-					})()
-					}
-		          {
-					(()=>{
-					if(this.state.dbTradeBinance.length > 0)
-					{return this.state.dbTradeBinance.map((option) => (
-					<div  key={option.key}>
-					<ReactEchartsCore
-			          echarts={echarts}
-					  option={option}
-					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
-					  notMerge={true}
-					  lazyUpdate={true}
-					  onEvents={{
-						  'legendselectchanged':(evt)=>{
-							 return option.legend.selected = evt.selected;
-							 },	
-						  'dataZoom': (zoom)=>{
-							  return option.dataZoom =({start:zoom.start,end:zoom.end});
-							}
-					  }}
-				    />	
-				    </div>
-					))}
-					})()						
-				}
-				 {
-					(()=>{
-					if(this.state.dbScatter.length > 0)
-					{return this.state.dbScatter.map((option,i) => (
-					<div key={option.key}>
-					<ReactEchartsCore
-			          echarts={echarts}
-					  option={option}
-					  style={{height: this.state.chartSize.height+'px', width:'100%'}}
-					  notMerge={true}
-					  lazyUpdate={true}
-					  onEvents={{
-					  'legendselectchanged':(evt)=>{
-						  let _dbScatter = this.state.dbScatter;
-						  _dbScatter[i].legend.selected = evt.selected;
-						  return this.setState({dbScatter:_dbScatter})
-						 }
-						}}
-				    />	
-				    </div>
-					))}
-					})()						
-				}
+			   <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
+			   <BittrexChart style={{height: this.state.chartSize.height+'px', width:'100%'}} option={this.state.dbTrade} />		
+			   
+				<h3>Binance</h3>  
+				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
+				<BinanceCharts style={{height: this.state.chartSize.height+'px', width:'100%'}} optionList={this.state.dbScatter} chartSize={this.state.chartSize} />			
+		
 			</TabContainer>}
 			{this.state.tabValue === 3 && <TabContainer>
 				<Button variant="raised" color="primary" onClick={this.clearOrders}>Clear Cache</Button>
