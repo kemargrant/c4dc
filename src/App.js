@@ -27,14 +27,12 @@ import ReactEchartsCore from 'echarts-for-react/lib/core';
 import echarts from 'echarts/lib/echarts';
 import 'echarts/lib/chart/gauge';
 import 'echarts/lib/chart/line';
-import 'echarts/lib/chart/scatter';
 import 'echarts/lib/component/dataZoom';
 import 'echarts/lib/component/grid';
 import 'echarts/lib/component/legend';
-import 'echarts/lib/component/markLine';
 import 'echarts/lib/component/title';
 import 'echarts/lib/component/tooltip';
-
+import {Scatter} from 'react-chartjs-2';
 
 			
 function TabContainer(props) {
@@ -45,26 +43,26 @@ function TabContainer(props) {
 class BinanceProfit extends React.PureComponent{
 	constructor(props){
 		super(props)
-		this.binanceProfitInfo = this.binanceProfitInfo.bind(this)
+		this.profitInfo = this.binanceProfitInfo.bind()
 	}
 	
 	binanceProfitInfo(){
 		let results = [];
-		var balance = this.props.balance
+		let balance = this.props.balance
 		for(let key in this.props.profit){
 		   for(let key2 in this.props.profit[key]){
 				results.push([key2,this.props.profit[key][key2]]);
 			}
 		}
-		return results.map((profit)=>(
-				<div key={profit[1]}>
+		return results.map(function(profit){
+				return (<div key={profit[1]}>
 					{profit[1] ? profit[1].toFixed(8) :""}/{balance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/balance[profit[0]]).toFixed(8) : ""})%
 					<LinearProgress variant="determinate" value={profit[1] * 100/balance[profit[0]]} />	
-				</div>		
-		))
+				</div>)		
+		})
 	}
 	render() {
-		return (<div>{this.binanceProfitInfo()}</div>)
+		return (<div>{this.profitInfo}</div>)
 	}
 }
 
@@ -90,15 +88,19 @@ class BittrexProfit extends React.PureComponent{
 
 //Stat Charts
 class BinanceCharts extends React.PureComponent{
+	constructor(props){
+		super(props)
+		this.scatter = this.createScatter();
+		this.line = this.createLine();
+	}
 	createLine(){
-		const cstyle = {height: this.props.chartSize.height+'px', width:'100%'}
 		if(this.props.lineList.length > 0){
-			return this.props.lineList.map((option,i) => (
-				<div key={option.key}>
+			return this.props.lineList.map((option) => (
+				<div key={option.key+Math.random(0,10)}>
 					<ReactEchartsCore
 			          echarts={echarts}
 					  option={option}
-					  style={cstyle}
+					  style={{height: this.props.chartSize.height+'px', width:'100%'}}
 					  notMerge={true}
 					  lazyUpdate={true}
 					  onEvents={{
@@ -115,30 +117,14 @@ class BinanceCharts extends React.PureComponent{
 		}
 	}
 	createScatter(){
-		const cstyle = {height: this.props.chartSize.height+'px', width:'100%'}
-		if(this.props.scatterList.length > 0){
-			return this.props.scatterList.map((option,i) => (
-				<div key={option.key}>
-					<ReactEchartsCore
-			          echarts={echarts}
-					  option={option}
-					  style={cstyle}
-					  notMerge={true}
-					  lazyUpdate={true}
-					  onEvents={{
-					  'legendselectchanged':(evt)=>{
-						  return option.legend.selected = evt.selected;
-						 }
-						}}
-				    />	
-			    </div>
-			))
-		}
+		return this.props.scatterList.map(function(_option){return (<Scatter key={_option.labels} data={_option} />)})
+			
 	}
 	
 	render() {
 		return (<div>
-			{this.createLine()}
+			{this.line}
+			{this.scatter}
 		</div>)
 	}
 		
@@ -331,92 +317,25 @@ class App extends Component{
 			sanity:true,
 			socketMessage:function(){},
 			scatterOption:{
-				animation:true,
-				animationDuration:5000,
-				backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
-			        offset: 0,
-			        color: '#f7f8fa'
-			    }, {
-			        offset: 1,
-			        color: '#cdd0d5'
-			    }]),
-			    title:{
-					top:'5%',
-					left:"20%",
-					text:'Percent vs Duration',
-					textStyle:{
-						fontSize: window.innerHeight > window.innerWidth ? (window.innerHeight/window.innerWidth*12) :  (window.innerWidth*13/window.innerHeight)
-					}
-				},
-			    legend: {
-					textStyle:{
-						color:'black'
-					},
-					data:['<100%','>100%']
-	            },			
-	            tooltip:{
-	                trigger: 'axis', 
-	                formatter: function (param) {
-						param = param[0];
-						return "Percent:"+param.data[0]+'<br/>Duration:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
-					},      
-	            },
-	            grid: {
-	                containLabel: true,
-	            },
-	            xAxis:{
-					min:'dataMin',
-					max:"dataMax",
-					type : 'value',
-					name:'Percent',
-					nameGap:30,
-					nameTextStyle:{
-						fontSize:15,
-					},
-					nameLocation:'middle',
-					 splitLine: {
-			            lineStyle: {
-			                type: 'dashed',
-			                color:'black'
-			            }
-			        }
-	            },
-	            yAxis:{
-					min:'dataMin',
-					max:"dataMax",
-					name:'Duration',
-					nameGap:50,
-					nameLocation:'middle',
-					nameTextStyle:{
-						fontSize:15,
-					},
-					scale:'true',
-					type: 'value',
-					splitLine: {
-			            lineStyle: {
-			                type: 'dashed',
-			                color:'black'
-			            }
-			        }
-	            }
-	            ,
-	            series:[
-	                {
-					
-	                    name:'>100%',
-	                    type:'scatter',
-	                    data:[0,0],
-	                    symbolSize: 10
-	                },
-	                {
-					
-	                    name:'<100%',
-	                    type:'scatter',
-	                    data:[0,0],
-	                    symbolSize:10
-	                }
-	            ]
-	        },		
+				labels: ['Scatter'],
+				datasets: [
+			    {
+			      label: 'My First dataset',
+			      fill: false,
+			      backgroundColor: 'rgba(75,192,192,0.4)',
+			      pointBorderColor: 'blue',
+			      pointBackgroundColor: '#fff',
+			      pointBorderWidth: 2,
+			      pointHoverRadius: 5,
+			      pointHoverBackgroundColor: 'rgba(75,192,192,1)',
+			      pointHoverBorderColor: 'rgba(220,220,220,1)',
+			      pointHoverBorderWidth: 3,
+			      pointRadius: 4,
+			      pointHitRadius: 10,
+			      data: []
+			    }
+			  ]
+			},
 			swingGauge:{},
 			swingOrder:{},
 			swingPercentage:2,
@@ -800,9 +719,9 @@ class App extends Component{
 						if(data.info[k].Percent > 100){
 							//Scatter Data
 							if(data.info[k].Filled && _binanceScatter[data.info[k].Pair]){
-								_binanceScatter[data.info[k].Pair]['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[2]]) + data.info[k].Profit*(Csplit[Csplit.pairs[1]]); 
-								_binanceScatter[data.info[k].Pair]['>>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['>>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
@@ -827,9 +746,11 @@ class App extends Component{
 						else{
 							//Scatter Data
 							if(data.info[k].Filled && _binanceScatter[data.info[k].Pair]){
-								_binanceScatter[data.info[k].Pair]['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
 								let profit = data.info[k].Profit3 + data.info[k].Profit2*(Csplit[Csplit.pairs[2]]) + data.info[k].Profit*(Csplit[Csplit.pairs[1]]); 
-								_binanceScatter[data.info[k].Pair]['<<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4)),data.info[k].Time]);
+								_binanceScatter[data.info[k].Pair]['<<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
+								
+							
 							}
 							//Profits
 							if(_binanceProfit[data.info[k].Pair]){
@@ -878,7 +799,7 @@ class App extends Component{
 				}		
 			}	
 			let option = {
-					animation:true,
+					animation:false,
 					animationDuration:5000,
 		            dataZoom:[
 				            {
@@ -972,26 +893,17 @@ class App extends Component{
 			    _option2.key = msc2[i].replace("_","");
 			    option2.push(_option2);
 			    //Scatter Data percent vs duration
-			    _scatterOption2 = this.state.scatterOption;
-			    _scatterOption2.key = msc2[i].replace("_","");
-			    _scatterOption2.title.text = msc2[i].replace("_","") + ": Percent vs Duration(m)";
-			    _scatterOption2.series[0].data = _binanceScatter[msc2[i].replace("_","")]['>100%'];
-			    _scatterOption2.series[1].data = _binanceScatter[msc2[i].replace("_","")]['<100%'];
+			    _scatterOption2 = JSON.parse(JSON.stringify(this.state.scatterOption));
+			    _scatterOption2.labels = "Scatter";
+			    _scatterOption2.datasets[0].backgroundColor = "blue";
+			    _scatterOption2.datasets[0].label = msc2[i].replace("_","") + " Percent vs Duration(m)";
+			    _scatterOption2.datasets[0].data = _binanceScatter[msc2[i].replace("_","")]['>100%'].concat(_binanceScatter[msc2[i].replace("_","")]['<100%']);
 			    scatterOption2.push(_scatterOption2);	
 			    //Scatter Data percent vs profit
 			    _scatterOption3 = JSON.parse(JSON.stringify(this.state.scatterOption));
-			    _scatterOption3.key = "profit_"+msc2[i].replace("_","");
-			    _scatterOption3.yAxis.name = "Profit";
-			    _scatterOption3.legend.data = ['<<100%','>>100%'];
-			    _scatterOption3.tooltip.formatter = function (param) {
-						param = param[0];
-						return "Percent:"+param.data[0]+'<br/>Profit:'+param.data[1]+'<br/>Created:'+new Date(param.data[2]);
-					}
-			    _scatterOption3.title.text = msc2[i].replace("_","") + ": Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].split("_")[1]+")";
-			    _scatterOption3.series[0].data = _binanceScatter[msc2[i].replace("_","")]['>>100%'];
-			    _scatterOption3.series[1].data = _binanceScatter[msc2[i].replace("_","")]['<<100%'];
-				_scatterOption3.series[0].name = '>>100%';
-			    _scatterOption3.series[1].name = '<<100%';			    
+			    _scatterOption3.labels = "Scatter2"
+			    _scatterOption3.datasets[0].label = msc2[i].replace("_","") + " Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].split("_")[1]+")";
+			    _scatterOption3.datasets[0].data = _binanceScatter[msc2[i].replace("_","")]['>>100%'].concat(_binanceScatter[msc2[i].replace("_","")]['<<100%'])
 			    scatterOption2.push(_scatterOption3);			    
 			}
 			if(this.state.autosave){
@@ -1793,7 +1705,7 @@ class App extends Component{
 			   
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
-				<BinanceCharts style={{height: this.state.chartSize.height+'px', width:'100%'}} lineList={this.state.dbTradeBinance} scatterList={this.state.dbScatter} chartSize={this.state.chartSize} />			
+				<BinanceCharts lineList={this.state.dbTradeBinance} scatterList={this.state.dbScatter} chartSize={this.state.chartSize} />			
 		
 			</TabContainer>}
 			{this.state.tabValue === 3 && <TabContainer>
