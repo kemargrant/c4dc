@@ -41,11 +41,6 @@ function TabContainer(props) {
 	
 //Profit Components
 class BinanceProfit extends React.PureComponent{
-	constructor(props){
-		super(props)
-		this.profitInfo = this.binanceProfitInfo.bind()
-	}
-	
 	binanceProfitInfo(){
 		let results = [];
 		let balance = this.props.balance
@@ -56,13 +51,13 @@ class BinanceProfit extends React.PureComponent{
 		}
 		return results.map(function(profit){
 				return (<div key={profit[1]}>
-					{profit[1] ? profit[1].toFixed(8) :""}/{balance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/balance[profit[0]]).toFixed(8) : ""})%
-					<LinearProgress variant="determinate" value={profit[1] * 100/balance[profit[0]]} />	
-				</div>)		
+						{profit[1] ? profit[1].toFixed(8) :""}/{balance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/balance[profit[0]]).toFixed(8) : ""})%
+						<LinearProgress variant="determinate" value={profit[1] * 100/balance[profit[0]]} />	
+					</div>)		
 		})
 	}
 	render() {
-		return (<div>{this.profitInfo}</div>)
+		return (<div>{this.binanceProfitInfo()}</div>)
 	}
 }
 
@@ -89,9 +84,10 @@ class BittrexProfit extends React.PureComponent{
 //Stat Charts
 class BinanceCharts extends React.PureComponent{
 	constructor(props){
-		super(props)
-		this.scatter = this.createScatter();
-		this.line = this.createLine();
+	super(props)
+	this.updateDisplay = this.updateDisplay.bind(this);
+	this.state = {display:false}	
+		
 	}
 	createLine(){
 		if(this.props.lineList.length > 0){
@@ -117,14 +113,39 @@ class BinanceCharts extends React.PureComponent{
 		}
 	}
 	createScatter(){
-		return this.props.scatterList.map(function(_option){return (<Scatter key={_option.labels} data={_option} />)})
+		return this.props.scatterList.map(function(_option){return (
+			<Scatter 
+			key={_option.labels} 
+			data={_option}
+			options={{
+				animation:{duration:0}
+			}} 
+			/>
+			)})
 			
 	}
-	
-	render() {
+	updateDisplay(checked){
+		return this.setState({display:checked})
+	}
+	render() {	
 		return (<div>
-			{this.line}
-			{this.scatter}
+			{this.createLine()}
+			<FormGroup>
+		        <FormControlLabel
+				  label="Show Scatter"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.display}
+			              onChange={(event, checked) => { 
+							  return this.updateDisplay(checked);
+							}}
+						/>}
+		        />
+			
+			</FormGroup>
+			
+			{this.state.display ? this.createScatter() : ""}
+			
 		</div>)
 	}
 		
