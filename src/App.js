@@ -694,7 +694,7 @@ class App extends Component{
 				if(data.info[k].OrdersFilled < 3){
 					continue;
 				}
-				if(data.info[k].Exchange !== "Binance"){
+				if(data.info[k].Exchange === "Bittrex"){
 					date = new Date(data.info[k].Time).toISOString().split("T")[0];
 					if(dat[date]){
 						dat[date]++;
@@ -725,7 +725,7 @@ class App extends Component{
 						}
 					}
 				}
-				else{
+				else if(data.info[k].Exchange === "Binance"){
 					let myPair = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? insert(data.info[k].Pair,3,"_") : insert(data.info[k].Pair,4,"_");
 					let Csplit = this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] ? this.state.tradingPairs.binance[insert(data.info[k].Pair,3,"_")] : this.state.tradingPairs.binance[insert(data.info[k].Pair,4,"_")];
 					try{
