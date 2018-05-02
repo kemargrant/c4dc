@@ -944,9 +944,9 @@ class App extends Component{
 		if(data.type === "order"){
 			let _new_orders = this.state.orders;
 			if(data.exchange === "Binance"){
-				data.image = "url('https://pbs.twimg.com/profile_banners/877807935493033984/1511522262/1500x500')";
+				data.image = "url('https://www.binance.com/resources/img/logo-en.png')";
 			}
-			else{
+			else if(data.exchange === "Bittrex"){
 				data.image = "url('https://pbs.twimg.com/profile_banners/2309637680/1420589155/1500x500')";
 			}
 			_new_orders.push({"image":data.image,"filled":data.filled,"exchange":data.exchange,"order_id":data.order_id,"type":data.otype,"amount":data.amount,"pair":data.pair,"status":data.status,"rate":data.rate,"timestamp_created":data.timestamp_created});
