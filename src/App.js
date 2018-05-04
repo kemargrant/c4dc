@@ -151,17 +151,9 @@ class BinanceCharts extends React.PureComponent{
 		
 }
 
-class BittrexChart extends React.PureComponent{
-	constructor(props){
-		super(props)
-		this.legendEvents = {
-		  'legendselectchanged':(evt)=>{
-		     return this.props.option.legend.selected = evt.selected;
-			 },	
-		  'dataZoom': (zoom)=>{
-			  return this.props.option.dataZoom =({start:zoom.start,end:zoom.end})
-			}
-		}
+class BittrexChart extends Component{
+	shouldComponentUpdate(nextProps){
+		return !(nextProps.option.series[0].data[nextProps.option.series[0].data.length-1].value[1] === this.props.option.series[0].data[this.props.option.series[0].data.length-1].value[1]);
 	}
 	render() {
 		return (
@@ -171,7 +163,14 @@ class BittrexChart extends React.PureComponent{
 			  style={this.props.style}
 			  notMerge={true}
 			  lazyUpdate={true}
-			  onEvents={this.legendEvents}
+			  onEvents={{
+				  'legendselectchanged':(evt)=>{
+				     return this.myOption.legend.selected = evt.selected;
+					 },	
+				  'dataZoom': (zoom)=>{
+					  return this.myOption.dataZoom =({start:zoom.start,end:zoom.end})
+					}
+				}}
 			   />
 	)}
 		
