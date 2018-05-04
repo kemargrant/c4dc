@@ -39,6 +39,145 @@ function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
 	
+//BinanceState
+
+class BinanceState extends React.Component{
+	activeToggle(pair){
+		return(<div className="monitorToggle">
+			<FormGroup>
+		        <FormControlLabel
+				  label={!this.props.binanceStatus[pair] ? "Active" : "Paused"}
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={!this.props.binanceStatus[pair]}
+			              onChange={(event, checked) => {
+							  this.props.forceMonitorBinance(pair,!checked)
+							}}
+						/>}
+		        />
+			</FormGroup>
+			</div>)
+	}
+	bTable(pair1,pair2,pair3,a,b,c){
+		return(<div className="bTable">
+			<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Asset</th>
+						<th data-field="">Balance</th>
+						<th data-field="">{a.toUpperCase()}/Ratio</th>
+						<th data-field="">{b.toUpperCase()}/Ratio</th>
+						<th data-field="">&#8224;{b.toUpperCase()}</th>
+						<th data-field="">&#8224;{c.toUpperCase()}</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{a.toUpperCase()}</td>	
+						<td>{this.props.balance[a]}</td>	
+						<td>100%</td>				
+						<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair1] * this.props.balance[a]*100/this.props.balance[b]).toFixed(2)+'%' : ""}</td>
+						<td>{this.props.tradingPairs[pair1] ? this.props.tradingPairs[pair1][pair1].toFixed(7) : "" }</td>
+						<td>{this.props.tradingPairs[pair1] ? this.props.tradingPairs[pair1][pair2].toFixed(2) : ""}</td>
+					</TableRow>
+					<TableRow>
+						<td>{b.toUpperCase()}</td>	
+						<td>{this.props.balance[b]}</td>
+						<td>{this.props.tradingPairs[pair1] ? (this.props.balance[b]/this.props.tradingPairs[pair1][pair1] *100/this.props.balance[a]).toFixed(2)+'%' : ""}</td>
+						<td>100%</td>
+						<td>1</td>
+						<td>{this.props.tradingPairs[pair1] ? this.props.tradingPairs[pair1][pair3].toFixed(2) : ""}</td>
+					</TableRow>
+					<TableRow>
+						<td>{c.toUpperCase()}</td>
+						<td>{ this.props.balance[c] ? this.props.balance[c].toFixed(7) : 0}</td>
+						<td>{this.props.tradingPairs[pair1] ? (100*((this.props.balance[c]/this.props.tradingPairs[pair1][pair2])/this.props.balance[a])).toFixed(2)+ '%' : ""}</td>
+						<td>{this.props.tradingPairs[pair1] ? (100*((this.props.balance[c]/this.props.tradingPairs[pair1][pair2])/this.props.balance[b])).toFixed(2)+ '%' : ""}</td>						
+						<td>{this.props.tradingPairs[pair1] ? (1/this.props.tradingPairs[pair1][pair3]).toFixed(7) : ""}</td>
+						<td>1</td>
+					</TableRow>										
+				</TableBody>
+			</Table>
+			</div>)
+	}
+	cTable(pair1,pair2,pair3,a,b,c){
+		return(<Table>
+			<TableHead>
+				<TableRow>
+					<th data-field="">Trade</th>
+					<th data-field="">$</th>
+					<th data-field="">{a.toUpperCase()}</th>
+					<th data-field="">{b.toUpperCase()}</th>
+					<th data-field="">{c.toUpperCase()}</th>
+					<th data-field="">Status</th>
+				</TableRow>
+			</TableHead>
+			<TableBody>
+			<TableRow>
+				<td>{b.toUpperCase()}</td>
+				<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} id={pair1.replace("_","")} value={this.props.binanceB1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceB1Minimum} /> </td>
+				<td>{this.props.tradingPairs[pair1] ? (1/this.props.tradingPairs[pair1][pair1] * this.props.binanceB1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
+				<td>{this.props.binanceB1Minimum[pair1.replace("_","")]}</td>						
+				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair3] * this.props.binanceB1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
+				<td>{
+					this.props.tradingPairs[pair1] ? 
+					((this.props.binanceB1Minimum[pair1.replace("_","")] < this.props.balance[a]) && ((1/this.props.tradingPairs[pair1][pair1] * this.props.binanceB1Minimum[pair1.replace("_","")]) < this.props.balance[a]) && ((this.props.tradingPairs[pair1][pair2] * this.props.binanceB1Minimum[pair1.replace("_","")]) < this.props.balance[c]) ? <Switch checked={true}/> : <Switch checked={false}/>)
+					: ""
+					}
+			</td>	
+			</TableRow>		
+			<TableRow>
+				<td>{a.toUpperCase()}</td>
+				<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={pair1.replace("_","")} value={this.props.binanceC1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceC1Minimum} /> </td>
+				<td>{this.props.binanceC1Minimum[pair1.replace("_","")]}</td>						
+				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair1] * this.props.binanceC1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
+				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair2] * this.props.binanceC1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
+				<td>{this.props.tradingPairs[pair1] ?
+					((this.props.binanceC1Minimum[pair1.replace("_","")] < this.props.balance[a]) 
+					&&	((this.props.tradingPairs[pair1][pair1] * this.props.binanceC1Minimum[pair1.replace("_","")]) < this.props.balance[a]) &&
+					((this.props.tradingPairs[pair1][pair3] * this.props.binanceC1Minimum[pair1.replace("_","")]) < this.props.balance[c])
+					? <Switch checked={true}/> :  <Switch checked={false}/>)
+					: ""
+					}</td>	
+			</TableRow>	
+			</TableBody>
+			</Table> 	)
+	}
+	progressBar(pair){
+		if(this.props.binanceStatusTime[pair] > 0){ 
+		return(
+		<div>
+		<LinearProgress variant="determinate" value={this.props.binanceProgress[pair]*100/3} /> 
+		<Button variant="raised" color="primary">Arbitrage In Progress</Button>
+		<br/>
+		{((new Date().getTime() - this.props.binanceStatusTime[pair])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+		</div>)
+		}
+		else{
+			return null
+		}
+		
+	}
+	info(){
+		let p = [];
+		for(let i=0;i < this.props.binancePairs.length;i++){
+			p.push([this.props.binancePairs[i].pair1,[this.props.binancePairs[i].pair1,this.props.binancePairs[i].pair2,this.props.binancePairs[i].pair3]])
+		}
+		if(p.length <1){return (<div></div>)}
+		return p.map((Pair) => (
+		<div key={Pair[0]}>
+			{this.progressBar(Pair[0].replace("_",""))}
+			{this.activeToggle(Pair[0].replace("_",""))}
+			{this.bTable(Pair[0],Pair[1][2],Pair[1][1],Pair[0].split("_")[0],Pair[0].split("_")[1],Pair[1][1].split("_")[1])}
+			{this.cTable(Pair[0],Pair[1][2],Pair[1][1],Pair[0].split("_")[0],Pair[0].split("_")[1],Pair[1][1].split("_")[1])}
+		</div>
+		))
+	}
+	render(){
+		return (<div>{this.info()}</div>)
+	}	
+}	
+	
 //Profit Components
 class BinanceProfit extends React.PureComponent{
 	binanceProfitInfo(){
@@ -1366,7 +1505,6 @@ class App extends Component{
 			</AppBar>	
 			<div className="body">   
 			{this.state.tabValue === 0 && <TabContainer>
-				
 			{ 
 				this.state.connected ?
 			  <ReactEchartsCore
@@ -1376,122 +1514,19 @@ class App extends Component{
 			   />
 			   :""
 			 }	
-			{
-				(()=>{
-				let p = [];
-				for(let i=0;i < this.state.binancePairs.length;i++){
-					p.push([this.state.binancePairs[i].pair1,[this.state.binancePairs[i].pair1,this.state.binancePairs[i].pair2,this.state.binancePairs[i].pair3]])
-				}
-				return p.map((Pair) => (
-				<div key={Pair[0]}>
-					{this.state.binanceStatusTime[Pair[0].replace("_","")] > 0 ? 
-						(<div>
-						<LinearProgress variant="determinate" value={this.state.binanceProgress[Pair[0].replace("_","")]*100/3} /> 
-						<Button variant="raised" color="primary">Arbitrage In Progress</Button>
-						<br/>
-						{((new Date().getTime() - this.state.binanceStatusTime[Pair[0].replace("_","")])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
-						</div>)
-						: ""
-					}
-					<div className="monitorToggle">
-					<FormGroup>
-				        <FormControlLabel
-						  label={!this.state.binanceStatus[Pair[0].replace("_","")] ? "Active" : "Paused"}
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={!this.state.binanceStatus[Pair[0].replace("_","")]}
-					              onChange={(event, checked) => {
-									  this.forceMonitorBinance(Pair[0].replace("_",""),!checked)
-									}}
-								/>}
-				        />
-					</FormGroup>
-					</div>
-					<div className="bTable">
-					<Table>
-						<TableHead>
-							<TableRow>
-								<th data-field="">Asset</th>
-								<th data-field="">Balance</th>
-								<th data-field="">{Pair[0].split("_")[0].toUpperCase()}/Ratio</th>
-								<th data-field="">{Pair[0].split("_")[1].toUpperCase()}/Ratio</th>
-								<th data-field="">&#8224;{Pair[0].split("_")[1].toUpperCase()}</th>
-								<th data-field="">&#8224;{Pair[1][1].split("_")[1].toUpperCase()}</th>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							<TableRow>
-								<td>{Pair[0].split("_")[0].toUpperCase()}</td>	
-								<td>{this.state.balance.binance[Pair[0].split("_")[0]]}</td>	
-								<td>100%</td>				
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.balance.binance[Pair[0].split("_")[0]]*100/this.state.balance.binance[Pair[0].split("_")[1]]).toFixed(2)+'%' : ""}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[0]].toFixed(7) : "" }</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][2]].toFixed(2) : ""}</td>
-							</TableRow>
-							<TableRow>
-								<td>{Pair[0].split("_")[1].toUpperCase()}</td>	
-								<td>{this.state.balance.binance[Pair[0].split("_")[1]]}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.balance.binance[Pair[0].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[0]] *100/this.state.balance.binance[Pair[0].split("_")[0]]).toFixed(2)+'%' : ""}</td>
-								<td>100%</td>
-								<td>1</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? this.state.tradingPairs.binance[Pair[0]][Pair[1][1]].toFixed(2) : ""}</td>
-							</TableRow>
-							<TableRow>
-								<td>{Pair[1][1].split("_")[1].toUpperCase()}</td>
-								<td>{ this.state.balance.binance[Pair[1][1].split("_")[1]] ? this.state.balance.binance[Pair[1][1].split("_")[1]].toFixed(7) : 0}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[1][2]])/this.state.balance.binance[Pair[0].split("_")[0]])).toFixed(2)+ '%' : ""}</td>
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (100*((this.state.balance.binance[Pair[1][1].split("_")[1]]/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]])/this.state.balance.binance[Pair[0].split("_")[1]])).toFixed(2)+ '%' : ""}</td>						
-								<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[1][1]]).toFixed(7) : ""}</td>
-								<td>1</td>
-							</TableRow>										
-						</TableBody>
-					</Table> 
-					</div>							
-					<Table>
-					<TableHead>
-						<TableRow>
-							<th data-field="">Trade</th>
-							<th data-field="">$</th>
-							<th data-field="">{Pair[0].split("_")[0].toUpperCase()}</th>
-							<th data-field="">{Pair[0].split("_")[1].toUpperCase()}</th>
-							<th data-field="">{Pair[1][1].split("_")[1].toUpperCase()}</th>
-							<th data-field="">Status</th>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-					<TableRow>
-						<td>{Pair[0].split("_")[1].toUpperCase()}</td>
-						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} id={Pair[0].replace("_","")} value={this.state.binanceB1Minimum[Pair[0].replace("_","")]} onChange={this.updateBinanceB1Minimum} /> </td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
-						<td>{this.state.binanceB1Minimum[Pair[0].replace("_","")]}</td>						
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
-						<td>{
-							this.state.tradingPairs.binance[Pair[0]] ? 
-							((this.state.binanceB1Minimum[Pair[0].replace("_","")] < this.state.balance.binance[Pair[0].split("_")[0]]) && ((1/this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[0].split("_")[0]]) && ((this.state.tradingPairs.binance[Pair[0]][Pair[1][1]] * this.state.binanceB1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[1][1].split("_")[1]]) ? <Switch checked={true}/> : <Switch checked={false}/>)
-							: ""
-							}
-					</td>	
-					</TableRow>		
-					<TableRow>
-						<td>{Pair[0].split("_")[0].toUpperCase()}</td>
-						<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={Pair[0].replace("_","")} value={this.state.binanceC1Minimum[Pair[0].replace("_","")]} onChange={this.updateBinanceC1Minimum} /> </td>
-						<td>{this.state.binanceC1Minimum[Pair[0].replace("_","")]}</td>						
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ? (this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]).toFixed(5) : ""}</td>
-						<td>{this.state.tradingPairs.binance[Pair[0]] ?
-							((this.state.binanceC1Minimum[Pair[0].replace("_","")] < this.state.balance.binance[Pair[0].split("_")[0]]) 
-							&&	((this.state.tradingPairs.binance[Pair[0]][Pair[0]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[0].split("_")[0]]) &&
-							((this.state.tradingPairs.binance[Pair[0]][Pair[1][2]] * this.state.binanceC1Minimum[Pair[0].replace("_","")]) < this.state.balance.binance[Pair[1][1].split("_")[1]])
-							? <Switch checked={true}/> :  <Switch checked={false}/>)
-							: ""
-							}</td>	
-					</TableRow>	
-					</TableBody>
-					</Table> 	
-				</div>
-				))
-				})()						
-			}	
+			 <BinanceState 
+				binancePairs={this.state.binancePairs} 
+				binanceStatusTime={this.state.binanceStatusTime} 
+				binanceStatus={this.state.binanceStatus} 
+				forceMonitorBinance = {this.forceMonitorBinance}
+				tradingPairs = {this.state.tradingPairs.binance}
+				balance = {this.state.balance.binance}
+				binanceProgress = {this.state.binanceProgress}
+				binanceB1Minimum = {this.state.binanceB1Minimum}
+				updateBinanceB1Minimum = {this.updateBinanceB1Minimum}
+				binanceC1Minimum = {this.state.binanceC1Minimum}
+				updateBinanceC1Minimum ={this.updateBinanceC1Minimum}
+				/>	
 			</TabContainer>}
 						
 			  
