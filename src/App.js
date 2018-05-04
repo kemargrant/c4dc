@@ -842,11 +842,7 @@ class App extends Component{
 						left:"30%"
 					},
 		            tooltip:{
-		                trigger: 'axis',
-						formatter: function(params){
-							params = params[0];
-							return params.name.split("GMT")[0]+ '/' + params.value[1].toFixed(2);
-						},            
+		                trigger: 'axis',         
 		            },
 		            grid: {
 						top:'8%',
