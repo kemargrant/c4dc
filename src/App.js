@@ -567,11 +567,15 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-				<ReactEchartsCore
+			{
+			this.props.gauge.series[0].data[0].value > 0 ?
+			(<ReactEchartsCore
 			  echarts={echarts}
 			  option={this.props.gauge}
 			  style={this.props.style}
-			   />
+			   />):""
+			 
+			}
 			{this.info()}
 			</div>)
 	}	
