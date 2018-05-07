@@ -38,25 +38,423 @@ import {Scatter} from 'react-chartjs-2';
 function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
-	
-//BinanceState
 
-class BinanceState extends React.Component{
-	activeToggle(pair){
-		return(<div className="monitorToggle">
+class ArbProgress  extends React.PureComponent{
+	render(){
+		return(
+			<div>
+			<LinearProgress variant="determinate" value={this.props.value} /> 
+			<Button variant="raised" color="primary">Arbitrage In Progress</Button>
+			<br/>
+			{((new Date().getTime() - this.props.time)/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+			</div>
+			)
+	}
+}
+class ArbToggle extends React.PureComponent{
+	render(){
+		return (<div className="monitorToggle">
 			<FormGroup>
 		        <FormControlLabel
-				  label={!this.props.binanceStatus[pair] ? "Active" : "Paused"}
+				  label={this.props.on ? "Active" : "Paused"}
 				  style={{margin:"auto"}}
 		          control={<Switch
-			              checked={!this.props.binanceStatus[pair]}
+			              checked={this.props.on}
 			              onChange={(event, checked) => {
-							  this.props.forceMonitorBinance(pair,!checked)
+							  this.props.forceMonitor(this.props.pair,!checked)
 							}}
 						/>}
 		        />
 			</FormGroup>
 			</div>)
+	}
+}
+
+class Config extends React.PureComponent{	
+	render(){
+		return (<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+		        <CardContent >
+		           <Typography type="title">Server Connection</Typography>
+		           <br/>
+					<FormControl fullWidth={true}>
+						<InputLabel>Private Key</InputLabel>
+						<Input type="text" placeholder="Private Key" value={this.props.privatekey} onChange={this.props.updatePkey}/>
+					</FormControl>	
+					<FormControl fullWidth={true}>
+						<InputLabel>Host</InputLabel>
+						<Input type="text" value={this.props.websocketNetwork} onChange={this.props.updateNetwork}/>
+					</FormControl>	
+					<FormControl fullWidth={true}>	
+						<InputLabel>Port Number</InputLabel>
+						<Input type="number" placeholder="Port" min={0} value={this.props.port} onChange={this.props.updatePort}/>	
+					</FormControl>				
+		        </CardContent>
+		        <CardActions>
+			        <FormGroup>
+			        <FormControlLabel
+					  label="Connect"
+					  style={{margin:"auto"}}
+			          control={<Switch
+							  
+				              checked={this.props.connected}
+				              onChange={(event, checked) => {
+								  if(checked){
+									  return this.props.begin();
+								  }
+								  else{
+									  return this.props.end();
+								  }
+								}}
+							/>}
+			        />
+					</FormGroup>	
+					<FormGroup>
+			        <FormControlLabel
+					  label="AutoConnect"
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.autoconnect}
+				              onChange={(event, checked) => {
+									return this.props.setStartup(checked);
+								}}
+							/>}
+			        />
+					</FormGroup>	        
+		        </CardActions>
+		        <CardActions>
+		        <FormGroup>
+		        <FormControlLabel
+				  label="AutoSave Settings"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.props.autosave}
+			              onChange={(event, checked) => {
+							  return this.props._autosave(checked);
+							}}
+						/>}
+		        />
+				</FormGroup>
+		        <FormGroup>
+		        <FormControlLabel
+				  label="Web Notifications"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.props.webNotify}
+			              onChange={(event, checked) => {
+							  return this.props._webNotify(checked);
+							}}
+						/>}
+		        />
+				</FormGroup>	
+				</CardActions>
+				<CardActions>		
+				<FormGroup>
+		        <FormControlLabel
+				  label="Toast Notifications"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.props.toastNotify}
+			              onChange={(event, checked) => {
+							  return this.props._toastNotify(checked);
+							}}
+						/>}
+		        />
+				</FormGroup>					
+				{
+				!this.props.cleared ?
+				<FormGroup>
+		        <FormControlLabel
+				  label="Reset Settings"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.props.cleared}
+			              onChange={(event, checked) => {
+							if(checked){
+								return this.setState({cleared:true},()=>{return this.props.clearData()});
+							}
+						}}
+		            /> }
+		        />
+				</FormGroup> : <label>Data wiped!</label>
+				}							
+		        </CardActions>
+				</Card>)
+	}
+}	
+class PMenu extends React.Component{
+	constructor(props){
+		super(props)
+		this.menuOpen = this.menuOpen.bind(this);
+		this.menuClose = this.menuClose.bind(this);
+		this.state={
+			menu_open:false,
+			menuAnchor:null
+			}
+	}	
+
+	menuOpen(evt){
+		return this.setState({menuAnchor:evt.currentTarget,menu_open:true});
+	}
+
+	menuClose(){
+		return this.setState({ menuAnchor: null,menu_open:false });
+	}	
+	
+	render(){
+		return (<div className="Burger">
+		        <IconButton
+		          aria-label="More"
+		          aria-owns={this.state.menu_open ? 'long-menu' : null}
+		          aria-haspopup="true"
+		          style={{color:"white",backgroundColor:"transparent"}}
+		          onClick={this.menuOpen}
+		        >
+		        <MoreVertIcon />
+		        </IconButton>
+		        <Menu
+		          id="long-menu"
+		          anchorEl={this.state.menuAnchor}
+		          open={this.state.menu_open}
+		          onClick={this.menuClose}
+		          PaperProps={{
+		            style: {
+		              maxHeight: 48 * 4.5,
+		              width: 200,
+		            },
+		          }}
+		        >
+		       {this.props.previous.map(option => (
+		            <MenuItem key={option} onClick={()=>{this.props.click(option)}}>
+		              {option}
+		            </MenuItem>
+		          ))}
+		        <MenuItem key="xxx" onClick={this.menuClose}>
+		        Close
+		        </MenuItem>
+		        </Menu>
+		    </div>  )
+	}
+}
+				
+				
+class ExchangeConfig extends React.PureComponent{
+	pairControl(){
+		let p = [];
+		for(var i = 0;i < this.props.binancePairs.length;i++){
+			p.push(this.props.binancePairs[i].pair1);
+		}
+		return p.map((Pair) => (
+		<div key={Pair}>
+			 <div className="Switches">
+			<FormGroup>
+	        <FormControlLabel
+			  id={Pair.replace("_","")}
+			  label="Liquid Trades"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={this.props.liquidTradesBinance[Pair.replace("_","")]}
+		              onChange={this.props.updateLiquidTradeBinance}
+	            /> }
+	        />
+	        <FormControlLabel
+			  id={Pair.replace("_","")+"_optimal"}
+			  label="Optimal Trades"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={this.props.binanceOptimalTrades[Pair.replace("_","")] === true ? true: false}
+		              onChange={(evt,checked)=>{this.props.updateBinanceOptimalTrades(Pair.replace("_",""),checked)}}
+	            /> }
+	        />
+	        ({Pair.replace("_","")})
+	        </FormGroup>
+	        </div>	
+			<InputLabel>Minimum {Pair.split("_")[1].toUpperCase()} Order</InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.000001" }} value={this.props.binanceB1Minimum[Pair.replace("_","")]} onChange={this.props.updateBinanceB1Minimum}/>
+			<br/>
+			<InputLabel>Minimum {Pair.split("_")[0].toUpperCase()} Order</InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.001" }} value={this.props.binanceC1Minimum[Pair.replace("_","")]} onChange={this.props.updateBinanceC1Minimum}/>
+			<br/>
+			<InputLabel> Trades &gt; 100% Lower Limit </InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")+"_over.lowerLimit"} inputProps={{min: "100",step: "0.001" }} value={this.props.binanceLimits[Pair.replace("_","")] ? this.props.binanceLimits[Pair.replace("_","")].over.lowerLimit : 100} onChange={this.props.updateBinanceLimits}/>
+			<br/>
+			<InputLabel>Trades &gt; 100% Upper Limit </InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")+"_over.upperLimit"} inputProps={{min: "100.001",step: "0.001" }} value={this.props.binanceLimits[Pair.replace("_","")] ? this.props.binanceLimits[Pair.replace("_","")].over.upperLimit : 100.001} onChange={this.props.updateBinanceLimits}/>
+			<br/>
+			<InputLabel> Trades &lt; 100% Lower Limit </InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")+"_under.lowerLimit"} inputProps={{min: "98",step: "0.001" }} value={this.props.binanceLimits[Pair.replace("_","")] ? this.props.binanceLimits[Pair.replace("_","")].under.lowerLimit : 98} onChange={this.props.updateBinanceLimits}/>
+			<br/>
+			<InputLabel>Trades &lt; 100% Upper Limit </InputLabel>
+			<br/>
+			<Input type="number" id={Pair.replace("_","")+"_under.upperLimit"} inputProps={{min: "98.1",step: "0.001" }} value={this.props.binanceLimits[Pair.replace("_","")] ? this.props.binanceLimits[Pair.replace("_","")].under.upperLimit : 99.99} onChange={this.props.updateBinanceLimits}/>
+			</div>	
+			))
+	}
+	render(){
+		const bChecked = this.props.binanceConnections > 0 && this.props.connected ?  true : false;
+		return (<div>
+			<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+		        <CardContent>
+		            <Typography type="title">Bittrex Configuration</Typography>
+		            <br/>
+					<InputLabel>Swing Polling Rate:{this.props.swingPollingRate/60000} Minutes</InputLabel>
+					<br/>
+					<Input type="number" min={10} max={1400001} value={this.props.swingPollingRate/1000} onChange={this.props.updateSwingPollingRate}/>
+					 <div className="Switches">
+					<FormGroup>
+					{
+						this.props.loadingBittrexSocket ? 
+						<LinearProgress /> :
+						<FormControlLabel
+						  label="WebSocket Connection"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={this.props.bittrexSocketStatus}
+					              onChange={(evt,checked)=>{this.props.controlBittrex(evt,checked)}}
+				            /> }
+				        />
+			        }
+			        <FormControlLabel
+					  label="Sane Trades"
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.sanity}
+				              onChange={this.props.updateSanity}
+			            /> }
+			        />
+			        <FormControlLabel
+					  label="Liquid Trades"
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.liquidTrades}
+				              onChange={this.props.updateLiquidTrade}
+			            /> }
+			        />
+			        <FormControlLabel
+					  label="View Bittrex Order Book"
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.viewBittrexBook}
+				              onChange={this.props.forceBittrexView}
+			            /> }
+			        />
+			        <FormControlLabel
+					  label="Swing Trade"
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.swingTrade}
+				              onChange={this.props.updateSwingTrade}
+			            /> }
+			        />
+			        </FormGroup>
+			        </div>
+					<InputLabel>Lower Limit</InputLabel>
+					<br/>
+					<Input type="number" min={0} max={120} value={this.props.lowerLimit} onChange={this.props.updateLowerLimit}/>
+					<br/>
+					<InputLabel>Upper Limit</InputLabel>
+					<br/>
+					<Input type="number"  min={0} max={120} value={this.props.upperLimit} onChange={this.props.updateUpperLimit}/>			       
+					<br/>
+					<InputLabel>Swing Percentage</InputLabel>
+					<br/>
+					<Input type="number" min={0} max={100} value={this.props.swingPercentage} onChange={this.props.updateSwingPercentage}/>
+					<br/>
+					<InputLabel>Log Level</InputLabel>
+					<br/>
+					<Input type="number" min={0} max={3} value={this.props.logLevel} onChange={this.props.updateLogLevel}/>						
+		        </CardContent>
+		        <CardActions>
+					<Button variant="raised" color="primary" onClick={this.props.swing_reset}>Reset Swing Trading</Button>	
+		        </CardActions>
+			</Card> 		    
+			<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+		        <CardContent>
+		            <Typography type="title">Binance Configuration</Typography>
+		            <br/>
+					{
+						this.props.loadingBinanceSocket ? 
+						<LinearProgress /> :
+			            <FormControlLabel
+						  label="WebSocket Connection"
+						  style={{margin:"auto"}}
+				          control={<Switch
+					              checked={bChecked}
+					              onChange={(evt,checked)=>{this.props.controlBinance(evt,checked)}}
+				            /> }
+				        />
+					}
+			    {this.pairControl()}		
+		        </CardContent>
+				</Card> 
+				</div>)
+		
+	}
+}
+
+class GeneralBalance extends React.PureComponent{
+	constructor(props){
+		super(props)
+		this.coins = [];
+		for(let key in this.props.balance){
+			if(key !== "account" && this.props.balance[key] > 0){
+				this.coins.push([key.toString(),this.props.balance[key]]);
+			}
+		}
+	}
+	render(){
+		return (<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
+		        <CardContent>
+					<Typography type="title">{this.props.title}</Typography>
+					<br/>
+					<Table>
+						<TableHead>
+							<TableRow>
+								<TableCell>Asset</TableCell>
+								<TableCell>Balance</TableCell>
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							 {this.coins.map(item=>(<TableRow key={item[0]}><TableCell>{item[0]}</TableCell><TableCell>{item[1]}</TableCell></TableRow>))}
+					</TableBody>
+					</Table>
+		        </CardContent>
+		        <CardActions>
+					<Button variant="raised" color="primary" onClick={this.props.update}>Get Balance</Button>			
+		        </CardActions>
+			</Card>)
+		
+	}
+}
+
+class Orders extends React.PureComponent{
+	render(){
+	return(<div>{this.props.orders.map((order)=> 
+			<Card key={order.order_id} style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+			<CardHeader style={{"backgroundRepeat":"no-repeat","backgroundPosition":"center",backgroundImage: order.image}}>
+			</CardHeader>
+	        <CardContent>
+	           <Typography type="headline">{order.type}</Typography>
+				<Typography component="p">
+				{order.pair.replace('_','/')}
+				<br/>{order.amount} @ {order.rate}
+				<br/>Created:{Number(order.timestamp_created) ? new Date(order.timestamp_created).toString() : order.timestamp_created}
+				<br/>{order.order_id}
+				</Typography>
+				<LinearProgress variant="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
+				{ order.filled > 0? (((order.amount-order.filled)/order.amount)*100).toFixed(2) +'% Filled' : '0% Filled'}
+	        </CardContent>
+	      </Card>)}</div>)				      
+	}
+}		
+//BinanceState
+class BinanceState extends React.Component{
+	activeToggle(pair){
+		return <ArbToggle pair={pair} on={!this.props.binanceStatus[pair]} forceMonitor={this.props.forceMonitorBinance}/>
 	}
 	bTable(pair1,pair2,pair3,a,b,c){
 		return(<div className="bTable">
@@ -123,7 +521,7 @@ class BinanceState extends React.Component{
 					this.props.tradingPairs[pair1] ? 
 					((this.props.binanceB1Minimum[pair1.replace("_","")] < this.props.balance[a]) && ((1/this.props.tradingPairs[pair1][pair1] * this.props.binanceB1Minimum[pair1.replace("_","")]) < this.props.balance[a]) && ((this.props.tradingPairs[pair1][pair2] * this.props.binanceB1Minimum[pair1.replace("_","")]) < this.props.balance[c]) ? <Switch checked={true}/> : <Switch checked={false}/>)
 					: ""
-					}
+					}					
 			</td>	
 			</TableRow>		
 			<TableRow>
@@ -145,13 +543,7 @@ class BinanceState extends React.Component{
 	}
 	progressBar(pair){
 		if(this.props.binanceStatusTime[pair] > 0){ 
-		return(
-		<div>
-		<LinearProgress variant="determinate" value={this.props.binanceProgress[pair]*100/3} /> 
-		<Button variant="raised" color="primary">Arbitrage In Progress</Button>
-		<br/>
-		{((new Date().getTime() - this.props.binanceStatusTime[pair])/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
-		</div>)
+			return <ArbProgress value={this.props.binanceProgress[pair]*100/3} time={ this.props.binanceStatusTime[pair]}/>
 		}
 		else{
 			return null
@@ -174,9 +566,209 @@ class BinanceState extends React.Component{
 		))
 	}
 	render(){
-		return (<div>{this.info()}</div>)
+		return (<div>
+				<ReactEchartsCore
+			  echarts={echarts}
+			  option={this.props.gauge}
+			  style={this.props.style}
+			   />
+			{this.info()}
+			</div>)
 	}	
 }	
+
+//Bittrex Components
+class CustomTable extends React.PureComponent{
+	render(){
+		const sortOrder = this.props.type === "Bids" ? 1 : 0;
+		return(<table className="myTable">
+		<tbody>
+			  <tr className="stripeTable">
+			    <th>{this.props.type === "Bids" ? "Amount" : (<div>{this.props.type} <br/>{this.props.pair}</div>) }</th> 		
+			    <th>{this.props.type === "Bids" ? (<div>{this.props.type} <br/>{this.props.pair}</div>) : "Amount" } </th>	    
+			  </tr>
+				{
+					this.props.data["Sorted"] && this.props.data["Sorted"][sortOrder].map((order) => (
+					<tr key={order}>
+						{this.props.type === "Bids" ? <td className="stripeTable">{Number(this.props.data[this.props.type][order]).toFixed(this.props.prec[0])}</td> : <td className="stripeTable">{Number(order).toFixed(this.props.prec[1])}</td>}
+						{this.props.type === "Bids" ? <td className="stripeTable">{Number(order).toFixed(this.props.prec[1])}</td> :  <td className="stripeTable">{Number(this.props.data[this.props.type][order]).toFixed(this.props.prec[0])}</td> }
+					</tr>
+					))
+				}
+		</tbody>
+		</table>
+		)
+	}
+}
+
+class BittrexGaugeChart extends React.Component{
+	constructor(props){
+		super(props)
+		this.current = Number(this.props.gauge.series[0].data[0].value);
+	}
+	shouldComponentUpdate(nextProps){	
+		if(Number(nextProps.gauge.series[0].data[0].value) !==  this.current){
+			this.current = Number(nextProps.gauge.series[0].data[0].value);
+			return true
+		}
+		return false;
+	}
+	render(){
+		return (<ReactEchartsCore
+			echarts={echarts}
+			option={this.props.gauge}
+			style={this.props.style}/>)	
+	}	
+}
+
+class BittrexState extends React.Component{
+	progress(){
+		if(this.props.time > 0){
+			return  <ArbProgress value={this.props.progress} time={this.props.time}/>
+		}
+		else{
+			return "";
+		}
+	}
+	book(){
+		if(this.props.viewBook){  
+			return(<div className="orderBooks">
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[0].toLowerCase()}
+				type={"Bids"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[0]]}
+				prec={[3,7]}
+				/>
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[0].toLowerCase()}
+				type={"Asks"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[0]]}
+				prec={[3,7]}
+				/>	
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[1].toLowerCase()}
+				type={"Bids"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[1]]}
+				prec={[4,2]}
+				/>	
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[1].toLowerCase()}
+				type={"Asks"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[1]]}
+				prec={[4,2]}
+				/>												
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[2].toLowerCase()}
+				type={"Bids"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[2]]}
+				prec={[2,4]}
+				/>	
+			<CustomTable 
+				pair={Object.keys(this.props.bookData)[2].toLowerCase()}
+				type={"Asks"}
+				data={this.props.bookData[Object.keys(this.props.bookData)[2]]}
+				prec={[2,4]}
+				/>	
+			</div>)
+		}
+		else{
+			return ""
+		}	
+	}
+	
+	render(){
+		return(<div>
+			<ArbToggle pair={"none"} on={!this.props.bittrexStatus} forceMonitor={this.props.forceMonitorBittrex}/>
+			<BittrexGaugeChart gauge={this.props.gauge} style={this.props.style} />
+			{this.book()}
+			{this.progress()}
+			<FormGroup>
+			        <FormControlLabel
+					  label={this.props.viewBook ? "Close OrderBook" : "Open OrderBook"}
+					  style={{margin:"auto"}}
+			          control={<Switch
+				              checked={this.props.viewBook}
+				              onChange={ this.props.toggleBook}
+							/>}
+			        />
+			</FormGroup>	
+			<div className="bTable">
+				<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Asset</th>
+						<th data-field="">Balance</th>
+						<th data-field="">{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}/Ratio</th>
+						<th data-field="">BTC/Ratio</th>
+						<th data-field="">&#8224;BTC</th>
+						<th data-field="">&#8224;USDT</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</td>	
+						<td>{this.props.balance[this.props.tradingPairs.misc]}</td>	
+						<td>100%</td>				
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] * this.props.balance[this.props.tradingPairs.misc]*100/this.props.balance.btc).toFixed(0)+'%' : ""}</td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc].toFixed(7) : ""}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc].toFixed(1) : ""}</td>
+					</TableRow>
+					<TableRow>
+						<td>BTC</td>	
+						<td>{this.props.balance.btc}</td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc/this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] *100/this.props.balance[this.props.tradingPairs.misc]).toFixed(0)+'%' : ""}</td>
+						<td>100%</td>
+						<td>1</td>
+						<td>{this.props.tradingPairs.bittrex.usdt_btc ? this.props.tradingPairs.bittrex.usdt_btc.toFixed(1) : "" }</td>
+					</TableRow>
+					<TableRow>
+						<td>USDT</td>
+						<td>{this.props.balance.usdt ? this.props.balance.usdt.toFixed(7) : 0}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (100*((this.props.balance.usdt/this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc])/this.props.balance[this.props.tradingPairs.misc])).toFixed(0)+ '%' : ""}</td>
+						<td>{this.props.tradingPairs.bittrex.usdt_btc ? (100*((this.props.balance.usdt/this.props.tradingPairs.bittrex.usdt_btc)/this.props.balance.btc)).toFixed(2)+ '%' : ""}</td>						
+						<td>{this.props.tradingPairs.bittrex.usdt_btc ? (1/this.props.tradingPairs.bittrex.usdt_btc).toFixed(7) : "" }</td>
+						<td>1</td>
+					</TableRow>										
+				</TableBody>
+				</Table> 
+				</div>
+				<Table>
+				<TableHead>
+					<TableRow>
+						<th data-field="">Trade</th>
+						<th data-field="">%</th>
+						<th data-field="">{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</th>
+						<th data-field="">BTC</th>
+						<th data-field="">USDT</th>
+						<th data-field="">Status</th>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					<TableRow>
+						<td>{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</td>
+						<td className="td_input"> <Input type="number" step={1} max={100} min={0} value={this.props.percentage1 * 100} onChange={this.props.updatePercentage1} /> </td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1).toFixed(5) : 0}</td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex.usdt_btc * this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 * this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) > 0.002 && (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1) < this.props.balance[this.props.tradingPairs.misc] && (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.btc && (this.props.tradingPairs.bittrex.usdt_btc * this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
+					</TableRow>
+					<TableRow>
+						<td>BTC</td>
+						<td  className="td_input"> <Input step={1} type="number" max={100} min={0} value={this.props.percentage2 * 100} onChange={this.props.updatePercentage2} /> </td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>						
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2).toFixed(5) : 0}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.props.balance.btc * this.props.percentage2) > 0.002 &&	(this.props.balance.btc * this.props.percentage2) < this.props.balance.btc && (this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance[this.props.tradingPairs.misc] && (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
+					</TableRow>		
+				</TableBody>
+				</Table> 			
+		
+			</div>)
+		
+	}
+	
+	
+}		
 	
 //Profit Components
 class BinanceProfit extends React.PureComponent{
@@ -314,13 +906,16 @@ class BittrexChart extends Component{
 	)}
 		
 }
-
+class Log extends React.PureComponent{
+	render(){
+		return <textarea value={this.props.text} readOnly> </textarea>	
+	}
+}
 			
 class App extends Component{
 	constructor(props){
 	    super(props);
 	    this.state = {
-			anch_menu:null,
 			autoconnect: window.localStorage && window.localStorage.getItem("AutoConnect") ? JSON.parse(window.localStorage.getItem("AutoConnect")) : false,
 			autosave: window.localStorage && JSON.parse(window.localStorage.getItem("Autosave")) ? true : false,
 			balance: window.localStorage && JSON.parse(window.localStorage.getItem("Bittrex_Balance")) ? JSON.parse(window.localStorage.getItem("Bittrex_Balance")):{binance:{account:"Binance"},bittrex:{account:"Bittrex"}},
@@ -464,13 +1059,10 @@ class App extends Component{
 			log:"",
 			logLevel:0,
 			lowerLimit:89,
-			menuAnchor: null,
-			menu_open:false,
 			orders: window.localStorage && JSON.parse(window.localStorage.getItem("Orders"))? JSON.parse(window.localStorage.getItem("Orders")):[],
 			previous: window.localStorage && JSON.parse(window.localStorage.getItem("Previous_Connections"))? JSON.parse(window.localStorage.getItem("Previous_Connections")) : [],
 			percentage1:null,
 			percentage2:null,
-			pollingRate:0,
 			port:7071,
 			privatekey: window.localStorage && window.localStorage.getItem("xxpkeyxx") ? window.localStorage.getItem("xxpkeyxx"): "",
 			sanity:true,
@@ -513,19 +1105,24 @@ class App extends Component{
 			websocketNetwork:"localhost",
 			viewBittrexBook:false
 		}
+		this.autosave = this.autosave.bind(this);
+		this.begin = this.begin.bind(this);
 		this.changeTab = this.changeTab.bind(this);	
 		this.clearData = this.clearData.bind(this);
 		this.clearOrders = this.clearOrders.bind(this);
 		this.connect = this.connect.bind(this);	
 		this.controlBinance = this.controlBinance.bind(this);			
-		this.controlBittrex = this.controlBittrex.bind(this);			
+		this.controlBittrex = this.controlBittrex.bind(this);	
+		this.end = this.end.bind(this);		
 		this.forceBittrexView = this.forceBittrexView.bind(this);
+		this.forceMonitorBinance = this.forceMonitorBinance.bind(this);
+		this.forceMonitorBittrex = this.forceMonitorBittrex.bind(this);
 		this.getBittrexDBTrade = this.getBittrexDBTrade.bind(this);
 		this.getOrders = this.getOrders.bind(this);
-		this.getPollingRate = this.getPollingRate.bind(this);
-		this.menuClose = this.menuClose.bind(this);
-		this.menuOpen = this.menuOpen.bind(this);
+		this.setStartup = this.setStartup.bind(this);
 		this.swing_reset = this.swing_reset.bind(this);
+		this.toastNotify = this.toastNotify.bind(this);
+		this.webNotify = this.webNotify.bind(this);
 		this.updateBinanceBalance = this.updateBinanceBalance.bind(this);	
 		this.updateBinanceB1Minimum = this.updateBinanceB1Minimum.bind(this);	
 		this.updateBinanceC1Minimum = this.updateBinanceC1Minimum.bind(this);
@@ -540,7 +1137,6 @@ class App extends Component{
 		this.updatePkey = this.updatePkey.bind(this);	
 		this.updatePercentage1 = this.updatePercentage1.bind(this);	
 		this.updatePercentage2 = this.updatePercentage2.bind(this);	
-		this.updatePollingRate = this.updatePollingRate.bind(this);	
 		this.updatePort = this.updatePort.bind(this);	
 		this.updateSanity = this.updateSanity.bind(this);	
 		this.updateSwingPercentage = this.updateSwingPercentage.bind(this);	
@@ -549,6 +1145,7 @@ class App extends Component{
 		this.updateUpperLimit = this.updateUpperLimit.bind(this);
 	}
 	autosave(checked){
+		this.setState({autosave:checked});
 		if(!checked){
 			return window.localStorage.removeItem("Autosave");
 		}
@@ -595,7 +1192,7 @@ class App extends Component{
 		for(let i=0;i< list.length;i++){
 			window.localStorage.removeItem(list[i]);
 		}
-		return this.setState({autosave:false});
+		return this.setState({autosave:false,cleared:true});
 	}
 	
 	clearOrders(){
@@ -653,19 +1250,13 @@ class App extends Component{
 		try{
 			this.toast(data.type);
 		}
-		catch(e){this.toast(e)}
-		if(data.type === "alert"){
-			this.toast(data.alert);
-			return this.getPollingRate();
-		}
-		
+		catch(e){
+			this.toast(e);
+		}		
 		if(data.type === "balance"){
 			return this.setState({balance:{bittrex:data.balance,binance:this.state.balance.binance}},()=>{
 				if(this.state.autosave){
 					window.localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
-				}
-				if(data.polling){
-					this.setState({pollingRate:data.polling});
 				}
 				if(data.p1){
 					this.setState({percentage1:data.p1,percentage2:data.p2,});
@@ -1157,11 +1748,6 @@ class App extends Component{
 			}
 			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:_bittrexGauge});
 		}		
-	
-		if(data.type === "poll_rate"){
-			return this.setState({pollingRate:data.polling});						
-		}	
-
 		if(data.type === "swing"){
 			let gauge = {
 				tooltip : {
@@ -1239,7 +1825,7 @@ class App extends Component{
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binanceMonitor","bool":checked,"pair":pair}),this.state.privatekey).toString());				
 	}
 	
-	forceMonitorBittrex(checked){
+	forceMonitorBittrex(pair,checked){
 		this.setState({bittrexStatus:checked});
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrexMonitor","bool":checked}),this.state.privatekey).toString());				
 	}		
@@ -1253,18 +1839,6 @@ class App extends Component{
 		this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"binance_orders"}),this.state.privatekey).toString());
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"bittrex_orders"}),this.state.privatekey).toString());
 	}		
-	
-	getPollingRate(){
-		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"poll_rate"}),this.state.privatekey).toString());			
-	}	
-			
-	menuOpen(evt){
-		return this.setState({menuAnchor:evt.currentTarget,menu_open:true});
-	}
-
-	menuClose(){
-		return this.setState({ menuAnchor: null,menu_open:false });
-	}	
 	
 	setStartup(checked){
 		this.setState({autoconnect:checked});
@@ -1317,6 +1891,7 @@ class App extends Component{
 	}	
 
 	toastNotify(checked){
+		this.setState({toastNotify:checked});
 		if(!checked){
 			return window.localStorage.removeItem("Toast_Notify");
 		}
@@ -1420,12 +1995,6 @@ class App extends Component{
 		}
 	}	
 		
-	updatePollingRate(evt){
-		let rate = evt.currentTarget.value; 
-		this.setState({pollingRate:rate * 1000});
-		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"poll","rate":rate}),this.state.privatekey).toString());
-	}	
-
 	updateSanity(evt,checked){
 		this.setState({sanity:checked});
 		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"sanity","bool":checked}),this.state.privatekey).toString());
@@ -1482,6 +2051,7 @@ class App extends Component{
 	}		
 		
 	webNotify(checked){
+		this.setState({webNotify:checked});
 		if(!checked){
 			return window.localStorage.removeItem("Web_Notify");
 		}
@@ -1505,16 +2075,9 @@ class App extends Component{
 			</AppBar>	
 			<div className="body">   
 			{this.state.tabValue === 0 && <TabContainer>
-			{ 
-				this.state.connected ?
-			  <ReactEchartsCore
-			  echarts={echarts}
-			  option={this.state.binanceGauge}
-			  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
-			   />
-			   :""
-			 }	
 			 <BinanceState 
+				style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+				gauge={this.state.binanceGauge}
 				binancePairs={this.state.binancePairs} 
 				binanceStatusTime={this.state.binanceStatusTime} 
 				binanceStatus={this.state.binanceStatus} 
@@ -1533,227 +2096,34 @@ class App extends Component{
 			{
 			this.state.tabValue === 1 && <TabContainer>
 				<div className="graph">
-				{
-					this.state.bittrexStatusTime > 0 ?
-					(<div>
-					<LinearProgress variant="determinate" value={this.state.bittrexProgress * 100/3} /> 
-					<Button variant="raised" color="primary">Arbitrage In Progress</Button>
-					<p className="simpleText">{((new Date().getTime() - this.state.bittrexStatusTime)/60000).toFixed(2) + " Minutes Processing Arbitrage"}</p>
-					 </div>) : ""
-				}
-				<div className="monitorToggle">
-				<FormGroup>
-			        <FormControlLabel
-					  label={!this.state.bittrexStatus ? "Pause" : "Activate"}
-					  style={{margin:"auto"}}
-			          control={<Switch
-				              checked={!this.state.bittrexStatus}
-				              onChange={(event, checked) => {
-								  this.forceMonitorBittrex(!checked)
-								}}
-							/>}
-			        />
-				</FormGroup>				
-				</div>
-				{
-					this.state.connected ? <ReactEchartsCore
-				  echarts={echarts}
-				  option={this.state.bittrexGauge}
-				  style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}/>
-				  : <div style={{width:"100%",height:this.state.chartSize.height*1.3+"px"}}></div>
-				  }					
-				<FormGroup>
-			        <FormControlLabel
-					  label={this.state.viewBittrexBook ? "Close OrderBook" : "Open OrderBook"}
-					  style={{margin:"auto"}}
-			          control={<Switch
-				              checked={this.state.viewBittrexBook}
-				              onChange={ this.forceBittrexView}
-							/>}
-			        />
-				</FormGroup>
-				{
-					this.state.viewBittrexBook ? 
-					<div className="orderBooks">
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Amount</th> 		
-					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[0].toLowerCase()} </th>	    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"][1].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Bids"][order]).toFixed(3)}</td>
-								<td className="stripeTable">{Number(order).toFixed(7)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[0].toLowerCase()} </th>
-					    <th>Amount</th> 			    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Sorted"][0].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(order).toFixed(7)}</td>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[0]]["Asks"][order]).toFixed(3)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Amount</th> 		
-					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[1].toLowerCase()} </th>	    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][1].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Bids"][order]).toFixed(4)}</td>
-								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[1].toLowerCase()} </th>
-					    <th>Amount</th> 			    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Sorted"][0].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[1]]["Asks"][order]).toFixed(4)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Amount</th> 		
-					    <th>Bids <br/> {Object.keys(this.state.bittrexBook)[2].toLowerCase()} </th>	    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][1].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Bids"][order]).toFixed(4)}</td>
-								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					<table className="myTable">
-					<tbody>
-					  <tr className="stripeTable">
-					    <th>Asks <br/> {Object.keys(this.state.bittrexBook)[2].toLowerCase()} </th>
-					    <th>Amount</th> 			    
-					  </tr>
-						{
-							this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"] && this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Sorted"][0].map((order) => (
-							<tr key={Math.random(0,1)}>
-								<td className="stripeTable">{Number(order).toFixed(2)}</td>
-								<td className="stripeTable">{Number(this.state.bittrexBook[Object.keys(this.state.bittrexBook)[2]]["Asks"][order]).toFixed(4)}</td>
-							</tr>
-							))
-						}
-					</tbody>
-					</table>
-					</div>		
-					:""
-				}		
-				</div>
-				<div className="bTable">
-				<Table>
-				<TableHead>
-					<TableRow>
-						<th data-field="">Asset</th>
-						<th data-field="">Balance</th>
-						<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}/Ratio</th>
-						<th data-field="">BTC/Ratio</th>
-						<th data-field="">&#8224;BTC</th>
-						<th data-field="">&#8224;USDT</th>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<TableRow>
-						<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>	
-						<td>{this.state.balance.bittrex[this.state.tradingPairs.misc]}</td>	
-						<td>100%</td>				
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] * this.state.balance.bittrex[this.state.tradingPairs.misc]*100/this.state.balance.bittrex.btc).toFixed(0)+'%' : ""}</td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc].toFixed(7) : ""}</td>
-						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc].toFixed(1) : ""}</td>
-					</TableRow>
-					<TableRow>
-						<td>BTC</td>	
-						<td>{this.state.balance.bittrex.btc}</td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc/this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] *100/this.state.balance.bittrex[this.state.tradingPairs.misc]).toFixed(0)+'%' : ""}</td>
-						<td>100%</td>
-						<td>1</td>
-						<td>{this.state.tradingPairs.bittrex.usdt_btc ? this.state.tradingPairs.bittrex.usdt_btc.toFixed(1) : "" }</td>
-					</TableRow>
-					<TableRow>
-						<td>USDT</td>
-						<td>{this.state.balance.bittrex.usdt ? this.state.balance.bittrex.usdt.toFixed(7) : 0}</td>
-						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc])/this.state.balance.bittrex[this.state.tradingPairs.misc])).toFixed(0)+ '%' : ""}</td>
-						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (100*((this.state.balance.bittrex.usdt/this.state.tradingPairs.bittrex.usdt_btc)/this.state.balance.bittrex.btc)).toFixed(2)+ '%' : ""}</td>						
-						<td>{this.state.tradingPairs.bittrex.usdt_btc ? (1/this.state.tradingPairs.bittrex.usdt_btc).toFixed(7) : "" }</td>
-						<td>1</td>
-					</TableRow>										
-				</TableBody>
-				</Table> 
-				</div>
-				<Table>
-				<TableHead>
-					<TableRow>
-						<th data-field="">Trade</th>
-						<th data-field="">%</th>
-						<th data-field="">{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</th>
-						<th data-field="">BTC</th>
-						<th data-field="">USDT</th>
-						<th data-field="">Status</th>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					<TableRow>
-						<td>{this.state.tradingPairs.misc ? this.state.tradingPairs.misc.toUpperCase() : ""}</td>
-						<td className="td_input"> <Input type="number" step={1} max={100} min={0} value={this.state.percentage1 * 100} onChange={this.updatePercentage1} /> </td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1).toFixed(5) : 0}</td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{(this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 * this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) > 0.002 && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.btc && (this.state.tradingPairs.bittrex.usdt_btc * this.state.balance.bittrex[this.state.tradingPairs.misc] * this.state.percentage1 *  this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
-					</TableRow>
-					<TableRow>
-						<td>BTC</td>
-						<td  className="td_input"> <Input step={1} type="number" max={100} min={0} value={this.state.percentage2 * 100} onChange={this.updatePercentage2} /> </td>
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>						
-						<td>{this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc] ? (this.state.balance.bittrex.btc * this.state.percentage2).toFixed(5) : 0}</td>
-						<td>{this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] ? (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{(this.state.balance.bittrex.btc * this.state.percentage2) > 0.002 &&	(this.state.balance.bittrex.btc * this.state.percentage2) < this.state.balance.bittrex.btc && (this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex[this.state.tradingPairs.misc] && (this.state.tradingPairs.bittrex['usdt_'+this.state.tradingPairs.misc] * this.state.balance.bittrex.btc * this.state.percentage2 / this.state.tradingPairs.bittrex['btc_'+this.state.tradingPairs.misc]) < this.state.balance.bittrex.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
-					</TableRow>		
-				</TableBody>
-				</Table> 	
+				<BittrexState 
+					balance={this.state.balance.bittrex}
+					bittrexStatus={this.state.bittrexStatus}
+					bookData={this.state.bittrexBook}
+					forceMonitorBittrex={this.forceMonitorBittrex}
+					gauge={this.state.bittrexGauge}
+					percentage1={this.state.percentage1}
+					percentage2={this.state.percentage2}
+					progress={this.state.bittrexProgress * 100/3}
+					style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+					time={this.state.bittrexStatusTime}
+					viewBook = {this.state.viewBittrexBook}
+					toggleBook={this.forceBittrexView}
+					tradingPairs={this.state.tradingPairs}
+					updatePercentage1={this.updatePercentage1}
+					updatePercentage2={this.updatePercentage2}
+				/>	  			
+				</div>	
 			</TabContainer>
 			}
 			
 			{this.state.tabValue === 2 && <TabContainer>
-			   <Button variant="raised" color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
-			   <h3>Bittrex</h3>
-			   <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
-			   <BittrexChart style={{height: this.state.chartSize.height+'px', width:'100%'}} option={this.state.dbTrade} />		
-			   
+			    <Button variant="raised" color="primary" onClick={this.getBittrexDBTrade}>Generate Trading Statistics</Button>
+			    
+			    <h3>Bittrex</h3>
+			    <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
+			    <BittrexChart style={{height: this.state.chartSize.height+'px', width:'100%'}} option={this.state.dbTrade} />		
+				
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
 				<BinanceCharts lineList={this.state.dbTradeBinance} scatterList={this.state.dbScatter} chartSize={this.state.chartSize} />			
@@ -1762,25 +2132,10 @@ class App extends Component{
 			{this.state.tabValue === 3 && <TabContainer>
 				<Button variant="raised" color="primary" onClick={this.clearOrders}>Clear Cache</Button>
 				<Button variant="raised" color="primary" onClick={this.getOrders}>Retrieve Orders</Button>
-				{this.state.orders.map((order)=> 
-					<Card key={order.order_id} style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
-					<CardHeader style={{backgroundPosition:"center",backgroundImage: order.image}}>
-					</CardHeader>
-			        <CardContent>
-			           <Typography type="headline">{order.type}</Typography>
-						<Typography component="p">
-						{order.pair.replace('_','/')}
-						<br/>{order.amount} @ {order.rate}
-						<br/>Created:{Number(order.timestamp_created) ? new Date(order.timestamp_created).toString() : order.timestamp_created}
-						<br/>{order.order_id}
-						</Typography>
-						<LinearProgress variant="determinate" value={ order.filled > 0? ((order.amount-order.filled)/order.amount)*100 : 0} />					
-						{ order.filled > 0? (((order.amount-order.filled)/order.amount)*100).toFixed(2) +'% Filled' : '0% Filled'}
-			        </CardContent>
-			      </Card>)}		
+				<Orders orders={this.state.orders} />	
 			</TabContainer>}
 			{this.state.tabValue === 4 && <TabContainer>
-				<textarea value={this.state.log} readOnly> </textarea>		
+				<Log text={this.state.log} />	
 			</TabContainer>}
 			{this.state.tabValue === 5 && <TabContainer>
 				{
@@ -1816,344 +2171,66 @@ class App extends Component{
 				: ""}
 			</TabContainer>}
 			{this.state.tabValue === 6 && <TabContainer>		
-				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
-		        <CardContent >
-		           <Typography type="title">Server Connection</Typography>
-		           <br/>
-					<FormControl fullWidth={true}>
-						<InputLabel>Private Key</InputLabel>
-						<Input type="text" placeholder="Private Key" value={this.state.privatekey} onChange={this.updatePkey}/>
-					</FormControl>	
-					<FormControl fullWidth={true}>
-						<InputLabel>Host</InputLabel>
-						<Input type="text" value={this.state.websocketNetwork} onChange={this.updateNetwork}/>
-					</FormControl>	
-					<FormControl fullWidth={true}>	
-						<InputLabel>Port Number</InputLabel>
-						<Input type="number" placeholder="Port" min={0} value={this.state.port} onChange={this.updatePort}/>	
-					</FormControl>				
-		        </CardContent>
-		        <CardActions>
-			        <FormGroup>
-			        <FormControlLabel
-					  label="Connect"
-					  style={{margin:"auto"}}
-			          control={<Switch
-							  
-				              checked={this.state.connected}
-				              onChange={(event, checked) => {
-								  if(checked){
-									  return this.begin();
-								  }
-								  else{
-									  return this.end();
-								  }
-								}}
-							/>}
-			        />
-					</FormGroup>	
-					<FormGroup>
-			        <FormControlLabel
-					  label="AutoConnect"
-					  style={{margin:"auto"}}
-			          control={<Switch
-				              checked={this.state.autoconnect}
-				              onChange={(event, checked) => {
-									return this.setStartup(checked);
-								}}
-							/>}
-			        />
-					</FormGroup>	        
-		        </CardActions>
-		        <CardActions>
-		        <FormGroup>
-		        <FormControlLabel
-				  label="AutoSave Settings"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.state.autosave}
-			              onChange={(event, checked) => {
-							  this.setState({ autosave: checked });
-							  return this.autosave(checked);
-							}}
-						/>}
-		        />
-				</FormGroup>
-		        <FormGroup>
-		        <FormControlLabel
-				  label="Web Notifications"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.state.webNotify}
-			              onChange={(event, checked) => {
-							  this.setState({ webNotify: checked });
-							  return this.webNotify(checked);
-							}}
-						/>}
-		        />
-				</FormGroup>	
-				</CardActions>
-				<CardActions>		
-				<FormGroup>
-		        <FormControlLabel
-				  label="Toast Notifications"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.state.toastNotify}
-			              onChange={(event, checked) => {
-							  this.setState({ toastNotify: checked });
-							  return this.toastNotify(checked);
-							}}
-						/>}
-		        />
-				</FormGroup>					
-				{
-				!this.state.cleared ?
-				<FormGroup>
-		        <FormControlLabel
-				  label="Reset Settings"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.state.cleared}
-			              onChange={(event, checked) => {
-							if(checked){
-								return this.setState({cleared:true},()=>{return this.clearData()});
-							}
-						}}
-		            /> }
-		        />
-				</FormGroup> : <label>Data wiped!</label>
-				}							
-		        </CardActions>
-				</Card>
-				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
-			        <CardContent>
-			            <Typography type="title">Bittrex Configuration</Typography>
-			            <br/>
-						<InputLabel>Bot Polling Rate:{this.state.pollingRate/60000} Minutes </InputLabel>
-						<br/>
-						<Input type="number" min={10} max={1400001} value={this.state.pollingRate/1000} onChange={this.updatePollingRate}/>
-						<br/>
-						<InputLabel>Swing Polling Rate:{this.state.swingPollingRate/60000} Minutes</InputLabel>
-						<br/>
-						<Input type="number" min={10} max={1400001} value={this.state.swingPollingRate/1000} onChange={this.updateSwingPollingRate}/>
-						 <div className="Switches">
-						<FormGroup>
-						{
-							this.state.loadingBittrexSocket ? 
-							 <LinearProgress /> :
-							<FormControlLabel
-							  label="WebSocket Connection"
-							  style={{margin:"auto"}}
-					          control={<Switch
-						              checked={this.state.bittrexSocketStatus}
-						              onChange={(evt,checked)=>{this.controlBittrex(evt,checked)}}
-					            /> }
-					        />
-				        }
-				        <FormControlLabel
-						  label="Sane Trades"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.sanity}
-					              onChange={this.updateSanity}
-				            /> }
-				        />
-				        <FormControlLabel
-						  label="Liquid Trades"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.liquidTrades}
-					              onChange={this.updateLiquidTrade}
-				            /> }
-				        />
-				        <FormControlLabel
-						  label="View Bittrex Order Book"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.viewBittrexBook}
-					              onChange={this.forceBittrexView}
-				            /> }
-				        />
-				        <FormControlLabel
-						  label="Swing Trade"
-						  style={{margin:"auto"}}
-				          control={<Switch
-					              checked={this.state.swingTrade}
-					              onChange={this.updateSwingTrade}
-				            /> }
-				        />
-				        </FormGroup>
-				        </div>
-						<InputLabel>Lower Limit</InputLabel>
-						<br/>
-						<Input type="number" min={0} max={120} value={this.state.lowerLimit} onChange={this.updateLowerLimit}/>
-						<br/>
-						<InputLabel>Upper Limit</InputLabel>
-						<br/>
-						<Input type="number"  min={0} max={120} value={this.state.upperLimit} onChange={this.updateUpperLimit}/>			       
-						<br/>
-						<InputLabel>Swing Percentage</InputLabel>
-						<br/>
-						<Input type="number" min={0} max={100} value={this.state.swingPercentage} onChange={this.updateSwingPercentage}/>
-						<br/>
-						<InputLabel>Log Level</InputLabel>
-						<br/>
-						<Input type="number" min={0} max={3} value={this.state.logLevel} onChange={this.updateLogLevel}/>						
-			        </CardContent>
-			        <CardActions>
-						<Button variant="raised" color="primary" onClick={this.get_poll_rate}>Get Bot Polling Rate</Button>
-						<Button variant="raised" color="primary" onClick={this.swing_reset}>Reset Swing Trading</Button>	
-			        </CardActions>
-				</Card> 		    
-				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
-			        <CardContent>
-			            <Typography type="title">Binance Configuration</Typography>
-			            <br/>
-						{
-							this.state.loadingBinanceSocket ? 
-							<LinearProgress /> :
-				            <FormControlLabel
-							  label="WebSocket Connection"
-							  style={{margin:"auto"}}
-					          control={<Switch
-						              checked={
-										  (()=>{
-											  if(this.state.binanceConnections > 0 && this.state.connected){
-												  return true;
-												  }
-											  else{
-												  return false
-											}
-											 })()
-										  }
-						              onChange={(evt,checked)=>{this.controlBinance(evt,checked)}}
-					            /> }
-					        />
-						}
-				        {
-							(()=>{
-							let p = [];
-							for(var i = 0;i < this.state.binancePairs.length;i++){
-								p.push(this.state.binancePairs[i].pair1);
-							}
-							return p.map((Pair) => (
-							<div key={Pair}>
-							 <div className="Switches">
-							<FormGroup>
-					        <FormControlLabel
-							  id={Pair.replace("_","")}
-							  label="Liquid Trades"
-							  style={{margin:"auto"}}
-					          control={<Switch
-						              checked={this.state.liquidTradesBinance[Pair.replace("_","")]}
-						              onChange={this.updateLiquidTradeBinance}
-					            /> }
-					        />
-					        <FormControlLabel
-							  id={Pair.replace("_","")+"_optimal"}
-							  label="Optimal Trades"
-							  style={{margin:"auto"}}
-					          control={<Switch
-						              checked={this.state.binanceOptimalTrades[Pair.replace("_","")] === true ? true: false}
-						              onChange={(evt,checked)=>{this.updateBinanceOptimalTrades(Pair.replace("_",""),checked)}}
-					            /> }
-					        />
-					        ({Pair.replace("_","")})
-					        </FormGroup>
-					        </div>	
-							<InputLabel>Minimum {Pair.split("_")[1].toUpperCase()} Order</InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.000001" }} value={this.state.binanceB1Minimum[Pair.replace("_","")]} onChange={this.updateBinanceB1Minimum}/>
-							<br/>
-							<InputLabel>Minimum {Pair.split("_")[0].toUpperCase()} Order</InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")} inputProps={{min: "0",step: "0.001" }} value={this.state.binanceC1Minimum[Pair.replace("_","")]} onChange={this.updateBinanceC1Minimum}/>
-							<br/>
-							<InputLabel> Trades &gt; 100% Lower Limit </InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")+"_over.lowerLimit"} inputProps={{min: "100",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].over.lowerLimit : 100} onChange={this.updateBinanceLimits}/>
-							<br/>
-							<InputLabel>Trades &gt; 100% Upper Limit </InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")+"_over.upperLimit"} inputProps={{min: "100.001",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].over.upperLimit : 100.001} onChange={this.updateBinanceLimits}/>
-							<br/>
-							<InputLabel> Trades &lt; 100% Lower Limit </InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")+"_under.lowerLimit"} inputProps={{min: "98",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].under.lowerLimit : 98} onChange={this.updateBinanceLimits}/>
-							<br/>
-							<InputLabel>Trades &lt; 100% Upper Limit </InputLabel>
-							<br/>
-							<Input type="number" id={Pair.replace("_","")+"_under.upperLimit"} inputProps={{min: "98.1",step: "0.001" }} value={this.state.binanceLimits[Pair.replace("_","")] ? this.state.binanceLimits[Pair.replace("_","")].under.upperLimit : 99.99} onChange={this.updateBinanceLimits}/>
-							</div>	
-							))
-							})()						
-						}	
-						       					
-			        </CardContent>
-				</Card> 		    				  
-				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
-			        <CardContent>
-						<Typography type="title">Bittrex Status</Typography>
-						<br/>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>Asset</TableCell>
-									<TableCell>Balance</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{
-									(()=>{
-										let p = [];
-										for(let key in this.state.balance.bittrex){
-											if(key !== "account" && this.state.balance.bittrex[key] > 0){
-												p.push([key.toString(),this.state.balance.bittrex[key]]);
-											}
-										}
-										return p.map(item=>(<TableRow key={item[0]}><TableCell>{item[0]}</TableCell><TableCell>{item[1]}</TableCell></TableRow>));
-										
-									})()
-								} 
-						</TableBody>
-						</Table>
-			        </CardContent>
-			        <CardActions>
-						<Button variant="raised" color="primary" onClick={this.updateBittrexBalance}>Get Balance</Button>			
-			        </CardActions>
-				</Card>
-				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}} >
-			        <CardContent>
-						<Typography type="title">Binance Status</Typography>
-						<br/>
-						<Table>
-							<TableHead>
-								<TableRow>
-									<TableCell>Asset</TableCell>
-									<TableCell>Balance</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{
-									(()=>{
-										let p = [];
-										for(let key in this.state.balance.binance){
-											if(key !== "account" && this.state.balance.binance[key] > 0){
-												p.push([key.toString(),this.state.balance.binance[key]]);
-											}
-										}
-										return p.map(item=>(<TableRow key={item[0]}><TableCell>{item[0]}</TableCell><TableCell>{item[1]}</TableCell></TableRow>));
-										
-									})()
-								} 
-						</TableBody>
-						</Table>
-			        </CardContent>
-			        <CardActions>
-						<Button variant="raised" color="primary" onClick={this.updateBinanceBalance}>Get Balance</Button>			
-			        </CardActions>
-				</Card>				
+				<Config 
+				autosave = {this.state.autosave}
+				_autosave = {this.autosave}
+				autoconnect = {this.state.autoconnect}
+				begin = {this.begin}
+				cleared = {this.state.cleared}
+				clearData = {this.clearData}
+				end = {this.end}
+				connected = {this.state.connected}
+				privatekey = {this.state.privatekey}
+				setStartup = {this.setStartup}
+				updatePkey = {this.updatePkey}
+				toastNotify = {this.state.toastNotify}
+				_toastNotify = {this.toastNotify}
+				websocketNetwork = {this.state.websocketNetwork}
+				webNotify = {this.state.webNotify}
+				_webNotify = {this.webNotify}
+				updateNetwork = {this.updateNetwork}
+				port={this.state.port} 
+				updatePort={this.updatePort}
+				/>
+				<ExchangeConfig 
+					controlBittrex = {this.controlBittrex}
+					liquidTrades = {this.state.liquidTrades}
+					updateLiquidTrade = {this.updateLiquidTrade}
+					lowerLimit = {this.state.lowerLimit} 
+					updateLowerLimit = {this.updateLowerLimit}
+					upperLimit = {this.state.upperLimit} 
+					updateUpperLimit = {this.updateUpperLimit}
+					swingPercentage = {this.state.swingPercentage} 
+					updateSwingPercentage = {this.updateSwingPercentage}
+					loadingBittrexSocket = {this.state.loadingBittrexSocket}
+					bittrexSocketStatus = {this.state.bittrexSocketStatus}
+					sanity = {this.state.sanity}
+					updateSanity = {this.updateSanity}
+					swingPollingRate = {this.state.swingPollingRate}
+					swingTrade = {this.state.swingTrade}
+					swing_reset = {this.swing_reset}
+					updateSwingTrade = {this.updateSwingTrade}
+					updateSwingPollingRate = {this.updateSwingPollingRate}
+					viewBittrexBook = {this.state.viewBittrexBook}
+					forceBittrexView = {this.forceBittrexView}
+	
+					loadingBinanceSocket = {this.state.loadingBinanceSocket}
+					liquidTradesBinance = {this.state.liquidTradesBinance}
+					updateLiquidTradeBinance = {this.updateLiquidTradeBinance}
+					binanceConnections = {this.state.binanceConnections}
+					connected = {this.state.connected}
+					controlBinance = {this.controlBinance}
+					binancePairs = {this.state.binancePairs}
+					binanceOptimalTrades = {this.state.binanceOptimalTrades}
+					binanceB1Minimum = {this.state.binanceB1Minimum}
+					updateBinanceB1Minimum = {this.updateBinanceB1Minimum}
+					binanceC1Minimum = {this.state.binanceC1Minimum}
+					binanceLimits = {this.state.binanceLimits}
+					updateBinanceC1Minimum = {this.updateBinanceC1Minimum}
+					updateBinanceLimits = {this.updateBinanceLimits}
+				/>		    				  
+				<GeneralBalance title="Bittrex Balances" balance={this.state.balance.bittrex} update={this.updateBittrexBalance} />			
+				<GeneralBalance title="Binance Balances" balance={this.state.balance.binance} update={this.updateBinanceBalance} />			
 				<footer>
 					<div>
 						MaterialUI theme provided by <a href='https://github.com/callemall/material-ui/tree/v1-beta'>Material-UI</a>
@@ -2162,38 +2239,7 @@ class App extends Component{
 				</footer> 				
 			</TabContainer>}   
 			</div>	
-			<div className="Burger">
-		        <IconButton
-		          aria-label="More"
-		          aria-owns={this.state.menu_open ? 'long-menu' : null}
-		          aria-haspopup="true"
-		          style={{color:"white",backgroundColor:"transparent"}}
-		          onClick={this.menuOpen}
-		        >
-		        <MoreVertIcon />
-		        </IconButton>
-		        <Menu
-		          id="long-menu"
-		          anchorEl={this.state.menuAnchor}
-		          open={this.state.menu_open}
-		          onClick={this.menuClose}
-		          PaperProps={{
-		            style: {
-		              maxHeight: 48 * 4.5,
-		              width: 200,
-		            },
-		          }}
-		        >
-		       {this.state.previous.map(option => (
-		            <MenuItem key={option} onClick={()=>{this.connect(option)}}>
-		              {option}
-		            </MenuItem>
-		          ))}
-		        <MenuItem key="xxx" onClick={this.menuClose}>
-		        Close
-		        </MenuItem>
-		        </Menu>
-		    </div>    
+			<PMenu click={this.connect} previous={this.state.previous}/>  
 			<Snackbar
 			  anchorOrigin={{
 				vertical: 'bottom',
