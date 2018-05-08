@@ -42,6 +42,10 @@ body{
     top: .5em;
 }   
 
+#GaugeChart > table{
+display:inline;
+}
+
 label{font-size:medium}
 
 .orderBooks{

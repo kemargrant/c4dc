@@ -23,17 +23,8 @@ import Table,{TableBody,TableCell,TableHead,TableRow} from 'material-ui/Table';
 import Tabs, {Tab} from 'material-ui/Tabs';
 import TrendingDown from 'material-ui-icons/TrendingDown';
 import TrendingUp from 'material-ui-icons/TrendingUp';
-import ReactEchartsCore from 'echarts-for-react/lib/core';
-import echarts from 'echarts/lib/echarts';
-import 'echarts/lib/chart/gauge';
-import 'echarts/lib/chart/line';
-import 'echarts/lib/component/dataZoom';
-import 'echarts/lib/component/grid';
-import 'echarts/lib/component/legend';
-import 'echarts/lib/component/title';
-import 'echarts/lib/component/tooltip';
 import {Scatter} from 'react-chartjs-2';
-
+import { Chart } from 'react-google-charts';
 			
 function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
@@ -453,6 +444,17 @@ class Orders extends React.PureComponent{
 }		
 //BinanceState
 class BinanceState extends React.Component{
+	constructor(props){
+		super(props);
+		this.options = {
+			min:99.61,
+			max:100.39,
+			yellowFrom:99.61,
+			yellowTo:99.70,
+			redFrom:100.3,
+			redTo:100.39
+		}
+	}
 	activeToggle(pair){
 		return <ArbToggle pair={pair} on={!this.props.binanceStatus[pair]} forceMonitor={this.props.forceMonitorBinance}/>
 	}
@@ -567,15 +569,15 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-			{
-			this.props.gauge.series[0].data[0].value > 0 ?
-			(<ReactEchartsCore
-			  echarts={echarts}
-			  option={this.props.gauge}
-			  style={this.props.style}
-			   />):""
-			 
-			}
+				<Chart
+		          chartType="Gauge"
+		          data={[['Label','Value'], ['Percentage',Number(this.props.gauge)]]}
+		          options={this.options}
+		          graph_id="GaugeChart"
+		          width="100%"
+		          height="40vh"
+		          legend_toggle
+		        />
 			{this.info()}
 			</div>)
 	}	
@@ -608,20 +610,33 @@ class CustomTable extends React.PureComponent{
 class BittrexGaugeChart extends React.Component{
 	constructor(props){
 		super(props)
-		this.current = Number(this.props.gauge.series[0].data[0].value);
+			this.options = {
+			min:99.61,
+			max:100.39,
+			yellowFrom:99.61,
+			yellowTo:99.70,
+			redFrom:100.3,
+			redTo:100.39
+		}
+		this.current = 0;
 	}
 	shouldComponentUpdate(nextProps){	
-		if(Number(nextProps.gauge.series[0].data[0].value) !==  this.current){
-			this.current = Number(nextProps.gauge.series[0].data[0].value);
+		if(Number(nextProps.gauge) !==  this.current){
+			this.current = Number(nextProps.gauge);
 			return true
 		}
 		return false;
 	}
 	render(){
-		return (<ReactEchartsCore
-			echarts={echarts}
-			option={this.props.gauge}
-			style={this.props.style}/>)	
+		return (<Chart
+		          chartType="Gauge"
+		          data={[['Label','Value'], ['Percentage',Number(this.props.gauge)]]}
+		          options={this.options}
+		          graph_id="GaugeChart"
+		          width="100%"
+		          height="40vh"
+		          legend_toggle
+		        />)	
 	}	
 }
 
@@ -926,80 +941,8 @@ class App extends Component{
 			binanceB1Minimum:{},
 			binanceC1Minimum:{},
 			binanceConnections:0,
-			binanceGauge:{
-				tooltip : {
-					formatter: "{c}"
-				},
-				title : {
-						text:"Binance Meter",
-						show:false,
-		            },				
-				series:[{
-						axisLine:{
-							lineStyle:{
-								width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9/120 : 100/12,
-							}
-						},
-						splitLine: {          
-			                length:document.documentElement.clientHeight > 0 ? (document.documentElement.clientHeight/1.9)/15 : 500/15,      
-			                lineStyle: {
-			                    color: 'gold'
-			                }
-			            },
-						radius:"90%",
-						name:"Percent",
-						type: 'gauge',
-						splitNumber: 16,
-						min: 99.61,
-						max:100.39,
-						detail:{
-			                formatter:"{value}",
-			                textBorderColor: 'white',
-			                fontFamily: 'Roboto',
-			                fontSize:15,
-			                width: 100,
-			                color: 'black',
-			            },
-						data: [{value: 0, name: "Percent"}]
-					}]
-			},
-			bittrexGauge:{
-				tooltip : {
-					formatter: "{c}"
-				},
-				title : {
-						text:"Bittrex Meter",
-						show:false,
-		            },				
-				series:[{
-						axisLine:{
-							lineStyle:{
-								width:document.documentElement.clientWidth > 0 ? document.documentElement.clientWidth *0.9/120 : 100/12,
-							}
-						},
-						splitLine: {          
-			                length:document.documentElement.clientHeight > 0 ? (document.documentElement.clientHeight/1.9)/15 : 500/15,      
-			                lineStyle: {
-			                    color: 'blue'
-			                }
-			            },
-						radius:"90%",
-						name:"Percent",
-						type: 'gauge',
-						splitNumber: 16,
-						min: 98.8,
-						max:101.2,
-						detail:{
-			                formatter:"{value}",
-			                textBorderColor: 'aliceblue',
-			                fontFamily: 'Roboto',
-			                fontSize:15,
-			                width: 100,
-			                color: 'black',
-			            },
-						data: [{value: 0, name: "Percent"}]
-					}]
-			},			
+			binanceGauge:100,
+			bittrexGauge:100,
 			binanceLimits:{},
 			binanceOptimalTrades:{},
 			binancePairs:[],
@@ -1279,8 +1222,7 @@ class App extends Component{
 			if(!Number(data.percentage)){return;}
 			let _binance = {}
 			let _type = data.percentage > 100 ? "two" : "one";
-			let gauge = this.state.binanceGauge;
-			gauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
+			let gauge = data.percentage.toFixed(4);
 			for(let key in data.info){
 				for(let i = 0;i < this.state.binancePairs.length;i++){
 					if(this.state.binancePairs[i].pair1.replace("_","") === key){
@@ -1745,12 +1687,11 @@ class App extends Component{
 					}
 				}
 			}
-			let _bittrexGauge = this.state.bittrexGauge;
-			_bittrexGauge.series[0].data = [{value:data.percentage.toFixed(4),name:"%"}];
+			let bgauge = data.percentage.toFixed(4);
 			if(this.state.autosave){
 				window.localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
 			}
-			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:_bittrexGauge});
+			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:bgauge});
 		}		
 		if(data.type === "swing"){
 			let gauge = {
