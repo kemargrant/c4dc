@@ -23,6 +23,14 @@ import Table,{TableBody,TableCell,TableHead,TableRow} from 'material-ui/Table';
 import Tabs, {Tab} from 'material-ui/Tabs';
 import TrendingDown from 'material-ui-icons/TrendingDown';
 import TrendingUp from 'material-ui-icons/TrendingUp';
+import ReactEchartsCore from 'echarts-for-react/lib/core';
+import echarts from 'echarts/lib/echarts';
+import 'echarts/lib/chart/line';
+import 'echarts/lib/component/dataZoom';
+import 'echarts/lib/component/grid';
+import 'echarts/lib/component/legend';
+import 'echarts/lib/component/title';
+import 'echarts/lib/component/tooltip';
 import {Scatter} from 'react-chartjs-2';
 import { Chart } from 'react-google-charts';
 			
