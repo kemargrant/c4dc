@@ -236,7 +236,7 @@ class PMenu extends React.Component{
 }
 				
 				
-class ExchangeConfig extends React.PureComponent{
+class ExchangeConfig extends React.Component{
 	pairControl(){
 		let p = [];
 		for(var i = 0;i < this.props.binancePairs.length;i++){
@@ -430,7 +430,7 @@ class GeneralBalance extends React.PureComponent{
 	}
 }
 
-class Orders extends React.PureComponent{
+class Orders extends React.Component{
 	render(){
 	return(<div>{this.props.orders.map((order)=> 
 			<Card key={order.order_id} style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
