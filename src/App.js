@@ -2181,6 +2181,7 @@ class App extends Component{
 					binanceLimits = {this.state.binanceLimits}
 					updateBinanceC1Minimum = {this.updateBinanceC1Minimum}
 					updateBinanceLimits = {this.updateBinanceLimits}
+					updateBinanceOptimalTrades = {this.updateBinanceOptimalTrades}
 				/>		    				  
 				<GeneralBalance title="Bittrex Balances" balance={this.state.balance.bittrex} update={this.updateBittrexBalance} />			
 				<GeneralBalance title="Binance Balances" balance={this.state.balance.binance} update={this.updateBinanceBalance} />			
