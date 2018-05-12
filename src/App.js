@@ -535,10 +535,10 @@ class BinanceState extends React.Component{
 				<td>{this.props.tradingPairs[pair1] ?
 					((this.props.binanceC1Minimum[pair1.replace("_","")] < this.props.balance[a]) 
 					&&	((this.props.tradingPairs[pair1][pair1] * this.props.binanceC1Minimum[pair1.replace("_","")]) < this.props.balance[a]) &&
-					((this.props.tradingPairs[pair1][pair3] * this.props.binanceC1Minimum[pair1.replace("_","")]) < this.props.balance[c])
+					((this.props.tradingPairs[pair1][pair2] * this.props.binanceC1Minimum[pair1.replace("_","")]) < this.props.balance[c])
 					? <Switch checked={true}/> :  <Switch checked={false}/>)
 					: ""
-					}</td>	
+					}</td>
 			</TableRow>	
 			</TableBody>
 			</Table> 	)
