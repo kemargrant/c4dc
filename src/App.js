@@ -23,15 +23,7 @@ import Table,{TableBody,TableCell,TableHead,TableRow} from 'material-ui/Table';
 import Tabs, {Tab} from 'material-ui/Tabs';
 import TrendingDown from 'material-ui-icons/TrendingDown';
 import TrendingUp from 'material-ui-icons/TrendingUp';
-import ReactEchartsCore from 'echarts-for-react/lib/core';
-import echarts from 'echarts/lib/echarts';
-import 'echarts/lib/chart/line';
-import 'echarts/lib/component/dataZoom';
-import 'echarts/lib/component/grid';
-import 'echarts/lib/component/legend';
-import 'echarts/lib/component/title';
-import 'echarts/lib/component/tooltip';
-import {Scatter} from 'react-chartjs-2';
+import {Line,Scatter} from 'react-chartjs-2';
 import { Chart } from 'react-google-charts';
 			
 function TabContainer(props) {
@@ -430,7 +422,7 @@ class GeneralBalance extends React.PureComponent{
 	}
 }
 
-class Orders extends React.PureComponent{
+class Orders extends React.Component{
 	render(){
 	return(<div>{this.props.orders.map((order)=> 
 			<Card key={order.order_id} style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
@@ -565,7 +557,9 @@ class BinanceState extends React.Component{
 		for(let i=0;i < this.props.binancePairs.length;i++){
 			p.push([this.props.binancePairs[i].pair1,[this.props.binancePairs[i].pair1,this.props.binancePairs[i].pair2,this.props.binancePairs[i].pair3]])
 		}
-		if(p.length <1){return (<div></div>)}
+		if(p.length < 1){
+			return (<div className="loader"></div>)
+		}
 		return p.map((Pair) => (
 		<div key={Pair[0]}>
 			{this.progressBar(Pair[0].replace("_",""))}
@@ -851,21 +845,10 @@ class BinanceCharts extends React.PureComponent{
 		if(this.props.lineList.length > 0){
 			return this.props.lineList.map((option) => (
 				<div key={option.key+Math.random(0,10)}>
-					<ReactEchartsCore
-			          echarts={echarts}
-					  option={option}
-					  style={{height: this.props.chartSize.height+'px', width:'100%'}}
-					  notMerge={true}
-					  lazyUpdate={true}
-					  onEvents={{
-					  'legendselectchanged':(evt)=>{
-						  return option.legend.selected = evt.selected;
-						 },
-					   'dataZoom': (zoom)=>{
-							return option.dataZoom =({start:zoom.start,end:zoom.end})
- 						}
-						}}
-				    />	
+					<Line 
+					data={option.data}
+					options={option.options} 
+					/>	
 			    </div>
 			))
 		}
@@ -873,7 +856,7 @@ class BinanceCharts extends React.PureComponent{
 	createScatter(){
 		return this.props.scatterList.map(function(_option){return (
 			<Scatter 
-			key={_option.labels} 
+			key={Math.random(0,1)} 
 			data={_option}
 			options={{
 				animation:{duration:0}
@@ -902,36 +885,25 @@ class BinanceCharts extends React.PureComponent{
 			
 			</FormGroup>
 			
-			{this.state.display ? this.createScatter() : ""}
+			{this.state.display ? "" : this.createScatter()}
 			
 		</div>)
 	}
 		
 }
 
-class BittrexChart extends Component{
-	shouldComponentUpdate(nextProps){
-		return !(nextProps.option.series[0].data[nextProps.option.series[0].data.length-1].value[1] === this.props.option.series[0].data[this.props.option.series[0].data.length-1].value[1]);
+class BittrexChart extends React.PureComponent{
+	chart(){
+		if(this.props.data.data.datasets){
+			return <Line data={this.props.data.data} options={this.props.data.options} />
+		}
+		else {
+			return null
+		}
 	}
 	render() {
-		return (
-			<ReactEchartsCore
-	          echarts={echarts}
-			  option={this.props.option}
-			  style={this.props.style}
-			  notMerge={true}
-			  lazyUpdate={true}
-			  onEvents={{
-				  'legendselectchanged':(evt)=>{
-				     return this.myOption.legend.selected = evt.selected;
-					 },	
-				  'dataZoom': (zoom)=>{
-					  return this.myOption.dataZoom =({start:zoom.start,end:zoom.end})
-					}
-				}}
-			   />
-	)}
-		
+		return this.chart();
+	}
 }
 class Log extends React.PureComponent{
 	render(){
@@ -993,10 +965,8 @@ class App extends Component{
                 ]
             },					
 			dbScatter:window.localStorage && JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance")) : [],
-			dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) : {
-				xAxis:{type:'time'},
-				yAxis:{type:'value'}
-			},
+			//~ dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) :[[new Date(),0,0,0]],
+			dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) : {data:{datasets:[{data:[]}]},options:{}},
 			dbTradeBinance:window.localStorage && JSON.parse(window.localStorage.getItem("DB_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_TradeBinance")) : [{
 				xAxis:{type:'time'},
 				yAxis:{type:'value'}
@@ -1054,7 +1024,6 @@ class App extends Component{
 			},	
 			toastNotify: window.localStorage && JSON.parse(window.localStorage.getItem("Toast_Notify")) ? true : false,
 			tradingPairs: window.localStorage && JSON.parse(window.localStorage.getItem("Trading_Pairs"))? JSON.parse(window.localStorage.getItem("Trading_Pairs")) : {bittrex:{},binance:{},msc:""},
-			tradeInfo:undefined,
 			upperLimit:101.79,
 			webNotify: window.localStorage && JSON.parse(window.localStorage.getItem("Web_Notify")) ? true : false,
 			websocketNetwork:"localhost",
@@ -1143,7 +1112,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_Scatter_TradeBinance","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_Scatter_TradeBinance","DB_Trade","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			window.localStorage.removeItem(list[i]);
 		}
@@ -1483,113 +1452,80 @@ class App extends Component{
 				}
 			}
 			for(let key in dat){
-				v.push({value:[key,dat[key]],name:key});
+				v.push({x:key,y:dat[key]})
 			}
 			for(let key in b1Count){
-				b1.push({value:[key,b1Count[key]],name:key});
+				b1.push({x:key,y:b1Count[key]})
 			}
 			for(let key in _mscCount){
-				_msc.push({value:[key,_mscCount[key]],name:key});
-			}	
+				_msc.push({x:key,y:_mscCount[key]})
+			}
 			for(let i = 0;i < msc2.length;i++){
 				for(let key in dat2[msc2[i].replace("_","")]){
-					v2[msc2[i].replace("_","")].push({value:[key,dat2[msc2[i].replace("_","")][key]],name:key});
+					v2[msc2[i].replace("_","")].push({x:key,y:dat2[msc2[i].replace("_","")][key] });
 				}
 				for(let key in b1Count2[msc2[i].replace("_","")]){
-					b12[msc2[i].replace("_","")].push({value:[key,b1Count2[msc2[i].replace("_","")][key]],name:key});
+					b12[msc2[i].replace("_","")].push({x:key,y:b1Count2[msc2[i].replace("_","")][key]});
 				}
 				for(let key in _mscCount2[msc2[i].replace("_","")]){
-					_msc2[msc2[i].replace("_","")].push({value:[key,_mscCount2[msc2[i].replace("_","")][key]],name:key});
+					_msc2[msc2[i].replace("_","")].push({x:key,y:_mscCount2[msc2[i].replace("_","")][key]});
 				}		
 			}	
-			let option = {
-					animation:false,
-					animationDuration:5000,
-		            dataZoom:[
-				            {
-				            show: true,
-				            realtime: true,
-				            start: 0,
-				            end: 100
-				        },
-				    ],	
-				    legend: {
-						textStyle:{
-							color:'black'
-							},
-		                data:['Total','>100%','<100%']
-		            },			
-		            title:{
-						textStyle:{fontSize:15},
-						text:"Trades",
-						top:'3%',
-						left:"30%"
-					},
-		            tooltip:{
-		                trigger: 'axis',         
-		            },
-		            grid: {
-						top:'8%',
-		                left: '3%',
-		                right: '3%',
-		                bottom: '15%',
-		                containLabel: true
-		            },
-		            xAxis:[
-						{
-		                    type : 'time',
-		                    splitLine:{
-								show: true,
-								lineStyle:{
-									type:'dashed',
-									width:1
-								}
-							},					
-		                }
-		            ],
-		            yAxis:[
-						{
+			var config = {
+			data: {
+				datasets: [{
+					label: 'Total',
+					borderColor:"red",
+					backgroundColor:"red",
+					fill:false,
+					data: v,
+				}, {
+					label: '>100%',
+					borderColor:"blue",
+					fill: false,
+					data: b1,
+				}, {
+					label: '<100%',
+					borderColor: "green",
+					fill: false,
+					data: _msc,
+				}]
+			},
+			options: {
+				title: {
+					text: 'Bittrex'
+				},
+				scales: {
+					xAxes: [{
+						type: 'time',
+						time: {
+							parser: 'YY-MM-DD',
+							round: 'day'
+						},
+						scaleLabel: {
+							display: true,
+							labelString: 'Date'
+						}
+					}],
+					yAxes: [{
+						ticks: {
 							min:0,
-							max:"dataMax",
-		                    type : 'value',
-		                }
-		            ],
-		            series:[
-		                {
-						
-		                    name:'Total',
-		                    type:'line',
-		                    smooth:'true',
-		                    data:v,
-		                },
-		                {
-							
-		                    name:'>100%',
-		                    type:'line',
-		                    smooth:'true',
-		                    data:b1,
-		                },
-		                {
-						
-		                    name:'<100%',
-		                    type:'line',
-		                    smooth:'true',
-		                    data:_msc,
-		                },
-		            ]
-		        }	
+							stepSize:10
+						}
+					}],					
+				},
+			}
+			};	
 		    let option2 = [];
 		    let scatterOption2 = [];
 		    let _scatterOption2;
 		    let _scatterOption3;
 		    let _option2;
 		    for(let i = 0;i < msc2.length;i++){
-				_option2 = JSON.parse(JSON.stringify(option));
-			    _option2.series[0].data = v2[msc2[i].replace("_","")];
-			    _option2.series[1].data = b12[msc2[i].replace("_","")];
-			    _option2.series[1].name = '>100%';
-			    _option2.series[2].data = _msc2[msc2[i].replace("_","")];
-			    _option2.series[2].name = '<100%';
+				_option2 = JSON.parse(JSON.stringify(config));
+			    _option2.data.datasets[0].data = v2[msc2[i].replace("_","")];
+			    _option2.data.datasets[1].data = b12[msc2[i].replace("_","")];
+			    _option2.data.datasets[2].data = _msc2[msc2[i].replace("_","")];
 			    _option2.key = msc2[i].replace("_","");
 			    option2.push(_option2);
 			    //Scatter Data percent vs duration
@@ -1607,13 +1543,13 @@ class App extends Component{
 			    scatterOption2.push(_scatterOption3);			    
 			}
 			if(this.state.autosave){
-					window.localStorage.setItem("DB_Trade",JSON.stringify(option));
+					window.localStorage.setItem("DB_Trade",JSON.stringify(config));
 					window.localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
 					window.localStorage.setItem("DB_Scatter_TradeBinance",JSON.stringify(scatterOption2));
 					window.localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
 					window.localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
-			return this.setState({dbTrade:option,dbTradeBinance:option2,tradeInfo:data.info,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbScatter:scatterOption2});
+			return this.setState({dbTrade:config,dbTradeBinance:option2,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbScatter:scatterOption2});
 		}				
 		
 		if(data.type === "log"){
@@ -2075,7 +2011,7 @@ class App extends Component{
 			    
 			    <h3>Bittrex</h3>
 			    <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
-			    <BittrexChart style={{height: this.state.chartSize.height+'px', width:'100%'}} option={this.state.dbTrade} />		
+			    <BittrexChart data={this.state.dbTrade} />		
 				
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
@@ -2108,11 +2044,22 @@ class App extends Component{
 			        
 			        </CardContent>
 			      </Card>
-				<ReactEchartsCore
-				  echarts={echarts}
-				  option={this.state.swingGauge}
-				  style={{height: this.state.chartSize.height*1.1+'px', width:'100%'}}
-				   />
+			      <Chart
+		          chartType="Gauge"
+		          data={[['Label','Value'], ['Percentage',Number(this.state.swingGauge)]]}
+		          options={{
+						min:99.61,
+						max:100.39,
+						yellowFrom:99.61,
+						yellowTo:99.70,
+						redFrom:100.3,
+						redTo:100.39
+					}}
+		          graph_id="GaugeChart"
+		          width="100%"
+		          height="40vh"
+		          legend_toggle
+		        />
 				<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
 					{this.state.swingOrder.order && <CardContent>
 						<Typography type="headline">Next Trade</Typography>
