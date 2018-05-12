@@ -228,7 +228,7 @@ class PMenu extends React.Component{
 }
 				
 				
-class ExchangeConfig extends React.PureComponent{
+class ExchangeConfig extends React.Component{
 	pairControl(){
 		let p = [];
 		for(var i = 0;i < this.props.binancePairs.length;i++){
@@ -2128,6 +2128,7 @@ class App extends Component{
 					binanceLimits = {this.state.binanceLimits}
 					updateBinanceC1Minimum = {this.updateBinanceC1Minimum}
 					updateBinanceLimits = {this.updateBinanceLimits}
+					updateBinanceOptimalTrades = {this.updateBinanceOptimalTrades}
 				/>		    				  
 				<GeneralBalance title="Bittrex Balances" balance={this.state.balance.bittrex} update={this.updateBittrexBalance} />			
 				<GeneralBalance title="Binance Balances" balance={this.state.balance.binance} update={this.updateBinanceBalance} />			
