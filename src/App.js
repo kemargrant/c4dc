@@ -873,7 +873,7 @@ class BinanceCharts extends React.PureComponent{
 			{this.createLine()}
 			<FormGroup>
 		        <FormControlLabel
-				  label="Show Scatter"
+				  label="Hide Scatter"
 				  style={{margin:"auto"}}
 		          control={<Switch
 			              checked={this.display}
