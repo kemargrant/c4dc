@@ -30,14 +30,31 @@ function TabContainer(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
 
-class ArbProgress  extends React.PureComponent{
+class ArbProgress  extends React.Component{
+	constructor(props){
+		super(props);
+		this.count = this.count.bind(this);
+		this.date = new Date();		
+		this.count();
+		this.timeout = false;
+	}
+	
+	count(){
+		if(this.props.time > 0){
+			this.date = new Date();
+			this.timeout = setTimeout(this.count,950)
+		}	
+	}
+	componentWillUnmount(){
+		return clearTimeout(this.timeout);
+	}
 	render(){
 		return(
 			<div>
 			<LinearProgress variant="determinate" value={this.props.value} /> 
 			<Button variant="raised" color="primary">Arbitrage In Progress</Button>
 			<br/>
-			{((new Date().getTime() - this.props.time)/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
+			{((this.date.getTime() - this.props.time)/60000).toFixed(2) + " Minutes Processing Arbitrage"} 
 			</div>
 			)
 	}
@@ -586,6 +603,97 @@ class BinanceState extends React.Component{
 }	
 
 //Bittrex Components
+class StockChart extends React.PureComponent{
+	constructor(props){
+		super(props);
+		this.config={
+			data: {
+				datasets: [{
+					label: 'Bids',
+					borderColor:"green",
+					backgroundColor:"green",
+					fill:'origin',
+					data: [],
+					lineTension:0,
+					showLine:true
+				},{
+					label: 'Asks',
+					borderColor:"red",
+					backgroundColor:"red",
+					fill:'origin',
+					lineTension:0,
+					data: [],
+					showLine:true
+				}]
+			},
+			options: {
+				responsive:true,
+				title: {
+					text:"",
+					display:true,
+				},
+				animation:{
+					duration:2000
+				},
+				tooltips:{
+					mode:'x',
+					intersect:false,
+				},
+				hover:{
+					mode:'y',
+					intersect:true
+				},
+				scales:{
+					yAxes:[{
+						scaleLabel:{
+							display:false,
+							labelString:'Amount'
+						}
+					}],
+					xAxes:[
+						{
+							scaleLabel: {
+							display: false,
+							labelString: 'Price'
+							}
+					}]
+				}
+			}
+		}	
+	}
+	dataPoints(){
+		if(this.props.data["Sorted"]){
+			if(!this.props.small){
+				this.config.data.datasets[0].data = this.props.data["Sorted"] && this.props.data["Sorted"][1].map((order) => {
+					return {y:this.props.data["Bids"][order],x:Number(order)}
+				})
+				this.config.data.datasets[1].data = this.props.data["Sorted"] && this.props.data["Sorted"][0].map((order) => {
+					return {y:this.props.data["Asks"][order],x:Number(order)}
+				})
+				this.config.options.title.text = this.props.pair;
+			}
+			else{
+				this.config.data.datasets[0].data = this.props.data["Sorted"] && this.props.data["Sorted"][1].map((order) => {
+					return {y:this.props.data["Bids"][order],x:1/Number(order)}
+				})
+				this.config.data.datasets[1].data = this.props.data["Sorted"] && this.props.data["Sorted"][0].map((order) => {
+					return {y:this.props.data["Asks"][order],x:1/Number(order)}
+				})
+				this.config.options.title.text = this.props.pair + "(Scaled)";
+				
+			}
+		}
+		return <Scatter
+				height={this.props.style.height > 400 ? 50 : this.props.style.height/2}
+				data={this.config.data}
+				options={this.config.options} 
+				/>
+	}
+	render(){
+		return this.dataPoints();
+	}
+	
+}
 class CustomTable extends React.PureComponent{
 	render(){
 		const sortOrder = this.props.type === "Bids" ? 1 : 0;
@@ -645,7 +753,7 @@ class BittrexGaugeChart extends React.Component{
 class BittrexState extends React.Component{
 	progress(){
 		if(this.props.time > 0){
-			return  <ArbProgress value={this.props.progress} time={this.props.time}/>
+			return  <ArbProgress  value={this.props.progress} time={this.props.time}/>
 		}
 		else{
 			return "";
@@ -654,6 +762,10 @@ class BittrexState extends React.Component{
 	book(){
 		if(this.props.viewBook){  
 			return(<div className="orderBooks">
+			<br/>
+			<StockChart style={this.props.style} data={this.props.bookData[Object.keys(this.props.bookData)[0]]} pair={Object.keys(this.props.bookData)[0].toLowerCase()} small/>
+			<StockChart style={this.props.style} data={this.props.bookData[Object.keys(this.props.bookData)[1]]} pair={Object.keys(this.props.bookData)[1].toLowerCase()}/>		
+			<StockChart style={this.props.style} data={this.props.bookData[Object.keys(this.props.bookData)[2]]} pair={Object.keys(this.props.bookData)[2].toLowerCase()}/>	
 			<CustomTable 
 				pair={Object.keys(this.props.bookData)[0].toLowerCase()}
 				type={"Bids"}
@@ -837,15 +949,16 @@ class BittrexProfit extends React.PureComponent{
 class BinanceCharts extends React.PureComponent{
 	constructor(props){
 	super(props)
-	this.updateDisplay = this.updateDisplay.bind(this);
-	this.state = {display:false}	
-		
+		this.updateDisplay = this.updateDisplay.bind(this);
+		this.state = {display:false}	
+		this.height = this.props.chartSize.height > 400 ? 100 : this.props.chartSize.height/2;
 	}
 	createLine(){
 		if(this.props.lineList.length > 0){
 			return this.props.lineList.map((option) => (
 				<div key={option.key+Math.random(0,10)}>
 					<Line 
+					height={this.height}
 					data={option.data}
 					options={option.options} 
 					/>	
@@ -854,8 +967,9 @@ class BinanceCharts extends React.PureComponent{
 		}
 	}
 	createScatter(){
-		return this.props.scatterList.map(function(_option){return (
+		return this.props.scatterList.map((_option)=>{return (
 			<Scatter 
+			height={this.height}
 			key={Math.random(0,1)} 
 			data={_option}
 			options={{
@@ -888,14 +1002,13 @@ class BinanceCharts extends React.PureComponent{
 			{this.state.display ? "" : this.createScatter()}
 			
 		</div>)
-	}
-		
+	}	
 }
 
 class BittrexChart extends React.PureComponent{
 	chart(){
 		if(this.props.data.data.datasets){
-			return <Line data={this.props.data.data} options={this.props.data.options} />
+			return <Line height={this.props.style.height > 400 ? 100 : this.props.style.height/2} data={this.props.data.data} options={this.props.data.options} />
 		}
 		else {
 			return null
@@ -1495,22 +1608,29 @@ class App extends Component{
 				title: {
 					text: 'Bittrex'
 				},
+				tooltips:{
+					mode:'x',
+					intersect:false,
+				},
+				hover:{
+					mode:'y',
+					intersect:true
+				},				
 				scales: {
 					xAxes: [{
 						type: 'time',
 						time: {
-							parser: 'YY-MM-DD',
-							round: 'day'
+							unit:'day',
+							  displayFormats: {
+                                        'day': 'MMM Do'
+                                    },
+							
 						},
-						scaleLabel: {
-							display: true,
-							labelString: 'Date'
-						}
 					}],
 					yAxes: [{
 						ticks: {
 							min:0,
-							stepSize:10
+							stepSize:5
 						}
 					}],					
 				},
@@ -1965,7 +2085,7 @@ class App extends Component{
 			<div className="body">   
 			{this.state.tabValue === 0 && <TabContainer>
 			 <BinanceState 
-				style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+				style={{height: this.state.chartSize.height, width: this.state.chartSize.width}}
 				gauge={this.state.binanceGauge}
 				binancePairs={this.state.binancePairs} 
 				binanceStatusTime={this.state.binanceStatusTime} 
@@ -1994,7 +2114,7 @@ class App extends Component{
 					percentage1={this.state.percentage1}
 					percentage2={this.state.percentage2}
 					progress={this.state.bittrexProgress * 100/3}
-					style={{height: this.state.chartSize.height*1.3+'px', width:'100%'}}
+					style={{height: this.state.chartSize.height, width: this.state.chartSize.width}}
 					time={this.state.bittrexStatusTime}
 					viewBook = {this.state.viewBittrexBook}
 					toggleBook={this.forceBittrexView}
@@ -2011,7 +2131,7 @@ class App extends Component{
 			    
 			    <h3>Bittrex</h3>
 			    <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
-			    <BittrexChart data={this.state.dbTrade} />		
+			    <BittrexChart style={{height: this.state.chartSize.height, width: this.state.chartSize.width}} data={this.state.dbTrade} />		
 				
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
