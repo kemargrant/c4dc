@@ -26,7 +26,7 @@ import TrendingUp from 'material-ui-icons/TrendingUp';
 import {Line,Scatter} from 'react-chartjs-2';
 import { Chart } from 'react-google-charts';
 			
-function TabContainer(props) {
+const TabContainer = function(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
 
@@ -59,135 +59,131 @@ class ArbProgress  extends React.Component{
 			)
 	}
 }
-class ArbToggle extends React.PureComponent{
-	render(){
-		return (<div className="monitorToggle">
-			<FormGroup>
-		        <FormControlLabel
-				  label={this.props.on ? "Active" : "Paused"}
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.props.on}
-			              onChange={(event, checked) => {
-							  this.props.forceMonitor(this.props.pair,!checked)
-							}}
-						/>}
-		        />
-			</FormGroup>
-			</div>)
-	}
+const ArbToggle = function(props) {
+	return (<div className="monitorToggle">
+		<FormGroup>
+	        <FormControlLabel
+			  label={props.on ? "Active" : "Paused"}
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={props.on}
+		              onChange={(event, checked) => {
+						  props.forceMonitor(props.pair,!checked)
+						}}
+					/>}
+	        />
+		</FormGroup>
+		</div>)
 }
 
-class Config extends React.PureComponent{	
-	render(){
-		return (<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
-		        <CardContent >
-		           <Typography type="title">Server Connection</Typography>
-		           <br/>
-					<FormControl fullWidth={true}>
-						<InputLabel>Private Key</InputLabel>
-						<Input type="text" placeholder="Private Key" value={this.props.privatekey} onChange={this.props.updatePkey}/>
-					</FormControl>	
-					<FormControl fullWidth={true}>
-						<InputLabel>Host</InputLabel>
-						<Input type="text" value={this.props.websocketNetwork} onChange={this.props.updateNetwork}/>
-					</FormControl>	
-					<FormControl fullWidth={true}>	
-						<InputLabel>Port Number</InputLabel>
-						<Input type="number" placeholder="Port" min={0} value={this.props.port} onChange={this.props.updatePort}/>	
-					</FormControl>				
-		        </CardContent>
-		        <CardActions>
-			        <FormGroup>
-			        <FormControlLabel
-					  label="Connect"
-					  style={{margin:"auto"}}
-			          control={<Switch
-							  
-				              checked={this.props.connected}
-				              onChange={(event, checked) => {
-								  if(checked){
-									  return this.props.begin();
-								  }
-								  else{
-									  return this.props.end();
-								  }
-								}}
-							/>}
-			        />
-					</FormGroup>	
-					<FormGroup>
-			        <FormControlLabel
-					  label="AutoConnect"
-					  style={{margin:"auto"}}
-			          control={<Switch
-				              checked={this.props.autoconnect}
-				              onChange={(event, checked) => {
-									return this.props.setStartup(checked);
-								}}
-							/>}
-			        />
-					</FormGroup>	        
-		        </CardActions>
-		        <CardActions>
+const Config = function(props){	
+	return (<Card style={{maxWidth:"97%",margin:"0.8em",backgroundColor:""}}>
+	        <CardContent >
+	           <Typography type="title">Server Connection</Typography>
+	           <br/>
+				<FormControl fullWidth={true}>
+					<InputLabel>Private Key</InputLabel>
+					<Input type="text" placeholder="Private Key" value={props.privatekey} onChange={props.updatePkey}/>
+				</FormControl>	
+				<FormControl fullWidth={true}>
+					<InputLabel>Host</InputLabel>
+					<Input type="text" value={props.websocketNetwork} onChange={props.updateNetwork}/>
+				</FormControl>	
+				<FormControl fullWidth={true}>	
+					<InputLabel>Port Number</InputLabel>
+					<Input type="number" placeholder="Port" min={0} value={props.port} onChange={props.updatePort}/>	
+				</FormControl>				
+	        </CardContent>
+	        <CardActions>
 		        <FormGroup>
 		        <FormControlLabel
-				  label="AutoSave Settings"
+				  label="Connect"
 				  style={{margin:"auto"}}
 		          control={<Switch
-			              checked={this.props.autosave}
+						  
+			              checked={props.connected}
 			              onChange={(event, checked) => {
-							  return this.props._autosave(checked);
-							}}
-						/>}
-		        />
-				</FormGroup>
-		        <FormGroup>
-		        <FormControlLabel
-				  label="Web Notifications"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.props.webNotify}
-			              onChange={(event, checked) => {
-							  return this.props._webNotify(checked);
+							  if(checked){
+								  return props.begin();
+							  }
+							  else{
+								  return props.end();
+							  }
 							}}
 						/>}
 		        />
 				</FormGroup>	
-				</CardActions>
-				<CardActions>		
 				<FormGroup>
 		        <FormControlLabel
-				  label="Toast Notifications"
+				  label="AutoConnect"
 				  style={{margin:"auto"}}
 		          control={<Switch
-			              checked={this.props.toastNotify}
+			              checked={props.autoconnect}
 			              onChange={(event, checked) => {
-							  return this.props._toastNotify(checked);
+								return props.setStartup(checked);
 							}}
 						/>}
 		        />
-				</FormGroup>					
-				{
-				!this.props.cleared ?
-				<FormGroup>
-		        <FormControlLabel
-				  label="Reset Settings"
-				  style={{margin:"auto"}}
-		          control={<Switch
-			              checked={this.props.cleared}
-			              onChange={(event, checked) => {
-							if(checked){
-								return this.setState({cleared:true},()=>{return this.props.clearData()});
-							}
+				</FormGroup>	        
+	        </CardActions>
+	        <CardActions>
+	        <FormGroup>
+	        <FormControlLabel
+			  label="AutoSave Settings"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={props.autosave}
+		              onChange={(event, checked) => {
+						  return props._autosave(checked);
 						}}
-		            /> }
-		        />
-				</FormGroup> : <label>Data wiped!</label>
-				}							
-		        </CardActions>
-				</Card>)
-	}
+					/>}
+	        />
+			</FormGroup>
+	        <FormGroup>
+	        <FormControlLabel
+			  label="Web Notifications"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={props.webNotify}
+		              onChange={(event, checked) => {
+						  return props._webNotify(checked);
+						}}
+					/>}
+	        />
+			</FormGroup>	
+			</CardActions>
+			<CardActions>		
+			<FormGroup>
+	        <FormControlLabel
+			  label="Toast Notifications"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={props.toastNotify}
+		              onChange={(event, checked) => {
+						  return props._toastNotify(checked);
+						}}
+					/>}
+	        />
+			</FormGroup>					
+			{
+			!props.cleared ?
+			<FormGroup>
+	        <FormControlLabel
+			  label="Reset Settings"
+			  style={{margin:"auto"}}
+	          control={<Switch
+		              checked={props.cleared}
+		              onChange={(event, checked) => {
+						if(checked){
+							return props.clearData();
+						}
+					}}
+	            /> }
+	        />
+			</FormGroup> : <label>Data wiped!</label>
+			}							
+	        </CardActions>
+		</Card>)
 }	
 class PMenu extends React.Component{
 	constructor(props){
@@ -243,8 +239,7 @@ class PMenu extends React.Component{
 		    </div>  )
 	}
 }
-				
-				
+								
 class ExchangeConfig extends React.Component{
 	pairControl(){
 		let p = [];
@@ -404,7 +399,7 @@ class ExchangeConfig extends React.Component{
 	}
 }
 
-class GeneralBalance extends React.PureComponent{
+class GeneralBalance extends React.Component{
 	constructor(props){
 		super(props)
 		this.coins = [];
@@ -435,7 +430,6 @@ class GeneralBalance extends React.PureComponent{
 					<Button variant="raised" color="primary" onClick={this.props.update}>Get Balance</Button>			
 		        </CardActions>
 			</Card>)
-		
 	}
 }
 
@@ -583,10 +577,8 @@ class BinanceState extends React.Component{
 }	
 
 //Bittrex Components
-class StockChart extends React.PureComponent{
-	constructor(props){
-		super(props);
-		this.config={
+const StockChart = function(props){
+	const config={
 			data: {
 				datasets: [{
 					label: 'Bids',
@@ -640,116 +632,95 @@ class StockChart extends React.PureComponent{
 				}
 			}
 		}	
-	}
-	dataPoints(){
-		if(this.props.data["Sorted"]){
-			if(!this.props.small){
-				this.config.data.datasets[0].data = this.props.data["Sorted"] && this.props.data["Sorted"][1].map((order) => {
-					return {y:this.props.data["Bids"][order],x:Number(order)}
-				})
-				this.config.data.datasets[1].data = this.props.data["Sorted"] && this.props.data["Sorted"][0].map((order) => {
-					return {y:this.props.data["Asks"][order],x:Number(order)}
-				})
-				this.config.options.title.text = this.props.pair;
-			}
-			else{
-				this.config.data.datasets[0].data = this.props.data["Sorted"] && this.props.data["Sorted"][1].map((order) => {
-					return {y:this.props.data["Bids"][order],x:1/Number(order)}
-				})
-				this.config.data.datasets[1].data = this.props.data["Sorted"] && this.props.data["Sorted"][0].map((order) => {
-					return {y:this.props.data["Asks"][order],x:1/Number(order)}
-				})
-				this.config.options.title.text = this.props.pair + "(Scaled)";
-				
-			}
+	if(props.data["Sorted"]){
+		if(!props.small){
+			config.data.datasets[0].data = props.data["Sorted"] && props.data["Sorted"][1].map((order) => {
+				return {y:props.data["Bids"][order],x:Number(order)}
+			})
+			config.data.datasets[1].data = props.data["Sorted"] && props.data["Sorted"][0].map((order) => {
+				return {y:props.data["Asks"][order],x:Number(order)}
+			})
+			config.options.title.text = props.pair;
+		}
+		else{
+			config.data.datasets[0].data = props.data["Sorted"] && props.data["Sorted"][1].map((order) => {
+				return {y:props.data["Bids"][order],x:1/Number(order)}
+			})
+			config.data.datasets[1].data = props.data["Sorted"] && props.data["Sorted"][0].map((order) => {
+				return {y:props.data["Asks"][order],x:1/Number(order)}
+			})
+			config.options.title.text = props.pair + "(Scaled)";
 		}
 		return <Scatter
-				height={this.props.style.height > 400 ? 50 : this.props.style.height/2}
-				data={this.config.data}
-				options={this.config.options} 
+				height={props.style.height > 400 ? 50 : props.style.height/2}
+				data={config.data}
+				options={config.options} 
 				/>
-	}
-	render(){
-		return this.dataPoints();
-	}
-	
+	}	
+	return null;
 }
-class CustomTable extends React.PureComponent{
-	render(){
-		const sortOrder = this.props.type === "Bids" ? 1 : 0;
-		return(<table className="myTable">
-		<tbody>
-			  <tr className="stripeTable">
-			    <th>{this.props.type === "Bids" ? "Amount" : (<div>{this.props.type} <br/>{this.props.pair}</div>) }</th> 		
-			    <th>{this.props.type === "Bids" ? (<div>{this.props.type} <br/>{this.props.pair}</div>) : "Amount" } </th>	    
-			  </tr>
-				{
-					this.props.data["Sorted"] && this.props.data["Sorted"][sortOrder].map((order) => (
-					<tr key={order}>
-						{this.props.type === "Bids" ? <td className="stripeTable">{Number(this.props.data[this.props.type][order]).toFixed(this.props.prec[0])}</td> : <td className="stripeTable">{Number(order).toFixed(this.props.prec[1])}</td>}
-						{this.props.type === "Bids" ? <td className="stripeTable">{Number(order).toFixed(this.props.prec[1])}</td> :  <td className="stripeTable">{Number(this.props.data[this.props.type][order]).toFixed(this.props.prec[0])}</td> }
-					</tr>
-					))
-				}
-		</tbody>
-		</table>
-		)
-	}
+const CustomTable = function(props){
+	const sortOrder = props.type === "Bids" ? 1 : 0;
+	return(<table className="myTable">
+	<tbody>
+		  <tr className="stripeTable">
+		    <th>{props.type === "Bids" ? "Amount" : (<div>{props.type} <br/>{props.pair}</div>) }</th> 		
+		    <th>{props.type === "Bids" ? (<div>{props.type} <br/>{props.pair}</div>) : "Amount" } </th>	    
+		  </tr>
+			{
+				props.data["Sorted"] && props.data["Sorted"][sortOrder].map((order) => (
+				<tr key={order}>
+					{props.type === "Bids" ? <td className="stripeTable">{Number(props.data[props.type][order]).toFixed(props.prec[0])}</td> : <td className="stripeTable">{Number(order).toFixed(props.prec[1])}</td>}
+					{props.type === "Bids" ? <td className="stripeTable">{Number(order).toFixed(props.prec[1])}</td> :  <td className="stripeTable">{Number(props.data[props.type][order]).toFixed(props.prec[0])}</td> }
+				</tr>
+				))
+			}
+	</tbody>
+	</table>
+	)
 }
 
-class MovingLine extends React.PureComponent{
-	constructor(props){
-		super(props);
-		this.config={
-			events:[],	
-			animation:{duration:0},	
-			scales: {
-				xAxes: [{
-					type: 'linear',
-				}],	
-			},
-		}
-		this.height = this.props.height > 400 ? 100 : this.props.height/2;
-	}
-	componentDidMount(){
-		this.chart = this.refs.bmavg.chartInstance;
-	}
-	componentWillUnmount(){
-		this.chart.unbindEvents();
-		this.chart.stop();
-		this.chart.update = console.log
-		this.chart.destroy();
-	}
-	render(){
-		return(<Line 
-				ref={"bmavg"}
-				data={{
-				labels: ['Scatter'],
-				datasets: [
-			    {
-			      label: 'Percentage Moving Average ('+ this.props.gauge[0][this.props.gauge[0].length-1].y+')',
-			      color:"blue",
-			      borderColor:"green",
-			      data: this.props.gauge[0],
-			      fill:false,
-			    },
-			    {
-			      label: 'Percent('+this.props.gauge[1][this.props.gauge[1].length-1].y +')',
-			      color:"purple",
-			      borderColor:"blue",
-			      backgroundColor:"blue",
-			      data: this.props.gauge[1],
-			      fill:false,
-			    }
-			  ]
-			}}
-			height={this.height}
-			options={this.config} />)
-		
-	}
+const MovingLine = function(props) {
+	return(<Line
+			data={{
+			labels: ['Scatter'],
+			datasets:[
+		    {
+		      label: 'Percentage Moving Average ('+ props.gauge[0][props.gauge[0].length-1].y+')',
+		      color:"blue",
+		      borderColor:"green",
+		      data: props.gauge[0],
+		      lineTension:0,
+		      fill:false,
+		    },
+		    {
+		      label: 'Percent('+props.gauge[1][props.gauge[1].length-1].y +')',
+		      color:"purple",
+		      borderColor:"blue",
+		      backgroundColor:"blue",
+		      data: props.gauge[1],
+		      lineTension:0,
+		      fill:false,
+		    }
+		  ]
+		}}
+		height={props.height}
+		options={{
+		events:[],	
+		animation:{duration:10},	
+		scales: {
+			xAxes: [{
+				type: 'linear',
+			}],	
+		},
+	}} />)	
 }
 
 class BittrexState extends React.Component{
+	constructor(props){
+		super(props)
+		this.height = this.props.style.height > 400 ? 100 : this.props.style.height/2;
+	}
 	progress(){
 		if(this.props.time > 0){
 			return  <ArbProgress  value={this.props.progress} time={this.props.time}/>
@@ -811,7 +782,7 @@ class BittrexState extends React.Component{
 	render(){
 		return(<div>
 			<ArbToggle pair={"none"} on={!this.props.bittrexStatus} forceMonitor={this.props.forceMonitorBittrex}/>
-			<MovingLine gauge={this.props.gauge} height={this.props.style.height}/>
+			<MovingLine gauge={this.props.gauge} height={this.height}/>
 			{this.book()}
 			{this.progress()}
 			<FormGroup>
@@ -1764,8 +1735,8 @@ class App extends Component{
 					}
 				}
 			}
-			let agauge = this.state.bittrexGauge[1];
-			let bgauge = this.state.bittrexGauge[0];
+			let agauge = this.state.bittrexGauge[1].slice(0);
+			let bgauge = this.state.bittrexGauge[0].slice(0);
 			if(agauge.length > 20){
 				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
 				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
@@ -1777,7 +1748,7 @@ class App extends Component{
 			if(this.state.autosave){
 				window.localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
 			}
-			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:[bgauge.slice(0),agauge]});
+			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:[bgauge,agauge]});
 		}		
 		if(data.type === "swing"){
 			let gauge = {
