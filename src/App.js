@@ -461,17 +461,6 @@ class Orders extends React.Component{
 }		
 //BinanceState
 class BinanceState extends React.Component{
-	constructor(props){
-		super(props);
-		this.options = {
-			min:99.61,
-			max:100.39,
-			yellowFrom:99.61,
-			yellowTo:99.70,
-			redFrom:100.3,
-			redTo:100.39
-		}
-	}
 	activeToggle(pair){
 		return <ArbToggle pair={pair} on={!this.props.binanceStatus[pair]} forceMonitor={this.props.forceMonitorBinance}/>
 	}
@@ -567,7 +556,6 @@ class BinanceState extends React.Component{
 		else{
 			return null
 		}
-		
 	}
 	info(){
 		let p = [];
@@ -588,16 +576,8 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-				<Chart
-		          chartType="Gauge"
-		          data={[['Label','Value'], ['Percentage',Number(this.props.gauge)]]}
-		          options={this.options}
-		          graph_id="GaugeChart"
-		          width="100%"
-		          height="40vh"
-		          legend_toggle
-		        />
-			{this.info()}
+				<MovingLine gauge={this.props.gauge} height={this.props.height}/>
+				{this.info()}
 			</div>)
 	}	
 }	
@@ -633,7 +613,7 @@ class StockChart extends React.PureComponent{
 					display:true,
 				},
 				animation:{
-					duration:2000
+					duration:0
 				},
 				tooltips:{
 					mode:'x',
@@ -717,37 +697,56 @@ class CustomTable extends React.PureComponent{
 	}
 }
 
-class BittrexGaugeChart extends React.Component{
+class MovingLine extends React.PureComponent{
 	constructor(props){
-		super(props)
-			this.options = {
-			min:99.61,
-			max:100.39,
-			yellowFrom:99.61,
-			yellowTo:99.70,
-			redFrom:100.3,
-			redTo:100.39
+		super(props);
+		this.config={
+			events:[],	
+			animation:{duration:0},	
+			scales: {
+				xAxes: [{
+					type: 'linear',
+				}],	
+			},
 		}
-		this.current = 0;
+		this.height = this.props.height > 400 ? 100 : this.props.height/2;
 	}
-	shouldComponentUpdate(nextProps){	
-		if(Number(nextProps.gauge) !==  this.current){
-			this.current = Number(nextProps.gauge);
-			return true
-		}
-		return false;
+	componentDidMount(){
+		this.chart = this.refs.bmavg.chartInstance;
+	}
+	componentWillUnmount(){
+		this.chart.unbindEvents();
+		this.chart.stop();
+		this.chart.update = console.log
+		this.chart.destroy();
 	}
 	render(){
-		return (<Chart
-		          chartType="Gauge"
-		          data={[['Label','Value'], ['Percentage',Number(this.props.gauge)]]}
-		          options={this.options}
-		          graph_id="GaugeChart"
-		          width="100%"
-		          height="40vh"
-		          legend_toggle
-		        />)	
-	}	
+		return(<Line 
+				ref={"bmavg"}
+				data={{
+				labels: ['Scatter'],
+				datasets: [
+			    {
+			      label: 'Percentage Moving Average ('+ this.props.gauge[0][this.props.gauge[0].length-1].y+')',
+			      color:"blue",
+			      borderColor:"green",
+			      data: this.props.gauge[0],
+			      fill:false,
+			    },
+			    {
+			      label: 'Percent('+this.props.gauge[1][this.props.gauge[1].length-1].y +')',
+			      color:"purple",
+			      borderColor:"blue",
+			      backgroundColor:"blue",
+			      data: this.props.gauge[1],
+			      fill:false,
+			    }
+			  ]
+			}}
+			height={this.height}
+			options={this.config} />)
+		
+	}
 }
 
 class BittrexState extends React.Component{
@@ -812,7 +811,7 @@ class BittrexState extends React.Component{
 	render(){
 		return(<div>
 			<ArbToggle pair={"none"} on={!this.props.bittrexStatus} forceMonitor={this.props.forceMonitorBittrex}/>
-			<BittrexGaugeChart gauge={this.props.gauge} style={this.props.style} />
+			<MovingLine gauge={this.props.gauge} height={this.props.style.height}/>
 			{this.book()}
 			{this.progress()}
 			<FormGroup>
@@ -967,7 +966,8 @@ class BinanceCharts extends React.PureComponent{
 		}
 	}
 	createScatter(){
-		return this.props.scatterList.map((_option)=>{return (
+		return this.props.scatterList.map((_option)=>{
+			return (
 			<Scatter 
 			height={this.height}
 			key={Math.random(0,1)} 
@@ -976,7 +976,8 @@ class BinanceCharts extends React.PureComponent{
 				animation:{duration:0}
 			}} 
 			/>
-			)})
+			)
+		})
 			
 	}
 	updateDisplay(checked){
@@ -1034,8 +1035,8 @@ class App extends Component{
 			binanceB1Minimum:{},
 			binanceC1Minimum:{},
 			binanceConnections:0,
-			binanceGauge:100,
-			bittrexGauge:100,
+			binanceGauge:[[{x:0,y:0}],[{x:0,y:0}]],
+			bittrexGauge:[[{x:0,y:0}],[{x:0,y:0}]],
 			binanceLimits:{},
 			binanceOptimalTrades:{},
 			binancePairs:[],
@@ -1312,7 +1313,6 @@ class App extends Component{
 			if(!Number(data.percentage)){return;}
 			let _binance = {}
 			let _type = data.percentage > 100 ? "two" : "one";
-			let gauge = data.percentage.toFixed(4);
 			for(let key in data.info){
 				for(let i = 0;i < this.state.binancePairs.length;i++){
 					if(this.state.binancePairs[i].pair1.replace("_","") === key){
@@ -1325,8 +1325,19 @@ class App extends Component{
 					}
 				}
 			}
+			let agauge = this.state.binanceGauge[1];
+			let bgauge = this.state.binanceGauge[0];
+			if(agauge.length > 20){
+				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
+				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
+			}
+			else{
+				agauge.push({x:agauge.length,y:Number(data.percentage.toFixed(4))})
+				bgauge.push({x:agauge.length-1,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) })
+			}
+			
 			let _tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
-			return this.setState({binanceGauge:gauge,tradingPairs:_tradingPairs});
+			return this.setState({binanceGauge:[bgauge.slice(0),agauge],tradingPairs:_tradingPairs});
 		}
 
 		if(data.type === "binanceStatus"){
@@ -1657,9 +1668,11 @@ class App extends Component{
 			    scatterOption2.push(_scatterOption2);	
 			    //Scatter Data percent vs profit
 			    _scatterOption3 = JSON.parse(JSON.stringify(this.state.scatterOption));
-			    _scatterOption3.labels = "Scatter2"
+			    _scatterOption3.labels = "Scatter2";
 			    _scatterOption3.datasets[0].label = msc2[i].replace("_","") + " Percent vs Profit ("+ this.state.tradingPairs.binance[msc2[i]].pairs[1].split("_")[1]+")";
 			    _scatterOption3.datasets[0].data = _binanceScatter[msc2[i].replace("_","")]['>>100%'].concat(_binanceScatter[msc2[i].replace("_","")]['<<100%'])
+			    let total = (_scatterOption3.datasets[0].data.reduce((s,c)=>{return s+c.y},0));
+			    _scatterOption3.datasets[0].label += " Total:"+total;
 			    scatterOption2.push(_scatterOption3);			    
 			}
 			if(this.state.autosave){
@@ -1751,11 +1764,20 @@ class App extends Component{
 					}
 				}
 			}
-			let bgauge = data.percentage.toFixed(4);
+			let agauge = this.state.bittrexGauge[1];
+			let bgauge = this.state.bittrexGauge[0];
+			if(agauge.length > 20){
+				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
+				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
+			}
+			else{
+				agauge.push({x:agauge.length,y:Number(data.percentage.toFixed(4))})
+				bgauge.push({x:agauge.length-1,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) })
+			}
 			if(this.state.autosave){
 				window.localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
 			}
-			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:bgauge});
+			return this.setState({tradingPairs:_tradingPairs,bittrexPercentage:data.percentage,bittrexGauge:[bgauge.slice(0),agauge]});
 		}		
 		if(data.type === "swing"){
 			let gauge = {
@@ -2085,7 +2107,7 @@ class App extends Component{
 			<div className="body">   
 			{this.state.tabValue === 0 && <TabContainer>
 			 <BinanceState 
-				style={{height: this.state.chartSize.height, width: this.state.chartSize.width}}
+				style={{height:this.state.chartSize.height, width: this.state.chartSize.width}}
 				gauge={this.state.binanceGauge}
 				binancePairs={this.state.binancePairs} 
 				binanceStatusTime={this.state.binanceStatusTime} 
