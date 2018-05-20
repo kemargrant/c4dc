@@ -561,8 +561,8 @@ class BinanceState extends React.Component{
 		}
 		return p.map((Pair) => (
 		<div key={Pair[0]}>
-			{this.progressBar(Pair[0].replace("_",""))}
 			{this.activeToggle(Pair[0].replace("_",""))}
+			{this.progressBar(Pair[0].replace("_",""))}
 			{this.bTable(Pair[0],Pair[1][2],Pair[1][1],Pair[0].split("_")[0],Pair[0].split("_")[1],Pair[1][1].split("_")[1])}
 			{this.cTable(Pair[0],Pair[1][2],Pair[1][1],Pair[0].split("_")[0],Pair[0].split("_")[1],Pair[1][1].split("_")[1])}
 		</div>
@@ -874,13 +874,13 @@ class BittrexState extends React.Component{
 }		
 	
 //Profit Components
-class BinanceProfit extends React.PureComponent{
-	binanceProfitInfo(){
+const BinanceProfit = function (props){
+	const binanceProfitInfo = function(){
 		let results = [];
-		let balance = this.props.balance
-		for(let key in this.props.profit){
-		   for(let key2 in this.props.profit[key]){
-				results.push([key2,this.props.profit[key][key2]]);
+		let balance = props.balance
+		for(let key in props.profit){
+		   for(let key2 in props.profit[key]){
+				results.push([key2,props.profit[key][key2]]);
 			}
 		}
 		return results.map(function(profit){
@@ -890,9 +890,7 @@ class BinanceProfit extends React.PureComponent{
 					</div>)		
 		})
 	}
-	render() {
-		return (<div>{this.binanceProfitInfo()}</div>)
-	}
+	return (<div>{binanceProfitInfo()}</div>)
 }
 
 class BittrexProfit extends React.PureComponent{
@@ -949,7 +947,6 @@ class BinanceCharts extends React.PureComponent{
 			/>
 			)
 		})
-			
 	}
 	updateDisplay(checked){
 		return this.setState({display:checked})
@@ -970,14 +967,34 @@ class BinanceCharts extends React.PureComponent{
 		        />
 			
 			</FormGroup>
-			
 			{this.state.display ? "" : this.createScatter()}
 			
 		</div>)
 	}	
 }
 
-class BittrexChart extends React.PureComponent{
+class BittrexChart extends React.Component{
+	constructor(props){
+		super(props);
+		this.state ={
+			display:false
+		}
+		this.updateDisplay = this.updateDisplay.bind(this);
+	}
+	createScatter(){
+		return this.props.scatterList.map((_option)=>{
+			return (
+			<Scatter 
+			height={this.height}
+			key={Math.random(0,1)} 
+			data={_option}
+			options={{
+				animation:{duration:0}
+			}} 
+			/>
+			)
+		})
+	}
 	chart(){
 		if(this.props.data.data.datasets){
 			return <Line height={this.props.style.height > 400 ? 100 : this.props.style.height/2} data={this.props.data.data} options={this.props.data.options} />
@@ -986,8 +1003,28 @@ class BittrexChart extends React.PureComponent{
 			return null
 		}
 	}
+	updateDisplay(checked){
+		return this.setState({display:checked})
+	}	
 	render() {
-		return this.chart();
+		return (
+			<div>
+			{this.chart()}
+			<FormGroup>
+		        <FormControlLabel
+				  label="Hide Scatter"
+				  style={{margin:"auto"}}
+		          control={<Switch
+			              checked={this.display}
+			              onChange={(event, checked) => { 
+							  return this.updateDisplay(checked);
+							}}
+						/>}
+		        />
+			
+			</FormGroup>
+			{this.state.display ? "" : this.createScatter()}
+			</div>);
 	}
 }
 class Log extends React.PureComponent{
@@ -1050,7 +1087,7 @@ class App extends Component{
                 ]
             },					
 			dbScatter:window.localStorage && JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBinance")) : [],
-			//~ dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) :[[new Date(),0,0,0]],
+			dbScatterBittrex:window.localStorage && JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBittrex"))? JSON.parse(window.localStorage.getItem("DB_Scatter_TradeBittrex")) : [],
 			dbTrade: window.localStorage && JSON.parse(window.localStorage.getItem("DB_Trade"))? JSON.parse(window.localStorage.getItem("DB_Trade")) : {data:{datasets:[{data:[]}]},options:{}},
 			dbTradeBinance:window.localStorage && JSON.parse(window.localStorage.getItem("DB_TradeBinance"))? JSON.parse(window.localStorage.getItem("DB_TradeBinance")) : [{
 				xAxis:{type:'time'},
@@ -1197,7 +1234,7 @@ class App extends Component{
 	}	
 	
 	clearData(){
-		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_Scatter_TradeBinance","DB_Trade","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
+		let list = ["AutoConnect","Autosave","Bittrex_Balance","Binance_Profit","Bittrex_Profit","DB_Scatter_TradeBinance","DB_Scatter_TradeBittrex","DB_Trade","DB_TradeBinance","Orders","Previous_Connections","Toast_Notify","Trading_Pairs","Web_Notify","xxpkeyxx"];
 		for(let i=0;i< list.length;i++){
 			window.localStorage.removeItem(list[i]);
 		}
@@ -1402,6 +1439,8 @@ class App extends Component{
 			}
 			let _binanceProfit = {}
 			let _bittrexProfit = {}
+			let _bittrexDurationScatter = {">100%":[],"<100%":[]}
+			let _bittrexProfitScatter = {">100%":[],"<100%":[]}
 			let _binanceScatter = {}
 			let date;
 			let date2 = {} //
@@ -1438,7 +1477,7 @@ class App extends Component{
 			_bittrexProfit[_b1] = 0;
 			_bittrexProfit[msc.toLowerCase()] = 0;
 			for(let k=0;k<data.info.length;k++){
-				if(data.info[k].OrdersFilled < 3){
+				if(data.info[k].OrdersFilled < 3 || !data.info[k].OrdersFilled){
 					continue;
 				}
 				if(data.info[k].Exchange === "Bittrex"){
@@ -1449,6 +1488,20 @@ class App extends Component{
 					else{
 						dat[date]=1;
 					}
+					//Scatter Data
+					if(data.info[k]){
+						let base = this.state.tradingPairs.bittrex ? [this.state.tradingPairs.bittrex["usdt_"+_b1],this.state.tradingPairs.bittrex["usdt_"+this.state.tradingPairs.misc]] : [1,1];
+						let profit = data.info[k].Profit * base[0] + data.info[k].Profit2 * base[1];
+						if(data.info[k].Percent < 100){
+							_bittrexDurationScatter['<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
+							_bittrexProfitScatter['<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
+						}
+						else{
+							_bittrexDurationScatter['>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
+							_bittrexProfitScatter['>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
+						}
+					}
+					//profit
 					if(data.info[k].Percent > 100){
 						if(Number(data.info[k].After - data.info[k].Before)){
 							_bittrexProfit[_b1] += (data.info[k].After - data.info[k].Before);
@@ -1618,11 +1671,28 @@ class App extends Component{
 				},
 			}
 			};	
+			let scatterOption =[]
 		    let option2 = [];
 		    let scatterOption2 = [];
 		    let _scatterOption2;
 		    let _scatterOption3;
 		    let _option2;
+		    //bittrex Scatter
+			let scatterOptionD = JSON.parse(JSON.stringify(this.state.scatterOption));
+			scatterOptionD.labels = "Duration Scatter";
+			scatterOptionD.datasets[0].backgroundColor = "blue";
+			scatterOptionD.datasets[0].label = msc + " Percent vs Duration(m)";
+			scatterOptionD.datasets[0].data = _bittrexDurationScatter['>100%'].concat(_bittrexDurationScatter['<100%']);
+			let scatterOptionP = JSON.parse(JSON.stringify(this.state.scatterOption));
+			scatterOptionP.labels = "Profit Scatter";
+			scatterOptionP.datasets[0].backgroundColor = "blue";
+			scatterOptionP.datasets[0].label = msc + " Percent vs Profit(usdt)";
+			scatterOptionP.datasets[0].data = _bittrexProfitScatter['>100%'].concat(_bittrexProfitScatter['<100%']);
+			let total = (scatterOptionP.datasets[0].data.reduce((s,c)=>{return s+c.y},0));
+			scatterOptionP.datasets[0].label += " Total:"+total;
+			scatterOption.push(scatterOptionD);		
+			scatterOption.push(scatterOptionP);	    
+		    //binance Scatter
 		    for(let i = 0;i < msc2.length;i++){
 				_option2 = JSON.parse(JSON.stringify(config));
 			    _option2.data.datasets[0].data = v2[msc2[i].replace("_","")];
@@ -1650,10 +1720,11 @@ class App extends Component{
 					window.localStorage.setItem("DB_Trade",JSON.stringify(config));
 					window.localStorage.setItem("DB_TradeBinance",JSON.stringify(option2));
 					window.localStorage.setItem("DB_Scatter_TradeBinance",JSON.stringify(scatterOption2));
+					window.localStorage.setItem("DB_Scatter_TradeBittrex",JSON.stringify(scatterOption));
 					window.localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
 					window.localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
-			return this.setState({dbTrade:config,dbTradeBinance:option2,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbScatter:scatterOption2});
+			return this.setState({dbTrade:config,dbTradeBinance:option2,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbBittrexScatter:scatterOption,dbScatter:scatterOption2});
 		}				
 		
 		if(data.type === "log"){
@@ -2124,7 +2195,7 @@ class App extends Component{
 			    
 			    <h3>Bittrex</h3>
 			    <BittrexProfit profit={this.state.bittrexProfit} balance={this.state.balance.bittrex} tradingPairs={this.state.tradingPairs}/>
-			    <BittrexChart style={{height: this.state.chartSize.height, width: this.state.chartSize.width}} data={this.state.dbTrade} />		
+			    <BittrexChart style={{height: this.state.chartSize.height, width: this.state.chartSize.width}} data={this.state.dbTrade} scatterList={this.state.dbScatterBittrex}/>		
 				
 				<h3>Binance</h3>  
 				<BinanceProfit profit={this.state.binanceProfit} balance={this.state.balance.binance}/>
