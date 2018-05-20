@@ -595,7 +595,6 @@ const StockChart = function(props){
 			data: {
 				datasets: [{
 					label: 'Bids',
-					borderColor:"green",
 					backgroundColor:"green",
 					fill:'origin',
 					data: [],
@@ -603,11 +602,10 @@ const StockChart = function(props){
 					showLine:true
 				},{
 					label: 'Asks',
-					borderColor:"red",
 					backgroundColor:"red",
 					fill:'origin',
-					lineTension:0,
 					data: [],
+					lineTension:0,
 					showLine:true
 				}]
 			},
@@ -629,17 +627,18 @@ const StockChart = function(props){
 					intersect:true
 				},
 				scales:{
-					yAxes:[{
+					yAxes:{
 						scaleLabel:{
 							display:false,
 							labelString:'Amount'
 						}
-					}],
-					xAxes:[
-						{
+					},
+					xAxes:[{
 							scaleLabel: {
-							display: false,
-							labelString: 'Price'
+								display: false,
+								labelString: 'Price'
+							},
+							ticks:{
 							}
 					}]
 				}
@@ -654,6 +653,8 @@ const StockChart = function(props){
 				return {y:props.data["Asks"][order],x:Number(order)}
 			})
 			config.options.title.text = props.pair;
+			config.options.scales.xAxes[0].ticks.max = Number(props.data["Sorted"][0][props.data["Sorted"][0].length - 1])
+			config.options.scales.xAxes[0].ticks.min = Number(props.data["Sorted"][1][props.data["Sorted"][1].length - 1])
 		}
 		else{
 			config.data.datasets[0].data = props.data["Sorted"] && props.data["Sorted"][1].map((order) => {
@@ -663,6 +664,8 @@ const StockChart = function(props){
 				return {y:props.data["Asks"][order],x:1/Number(order)}
 			})
 			config.options.title.text = props.pair + "(Scaled)";
+			config.options.scales.xAxes[0].ticks.min = 1/Number(props.data["Sorted"][0][props.data["Sorted"][0].length - 1])
+			config.options.scales.xAxes[0].ticks.max = 1/Number(props.data["Sorted"][1][props.data["Sorted"][1].length - 1])
 		}
 		return <Scatter
 				height={props.style.height > 400 ? 50 : props.style.height/2}
@@ -1737,7 +1740,7 @@ class App extends Component{
 					window.localStorage.setItem("Binance_Profit",JSON.stringify(_binanceProfit));
 					window.localStorage.setItem("Bittrex_Profit",JSON.stringify(_bittrexProfit));
 			}
-			return this.setState({dbTrade:config,dbTradeBinance:option2,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbBittrexScatter:scatterOption,dbScatter:scatterOption2});
+			return this.setState({dbTrade:config,dbTradeBinance:option2,binanceProfit:_binanceProfit,bittrexProfit:_bittrexProfit,dbScatterBittrex:scatterOption,dbScatter:scatterOption2});
 		}				
 		
 		if(data.type === "log"){
