@@ -514,6 +514,7 @@ class BinanceState extends React.Component{
 			</div>)
 	}
 	cTable(pair1,pair2,pair3,a,b,c){
+		const inputStyle ={width:"4.5em"}
 		return(<Table>
 			<TableHead>
 				<TableRow>
@@ -528,7 +529,7 @@ class BinanceState extends React.Component{
 			<TableBody>
 			<TableRow>
 				<td>{b.toUpperCase()}</td>
-				<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.000001"}} id={pair1.replace("_","")} value={this.props.binanceB1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceB1Minimum} /> </td>
+				<td> <Input style={inputStyle} type="number" inputProps={{min: "0",step: "0.000001"}} id={pair1.replace("_","")} value={this.props.binanceB1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceB1Minimum} /> </td>
 				<td>{this.props.tradingPairs[pair1] ? (1/this.props.tradingPairs[pair1][pair1] * this.props.binanceB1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
 				<td>{this.props.binanceB1Minimum[pair1.replace("_","")]}</td>						
 				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair3] * this.props.binanceB1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
@@ -541,7 +542,7 @@ class BinanceState extends React.Component{
 			</TableRow>		
 			<TableRow>
 				<td>{a.toUpperCase()}</td>
-				<td className="td_input"> <Input type="number" inputProps={{min: "0",step: "0.001"}} id={pair1.replace("_","")} value={this.props.binanceC1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceC1Minimum} /> </td>
+				<td> <Input style={inputStyle} type="number" inputProps={{min: "0",step: "0.001"}} id={pair1.replace("_","")} value={this.props.binanceC1Minimum[pair1.replace("_","")]} onChange={this.props.updateBinanceC1Minimum} /> </td>
 				<td>{this.props.binanceC1Minimum[pair1.replace("_","")]}</td>						
 				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair1] * this.props.binanceC1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
 				<td>{this.props.tradingPairs[pair1] ? (this.props.tradingPairs[pair1][pair2] * this.props.binanceC1Minimum[pair1.replace("_","")]).toFixed(5) : ""}</td>
@@ -583,7 +584,7 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-				<MovingLine gauge={this.props.gauge} height={this.props.height}/>
+				<MovingLine gauge={this.props.gauge} height={document.documentElement.clientHeight/4}/>
 				{this.info()}
 			</div>)
 	}	
@@ -727,6 +728,9 @@ const MovingLine = function(props) {
 		scales: {
 			xAxes: [{
 				type: 'linear',
+				ticks:{
+					stepSize:5
+				}
 			}],	
 		},
 	}} />)	
@@ -796,6 +800,7 @@ class BittrexState extends React.Component{
 	}
 	
 	render(){
+		const inputStyle ={width:"4.5em"}
 		return(<div>
 			<ArbToggle pair={"none"} on={!this.props.bittrexStatus} forceMonitor={this.props.forceMonitorBittrex}/>
 			<MovingLine gauge={this.props.gauge} height={this.height}/>
@@ -865,7 +870,7 @@ class BittrexState extends React.Component{
 				<TableBody>
 					<TableRow>
 						<td>{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</td>
-						<td className="td_input"> <Input type="number" step={1} max={100} min={0} value={this.props.percentage1 * 100} onChange={this.props.updatePercentage1} /> </td>
+						<td> <Input style={inputStyle} type="number" step={1} max={100} min={0} value={this.props.percentage1 * 100} onChange={this.props.updatePercentage1} /> </td>
 						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1).toFixed(5) : 0}</td>
 						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
 						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex.usdt_btc * this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
@@ -873,7 +878,7 @@ class BittrexState extends React.Component{
 					</TableRow>
 					<TableRow>
 						<td>BTC</td>
-						<td  className="td_input"> <Input step={1} type="number" max={100} min={0} value={this.props.percentage2 * 100} onChange={this.props.updatePercentage2} /> </td>
+						<td> <Input style={inputStyle} step={1} type="number" max={100} min={0} value={this.props.percentage2 * 100} onChange={this.props.updatePercentage2} /> </td>
 						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>						
 						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2).toFixed(5) : 0}</td>
 						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
@@ -2184,7 +2189,6 @@ class App extends Component{
 			  
 			{
 			this.state.tabValue === 1 && <TabContainer>
-				<div className="graph">
 				<BittrexState 
 					balance={this.state.balance.bittrex}
 					bittrexStatus={this.state.bittrexStatus}
@@ -2202,7 +2206,6 @@ class App extends Component{
 					updatePercentage1={this.updatePercentage1}
 					updatePercentage2={this.updatePercentage2}
 				/>	  			
-				</div>	
 			</TabContainer>
 			}
 			
