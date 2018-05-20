@@ -2,27 +2,40 @@ import React, { Component } from 'react';
 import './App.css';
 import AES from "crypto-js/aes";
 import Enc from 'crypto-js/enc-utf8';
-import Typography from 'material-ui/Typography';
-import AppBar  from 'material-ui/AppBar';
-import AutoRenew from 'material-ui-icons/Autorenew';
-import Button from 'material-ui/Button';
-import BubbleChart from 'material-ui-icons/BubbleChart';
-import Card, { CardActions, CardContent,CardHeader } from 'material-ui/Card';
-import { FormControl,FormControlLabel, FormGroup } from 'material-ui/Form';
-import IconButton from 'material-ui/IconButton';
-import Input, { InputLabel } from 'material-ui/Input';
-import InsertSettings from 'material-ui-icons/Settings';
-import InsertFile from 'material-ui-icons/ShopTwo';
-import InsertLogs from 'material-ui-icons/LibraryBooks';
-import {LinearProgress } from 'material-ui/Progress';
-import Menu, { MenuItem } from 'material-ui/Menu';
-import MoreVertIcon from 'material-ui-icons/MoreVert';
-import Snackbar from 'material-ui/Snackbar';
-import Switch from 'material-ui/Switch';
-import Table,{TableBody,TableCell,TableHead,TableRow} from 'material-ui/Table';
-import Tabs, {Tab} from 'material-ui/Tabs';
-import TrendingDown from 'material-ui-icons/TrendingDown';
-import TrendingUp from 'material-ui-icons/TrendingUp';
+import Typography from '@material-ui/core/Typography';
+import AppBar  from '@material-ui/core/AppBar';
+import AutoRenew from '@material-ui/icons/Autorenew';
+import Button from '@material-ui/core/Button';
+import BubbleChart from '@material-ui/icons/BubbleChart';
+import Card from '@material-ui/core/Card';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import IconButton from '@material-ui/core/IconButton';
+import Input from '@material-ui/core/Input';
+import InputLabel from '@material-ui/core/InputLabel';
+import InsertSettings from '@material-ui/icons/Settings';
+import InsertFile from '@material-ui/icons/ShopTwo';
+import InsertLogs from '@material-ui/icons/LibraryBooks';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
+import Snackbar from '@material-ui/core/Snackbar';
+import Switch from '@material-ui/core/Switch';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableHead from '@material-ui/core/TableHead'
+import TableRow from '@material-ui/core/TableRow'
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+
+import TrendingDown from '@material-ui/icons/TrendingDown';
+import TrendingUp from '@material-ui/icons/TrendingUp';
 import {Line,Scatter} from 'react-chartjs-2';
 import { Chart } from 'react-google-charts';
 			
@@ -2136,7 +2149,7 @@ class App extends Component{
 		return (
 		  <div className="App">
 			<AppBar position="static">
-			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} centered fullWidth>	
+			<Tabs scrollable value={this.state.tabValue} onChange={this.changeTab} fullWidth>	
 				<Tab label="Binance" icon={this.state.binanceUserStreamStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>				
 				<Tab label="Bittrex" icon={this.state.bittrexSocketStatus && this.state.connected ? <TrendingUp color="inherit"/> : <TrendingDown color="error"/>}></Tab>
 				<Tab label="Stats" icon={<BubbleChart />}></Tab>
