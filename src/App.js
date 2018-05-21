@@ -584,7 +584,7 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-				<MovingLine gauge={this.props.gauge} height={document.documentElement.clientHeight/4}/>
+				<MovingLine gauge={this.props.gauge} height={120}/>
 				{this.info()}
 			</div>)
 	}	
@@ -648,10 +648,10 @@ const StockChart = function(props){
 	if(props.data["Sorted"]){
 		if(!props.small){
 			config.data.datasets[0].data = props.data["Sorted"] && props.data["Sorted"][1].map((order) => {
-				return {y:props.data["Bids"][order],x:Number(order)}
+				return {y:props.data["Bids"][order],x:order}
 			})
 			config.data.datasets[1].data = props.data["Sorted"] && props.data["Sorted"][0].map((order) => {
-				return {y:props.data["Asks"][order],x:Number(order)}
+				return {y:props.data["Asks"][order],x:order}
 			})
 			config.options.title.text = props.pair;
 			config.options.scales.xAxes[0].ticks.max = Number(props.data["Sorted"][0][props.data["Sorted"][0].length - 1])
@@ -659,14 +659,14 @@ const StockChart = function(props){
 		}
 		else{
 			config.data.datasets[0].data = props.data["Sorted"] && props.data["Sorted"][1].map((order) => {
-				return {y:props.data["Bids"][order],x:1/Number(order)}
+				return {y:props.data["Bids"][order],x:order/props.data["Sorted"][1][props.data["Sorted"][1].length - 1]}
 			})
 			config.data.datasets[1].data = props.data["Sorted"] && props.data["Sorted"][0].map((order) => {
-				return {y:props.data["Asks"][order],x:1/Number(order)}
+				return {y:props.data["Asks"][order],x:order/props.data["Sorted"][1][props.data["Sorted"][1].length - 1]}
 			})
 			config.options.title.text = props.pair + "(Scaled)";
-			config.options.scales.xAxes[0].ticks.min = 1/Number(props.data["Sorted"][0][props.data["Sorted"][0].length - 1])
-			config.options.scales.xAxes[0].ticks.max = 1/Number(props.data["Sorted"][1][props.data["Sorted"][1].length - 1])
+			config.options.scales.xAxes[0].ticks.min = 1;
+			config.options.scales.xAxes[0].ticks.max = Number(props.data["Sorted"][0][props.data["Sorted"][1].length - 1])/Number(props.data["Sorted"][1][props.data["Sorted"][1].length - 1])
 		}
 		return <Scatter
 				height={props.style.height > 400 ? 50 : props.style.height/2}
@@ -994,18 +994,18 @@ class BinanceCharts extends React.PureComponent{
 	}	
 }
 
-class BittrexChart extends React.Component{
+class BittrexChart extends React.PureComponent{
 	constructor(props){
 		super(props);
 		this.state ={
 			display:false
 		}
 		this.updateDisplay = this.updateDisplay.bind(this);
+		this.height = this.props.style.height > 400 ? 100 : this.props.style.height/2;
 	}
 	createScatter(){
 		return this.props.scatterList.map((_option)=>{
-			return (
-			<Scatter 
+			return <Scatter 
 			height={this.height}
 			key={Math.random(0,1)} 
 			data={_option}
@@ -1013,12 +1013,12 @@ class BittrexChart extends React.Component{
 				animation:{duration:0}
 			}} 
 			/>
-			)
+			
 		})
 	}
 	chart(){
 		if(this.props.data.data.datasets){
-			return <Line height={this.props.style.height > 400 ? 100 : this.props.style.height/2} data={this.props.data.data} options={this.props.data.options} />
+			return <Line height={this.height} data={this.props.data.data} options={this.props.data.options} />
 		}
 		else {
 			return null
