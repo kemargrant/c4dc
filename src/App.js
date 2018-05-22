@@ -33,12 +33,11 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-
 import TrendingDown from '@material-ui/icons/TrendingDown';
 import TrendingUp from '@material-ui/icons/TrendingUp';
 import {Line,Scatter} from 'react-chartjs-2';
 import { Chart } from 'react-google-charts';
-			
+		
 const TabContainer = function(props) {
 	return <div style={{ padding: 1 * 3 }}>{props.children}</div>;
 }
@@ -640,6 +639,7 @@ const StockChart = function(props){
 								labelString: 'Price'
 							},
 							ticks:{
+								fontColor:"blue"
 							}
 					}]
 				}
@@ -698,42 +698,43 @@ const CustomTable = function(props){
 }
 
 const MovingLine = function(props) {
-	return(<Line
-			data={{
-			labels: ['Scatter'],
-			datasets:[
-		    {
-		      label: 'Percentage Moving Average ('+ props.gauge[0][props.gauge[0].length-1].y+')',
-		      color:"blue",
-		      borderColor:"green",
-		      data: props.gauge[0],
-		      lineTension:0,
-		      fill:false,
-		    },
-		    {
-		      label: 'Percent('+props.gauge[1][props.gauge[1].length-1].y +')',
-		      color:"purple",
-		      borderColor:"blue",
-		      backgroundColor:"blue",
-		      data: props.gauge[1],
-		      lineTension:0,
-		      fill:false,
-		    }
-		  ]
-		}}
-		height={props.height}
-		options={{
-		events:[],	
-		animation:{duration:10},	
-		scales: {
-			xAxes: [{
-				type: 'linear',
-				ticks:{
-					stepSize:5
-				}
-			}],	
-		},
-	}} />)	
+	return(<Scatter
+				data={
+				{labels: ['Scatter'],
+					datasets:[
+				    {
+				      label: 'Percentage Moving Average ('+ props.gauge[0][props.gauge[0].length-1].y+')',
+				      borderColor:"red",
+				      data: props.gauge[0],
+				      showLine:false,
+				      fill:false,
+				    },
+				    {
+				      label: 'Percent('+props.gauge[1][props.gauge[1].length-1].y +')',
+				      borderColor:"blue",
+				      backgroundColor:"black",
+				      radius:0,
+				      data: props.gauge[1],
+					  showLine:true,
+					  lineTension:0,
+				      fill:false,
+				    }
+				  ]
+				}}
+			height={props.height}
+			options={{
+			events:[],	
+			animation:{duration:10},	
+			scales: {
+				xAxes: [{
+					type: 'linear',
+					ticks:{
+						stepSize:5
+					}
+				}],	
+			},
+		}} 
+		/>)
 }
 
 class BittrexState extends React.Component{
@@ -1354,9 +1355,9 @@ class App extends Component{
 					}
 				}
 			}
-			let agauge = this.state.binanceGauge[1];
-			let bgauge = this.state.binanceGauge[0];
-			if(agauge.length > 20){
+			let agauge = this.state.binanceGauge[1].slice(0);
+			let bgauge = this.state.binanceGauge[0].slice(0);
+			if(agauge.length > 100){
 				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
 				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
 			}
@@ -1366,7 +1367,7 @@ class App extends Component{
 			}
 			
 			let _tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
-			return this.setState({binanceGauge:[bgauge.slice(0),agauge],tradingPairs:_tradingPairs});
+			return this.setState({binanceGauge:[bgauge,agauge],tradingPairs:_tradingPairs});
 		}
 
 		if(data.type === "binanceStatus"){
