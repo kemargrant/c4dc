@@ -583,7 +583,7 @@ class BinanceState extends React.Component{
 	}
 	render(){
 		return (<div>
-				<MovingLine gauge={this.props.gauge} height={120}/>
+				<MovingLine gauge={this.props.gauge} height={180}/>
 				{this.info()}
 			</div>)
 	}	
@@ -706,7 +706,9 @@ const MovingLine = function(props) {
 				      label: 'Percentage Moving Average ('+ props.gauge[0][props.gauge[0].length-1].y+')',
 				      borderColor:"red",
 				      data: props.gauge[0],
-				      showLine:false,
+				      showLine:true,
+				      lineTension:0,
+				      radius:0,
 				      fill:false,
 				    },
 				    {
@@ -729,7 +731,7 @@ const MovingLine = function(props) {
 				xAxes: [{
 					type: 'linear',
 					ticks:{
-						stepSize:5
+						stepSize:10
 					}
 				}],	
 			},
@@ -1830,7 +1832,7 @@ class App extends Component{
 			}
 			let agauge = this.state.bittrexGauge[1].slice(0);
 			let bgauge = this.state.bittrexGauge[0].slice(0);
-			if(agauge.length > 20){
+			if(agauge.length > 100){
 				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
 				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
 			}
