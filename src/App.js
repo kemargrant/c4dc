@@ -871,7 +871,7 @@ class BittrexState extends React.Component{
 				<TableHead>
 					<TableRow>
 						<th data-field="">Trade</th>
-						<th data-field="">%</th>
+						<th data-field="">$</th>
 						<th data-field="">{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</th>
 						<th data-field="">BTC</th>
 						<th data-field="">USDT</th>
@@ -881,19 +881,19 @@ class BittrexState extends React.Component{
 				<TableBody>
 					<TableRow>
 						<td>{this.props.tradingPairs.misc ? this.props.tradingPairs.misc.toUpperCase() : ""}</td>
-						<td> <Input style={inputStyle} type="number" step={1} max={100} min={0} value={this.props.percentage1 * 100} onChange={this.props.updatePercentage1} /> </td>
-						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1).toFixed(5) : 0}</td>
-						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex.usdt_btc * this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{(this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 * this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) > 0.002 && (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1) < this.props.balance[this.props.tradingPairs.misc] && (this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.btc && (this.props.tradingPairs.bittrex.usdt_btc * this.props.balance[this.props.tradingPairs.misc] * this.props.percentage1 *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
+						<td> <Input style={inputStyle} type="number" step={1} max={100} min={0} value={this.props.XXXAmount} onChange={this.props.updateXXXAmount} /> </td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.XXXAmount).toFixed(5) : 0}</td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.XXXAmount *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex.usdt_btc * this.props.XXXAmount *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.props.XXXAmount * this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) > 0.002 && (this.props.XXXAmount) < this.props.balance[this.props.tradingPairs.misc] && (this.props.XXXAmount *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.btc && (this.props.tradingPairs.bittrex.usdt_btc * this.props.XXXAmount *  this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt? <Switch checked={true}/> : <Switch checked={false}/>}</td>
 					</TableRow>
 					<TableRow>
 						<td>BTC</td>
-						<td> <Input style={inputStyle} step={1} type="number" max={100} min={0} value={this.props.percentage2 * 100} onChange={this.props.updatePercentage2} /> </td>
-						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>						
-						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.balance.btc * this.props.percentage2).toFixed(5) : 0}</td>
-						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
-						<td>{(this.props.balance.btc * this.props.percentage2) > 0.002 &&	(this.props.balance.btc * this.props.percentage2) < this.props.balance.btc && (this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance[this.props.tradingPairs.misc] && (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.balance.btc * this.props.percentage2 / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
+						<td> <Input style={inputStyle} step={1} type="number" max={100} min={0} value={this.props.BTCAmount} onChange={this.props.updateBTCAmount} /> </td>
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.BTCAmount / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>						
+						<td>{this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc] ? (this.props.BTCAmount).toFixed(5) : 0}</td>
+						<td>{this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] ? (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.BTCAmount / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]).toFixed(5) : ""}</td>
+						<td>{(this.props.BTCAmount) > 0.002 &&	(this.props.BTCAmount) < this.props.balance.btc && (this.props.BTCAmount / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance[this.props.tradingPairs.misc] && (this.props.tradingPairs.bittrex['usdt_'+this.props.tradingPairs.misc] * this.props.BTCAmount / this.props.tradingPairs.bittrex['btc_'+this.props.tradingPairs.misc]) < this.props.balance.usdt ?<Switch checked={true}/> :  <Switch checked={false}/>}</td>					
 					</TableRow>		
 				</TableBody>
 				</Table> 			
@@ -1140,8 +1140,8 @@ class App extends Component{
 			lowerLimit:89,
 			orders: window.localStorage && JSON.parse(window.localStorage.getItem("Orders"))? JSON.parse(window.localStorage.getItem("Orders")):[],
 			previous: window.localStorage && JSON.parse(window.localStorage.getItem("Previous_Connections"))? JSON.parse(window.localStorage.getItem("Previous_Connections")) : [],
-			percentage1:null,
-			percentage2:null,
+			XXXAmount:null,
+			BTCAmount:null,
 			port:7071,
 			privatekey: window.localStorage && window.localStorage.getItem("xxpkeyxx") ? window.localStorage.getItem("xxpkeyxx"): "",
 			sanity:true,
@@ -1213,8 +1213,8 @@ class App extends Component{
 		this.updateLowerLimit = this.updateLowerLimit.bind(this);
 		this.updateNetwork = this.updateNetwork.bind(this);
 		this.updatePkey = this.updatePkey.bind(this);	
-		this.updatePercentage1 = this.updatePercentage1.bind(this);	
-		this.updatePercentage2 = this.updatePercentage2.bind(this);	
+		this.updateXXXAmount = this.updateXXXAmount.bind(this);	
+		this.updateBTCAmount = this.updateBTCAmount.bind(this);	
 		this.updatePort = this.updatePort.bind(this);	
 		this.updateSanity = this.updateSanity.bind(this);	
 		this.updateSwingPercentage = this.updateSwingPercentage.bind(this);	
@@ -1337,7 +1337,7 @@ class App extends Component{
 					window.localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
 				}
 				if(data.p1){
-					this.setState({percentage1:data.p1,percentage2:data.p2,});
+					this.setState({XXXAmount:data.p1,BTCAmount:data.p2,});
 				}
 			});
 		}
@@ -2072,14 +2072,14 @@ class App extends Component{
 		}
 	}
 	
-	updatePercentage1(evt){
-		this.setState({percentage1:evt.currentTarget.value/100});
-		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage1":evt.currentTarget.value/100,"percentage2":this.state.percentage2}),this.state.privatekey).toString());
+	updateXXXAmount(evt){
+		this.setState({XXXAmount:evt.currentTarget.value});
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_amount","xxxAmount":evt.currentTarget.value,"btcAmount":this.state.BTCAmount}),this.state.privatekey).toString());
 	}
 	
-	updatePercentage2(evt){
-		this.setState({percentage2:evt.currentTarget.value/100});
-		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_percentage","percentage2":evt.currentTarget.value/100,"percentage1":this.state.percentage1}),this.state.privatekey).toString());			
+	updateBTCAmount(evt){
+		this.setState({BTCAmount:evt.currentTarget.value});
+		return this.state.bsocket.postMessage(AES.encrypt(JSON.stringify({"command":"update_amount","btcAmount":evt.currentTarget.value,"xxxAmount":this.state.XXXAmount}),this.state.privatekey).toString());			
 	}		
 
 	updatePkey(evt){
@@ -2206,16 +2206,16 @@ class App extends Component{
 					bookData={this.state.bittrexBook}
 					forceMonitorBittrex={this.forceMonitorBittrex}
 					gauge={this.state.bittrexGauge}
-					percentage1={this.state.percentage1}
-					percentage2={this.state.percentage2}
+					XXXAmount={this.state.XXXAmount}
+					BTCAmount={this.state.BTCAmount}
 					progress={this.state.bittrexProgress * 100/3}
 					style={{height: this.state.chartSize.height, width: this.state.chartSize.width}}
 					time={this.state.bittrexStatusTime}
 					viewBook = {this.state.viewBittrexBook}
 					toggleBook={this.forceBittrexView}
 					tradingPairs={this.state.tradingPairs}
-					updatePercentage1={this.updatePercentage1}
-					updatePercentage2={this.updatePercentage2}
+					updateXXXAmount={this.updateXXXAmount}
+					updateBTCAmount={this.updateBTCAmount}
 				/>	  			
 			</TabContainer>
 			}
