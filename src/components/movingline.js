@@ -9,7 +9,6 @@ function MovingLine(props) {
 	switch (props.gauge[0][0]){
 		case (undefined):
 			return <LineChart data={{}}/>
-			break
 		default:
 		mva =  props.gauge[0][props.gauge[0].length-1][1];
 		pu = props.gauge[0][props.gauge[1].length-1][1];
