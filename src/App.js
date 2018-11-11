@@ -299,13 +299,14 @@ class App extends Component{
 		catch(e){
 			this.toast(e);
 		}		
-		if(data.type === "balance"){
+		if(data.type === "balance"){					
 			return this.setState({balance:{bittrex:data.balance,binance:this.state.balance.binance}},()=>{
 				if(this.state.autosave){
 					window.localStorage.setItem("Bittrex_Balance",JSON.stringify(this.state.balance));
 				}
-				if(data.p1){
-					this.setState({XXXAmount:data.p1,BTCAmount:data.p2,});
+				if(data.p1 > -1){
+					this.setState({XXXAmount:data.p1,BTCAmount:data.p2});
+					console.log(this.state)
 				}
 			});
 		}
