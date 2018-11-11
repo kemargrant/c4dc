@@ -1,54 +1,31 @@
 import React from 'react';
-import Scatter from 'react-chartjs-2';
+import ReactChartkick, {LineChart} from 'react-chartkick'
+import Chart from 'chart.js'
+ReactChartkick.addAdapter(Chart)
 
-const MovingLine = function(props) {
-	var render;
+function MovingLine(props) {
+	var pu;
+	var mva;
 	switch (props.gauge[0][0]){
 		case (undefined):
-			render = <Scatter data={{}} height={props.height}/>
+			return <LineChart data={{}}/>
 			break
 		default:
-		render = <Scatter
-					data={
-					{labels: ['Scatter'],
-						datasets:[
-					    {
-					      label: 'Percentage Moving Average ('+ props.gauge[0][props.gauge[0].length-1].y+')',
-					      borderColor:"red",
-					      data: props.gauge[0],
-					      showLine:true,
-					      lineTension:0,
-					      radius:0,
-					      fill:false,
-					    },
-					    {
-					      label: 'Percent('+props.gauge[1][props.gauge[1].length-1].y +')',
-					      borderColor:"blue",
-					      backgroundColor:"black",
-					      radius:0,
-					      data: props.gauge[1],
-						  showLine:true,
-						  lineTension:0,
-					      fill:false,
-					    }
-					  ]
-					}}
-				height={props.height}
-				options={{
-				events:[],	
-				animation:{duration:10},	
+		mva =  props.gauge[0][props.gauge[0].length-1][1];
+		pu = props.gauge[0][props.gauge[1].length-1][1];
+		var options = {
 				scales: {
-					xAxes: [{
-						type: 'linear',
+					yAxes:[{
 						ticks:{
-							stepSize:10
+							stepSize:0.5,
+						min:98,
+						max:101
 						}
-					}],	
+					}],
 				},
-			}} 
-			/>
+			}
 	}
-	return render;
+	return <LineChart data={[{data:props.gauge[1],name:"Percentage:"+pu},{data:props.gauge[0],name:"Percentage Moving Average:"+mva}]} ytitle="Seconds" library={options}/>
 }
 
 export default MovingLine;

@@ -306,7 +306,6 @@ class App extends Component{
 				}
 				if(data.p1 > -1){
 					this.setState({XXXAmount:data.p1,BTCAmount:data.p2});
-					console.log(this.state)
 				}
 			});
 		}
@@ -337,12 +336,12 @@ class App extends Component{
 			let agauge = this.state.binanceGauge[1].slice(0);
 			let bgauge = this.state.binanceGauge[0].slice(0);
 			if(agauge.length > 100){
-				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
-				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
+				agauge.shift(agauge.push([agauge[agauge.length - 1][0] + 1,Number(data.percentage.toFixed(4))]))
+				bgauge.shift(bgauge.push([agauge[agauge.length - 1][0],Number(((agauge.reduce((s,c)=>{return s+c[1]},0))/agauge.length).toFixed(4)) ]))
 			}
 			else{
-				agauge.push({x:agauge.length,y:Number(data.percentage.toFixed(4))})
-				bgauge.push({x:agauge.length-1,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) })
+				agauge.push([agauge.length,Number(data.percentage.toFixed(4))]);
+				bgauge.push([agauge.length-1,Number(((agauge.reduce((s,c)=>{return s+c[1]},0))/agauge.length).toFixed(4)) ])
 			}
 			
 			let _tradingPairs = {bittrex:this.state.tradingPairs.bittrex,binance:_binance,misc:this.state.tradingPairs.misc}
@@ -810,12 +809,12 @@ class App extends Component{
 			let agauge = this.state.bittrexGauge[1].slice(0);
 			let bgauge = this.state.bittrexGauge[0].slice(0);
 			if(agauge.length > 100){
-				agauge.shift(agauge.push({x:agauge[agauge.length - 1].x + 1,y:Number(data.percentage.toFixed(4))}))
-				bgauge.shift(bgauge.push({x:agauge[agauge.length - 1].x,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) }))
+				agauge.shift(agauge.push([agauge[agauge.length - 1][0] + 1,Number(data.percentage.toFixed(4))]))
+				bgauge.shift(bgauge.push([agauge[agauge.length - 1][0],Number(((agauge.reduce((s,c)=>{return s+c[1]},0))/agauge.length).toFixed(4)) ]))
 			}
 			else{
-				agauge.push({x:agauge.length,y:Number(data.percentage.toFixed(4))})
-				bgauge.push({x:agauge.length-1,y:Number(((agauge.reduce((s,c)=>{return s+c.y},0))/agauge.length).toFixed(4)) })
+				agauge.push([agauge.length,Number(data.percentage.toFixed(4))])
+				bgauge.push([agauge.length-1,Number(((agauge.reduce((s,c)=>{return s+c[1]},0))/agauge.length).toFixed(4)) ])
 			}
 			if(this.state.autosave){
 				window.localStorage.setItem("Trading_Pairs",JSON.stringify(_tradingPairs));
