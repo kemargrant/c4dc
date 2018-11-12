@@ -11,7 +11,7 @@ const BinanceProfit = function (props){
 			}
 		}
 		return results.map(function(profit){
-				return (<div key={profit[1]}>
+				return (<div key={Math.random(0,1)}>
 						{profit[1] ? profit[1].toFixed(8) :""}/{balance[profit[0]]} {profit[0]} ({profit[1] ? ([profit[1]] * 100/balance[profit[0]]).toFixed(8) : ""})%
 						<LinearProgress variant="determinate" value={profit[1] * 100/balance[profit[0]]} />	
 					</div>)		
