@@ -1,41 +1,44 @@
+import Chart from 'chart.js'
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import {Line,Scatter} from 'react-chartjs-2';
 import React from 'react';
+import ReactChartkick, {LineChart,ScatterChart} from 'react-chartkick'
 import Switch from '@material-ui/core/Switch';
+
+ReactChartkick.addAdapter(Chart)
 
 class BinanceCharts extends React.PureComponent{
 	constructor(props){
 	super(props)
 		this.updateDisplay = this.updateDisplay.bind(this);
 		this.state = {display:false}	
-		this.height = this.props.chartSize.height > 400 ? 100 : this.props.chartSize.height/2;
+		this.height = this.props.chartSize.height > 400 ? 100 : Math.round(this.props.chartSize.height);
 	}
 	createLine(){
 		if(this.props.lineList.length > 0){
 			return this.props.lineList.map((option) => (
 				<div key={option.key+Math.random(0,10)}>
-					<Line 
-					height={this.height}
-					data={option.data}
-					options={option.options} 
-					/>	
+					<LineChart 
+						height={this.height+"px"} 
+						data={[
+							{data:option.data.datasets[0].data,name:option.data.datasets[0].label},
+							{data:option.data.datasets[1].data,name:option.data.datasets[1].label},
+							{data:option.data.datasets[2].data,name:option.data.datasets[2].label},
+						]} 
+						library={option.data.options} 
+					/>
 			    </div>
 			))
 		}
 	}
 	createScatter(){
 		return this.props.scatterList.map((_option)=>{
-			return (
-			<Scatter 
-			height={this.height}
+			return (<ScatterChart
+			height={this.height+"px"}
 			key={Math.random(0,1)} 
-			data={_option}
-			options={{
-				animation:{duration:0}
-			}} 
-			/>
-			)
+			data={_option.data}
+			xtitle={_option.labels}
+			/>)
 		})
 	}
 	updateDisplay(checked){
