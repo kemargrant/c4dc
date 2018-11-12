@@ -24,7 +24,7 @@ function MovingLine(props) {
 				},
 			}
 	}
-	return <LineChart data={[{data:props.gauge[1],name:"Percentage:"+pu},{data:props.gauge[0],name:"Percentage Moving Average:"+mva}]} ytitle="Seconds" library={options}/>
+	return <LineChart data={[{data:props.gauge[1],name:"Percentage:"+pu},{data:props.gauge[0],name:"Percentage Moving Average:"+mva}]} ytitle="%" library={options}/>
 }
 
 export default MovingLine;
