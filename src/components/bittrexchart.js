@@ -1,8 +1,11 @@
+import Chart from 'chart.js'
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import {Line,Scatter} from 'react-chartjs-2';
 import React from 'react';
+import ReactChartkick, {LineChart,ScatterChart} from 'react-chartkick'
 import Switch from '@material-ui/core/Switch';
+
+ReactChartkick.addAdapter(Chart)
 
 class BittrexChart extends React.PureComponent{
 	constructor(props){
@@ -11,24 +14,32 @@ class BittrexChart extends React.PureComponent{
 			display:false
 		}
 		this.updateDisplay = this.updateDisplay.bind(this);
-		this.height = this.props.style.height > 400 ? 100 : this.props.style.height/2;
+		this.height = this.props.style.height > 400 ? 100 :Math.round(this.props.style.height/2)*2;
 	}
 	createScatter(){
 		return this.props.scatterList.map((_option)=>{
-			return <Scatter 
-			height={this.height}
-			key={Math.random(0,1)} 
-			data={_option}
-			options={{
+			return <ScatterChart
+			height={this.height+"px"}
+			key={_option.datasets[0].label} 
+			data={_option.datasets[0].data}
+			xtitle={_option.datasets[0].label}
+			library={{
 				animation:{duration:0}
 			}} 
-			/>
-			
+			/>	
 		})
 	}
 	chart(){
 		if(this.props.data.data.datasets){
-			return <Line height={this.height} data={this.props.data.data} options={this.props.data.options} />
+			return 	<LineChart 
+				height={this.height+"px"} 
+				data={[
+					{data:this.props.data.data.datasets[0].data,name:this.props.data.data.datasets[0].label},
+					{data:this.props.data.data.datasets[2].data,name:this.props.data.data.datasets[1].label},
+					{data:this.props.data.data.datasets[2].data,name:this.props.data.data.datasets[2].label}
+				]} 
+				library={this.props.data.options} 
+				/>
 		}
 		else {
 			return null
