@@ -493,12 +493,12 @@ class App extends Component{
 						let base = this.state.tradingPairs.bittrex ? [this.state.tradingPairs.bittrex["usdt_"+_b1],this.state.tradingPairs.bittrex["usdt_"+this.state.tradingPairs.misc]] : [1,1];
 						let profit = data.info[k].Profit * base[0] + data.info[k].Profit2 * base[1];
 						if(data.info[k].Percent < 100){
-							_bittrexDurationScatter['<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
-							_bittrexProfitScatter['<100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
+							_bittrexDurationScatter['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+							_bittrexProfitScatter['<100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4))]);
 						}
 						else{
-							_bittrexDurationScatter['>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))});
-							_bittrexProfitScatter['>100%'].push({x:Number(data.info[k].Percent.toFixed(4)),y:Number(profit.toFixed(4))});
+							_bittrexDurationScatter['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(((data.info[k].Filled - data.info[k].Time)/60000).toFixed(2))]);
+							_bittrexProfitScatter['>100%'].push([Number(data.info[k].Percent.toFixed(4)),Number(profit.toFixed(4))]);
 						}
 					}
 					//profit
@@ -600,13 +600,13 @@ class App extends Component{
 				}
 			}
 			for(let key in dat){
-				v.push({x:key,y:dat[key]})
+				v.push([key,dat[key]])
 			}
 			for(let key in b1Count){
-				b1.push({x:key,y:b1Count[key]})
+				b1.push([key,b1Count[key]])
 			}
 			for(let key in _mscCount){
-				_msc.push({x:key,y:_mscCount[key]})
+				_msc.push([key,_mscCount[key]])
 			}
 			for(let i = 0;i < msc2.length;i++){
 				for(let key in dat2[msc2[i].replace("_","")]){
@@ -688,7 +688,7 @@ class App extends Component{
 			scatterOptionP.datasets[0].backgroundColor = "blue";
 			scatterOptionP.datasets[0].label = msc + " Percent vs Profit(usdt)";
 			scatterOptionP.datasets[0].data = _bittrexProfitScatter['>100%'].concat(_bittrexProfitScatter['<100%']);
-			let total = (scatterOptionP.datasets[0].data.reduce((s,c)=>{return s+c.y},0));
+			let total = (scatterOptionP.datasets[0].data.reduce((s,c)=>{return s+c[1]},0));
 			scatterOptionP.datasets[0].label += " Total:"+total;
 			scatterOption.push(scatterOptionD);		
 			scatterOption.push(scatterOptionP);	    
