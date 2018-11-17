@@ -30,12 +30,12 @@ class BittrexChart extends React.PureComponent{
 		})
 	}
 	chart(){
-		if(this.props.data.data.datasets){
+		if(this.props.data.data.datasets.length === 3){
 			return 	<LineChart 
 				height={this.height+"px"} 
 				data={[
 					{data:this.props.data.data.datasets[0].data,name:this.props.data.data.datasets[0].label},
-					{data:this.props.data.data.datasets[2].data,name:this.props.data.data.datasets[1].label},
+					{data:this.props.data.data.datasets[1].data,name:this.props.data.data.datasets[1].label},
 					{data:this.props.data.data.datasets[2].data,name:this.props.data.data.datasets[2].label}
 				]} 
 				library={this.props.data.options} 

@@ -15,7 +15,7 @@ class BinanceCharts extends React.PureComponent{
 		this.height = this.props.chartSize.height > 400 ? 100 : Math.round(this.props.chartSize.height);
 	}
 	createLine(){
-		if(this.props.lineList.length > 0){
+		if(this.props.lineList[0].length === 3){
 			return this.props.lineList.map((option) => (
 				<div key={option.key+Math.random(0,10)}>
 					<LineChart 
